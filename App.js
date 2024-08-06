@@ -89,32 +89,13 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   itemContainer: {
-    flex: 1, // Указываем, что каждый элемент будет занимать равное пространство
-    margin: 5, // Добавляем отступ между элементами
+    flex: 1,
+    margin: 5,
     backgroundColor: "#696969",
     alignItems: "center",
     justifyContent: "center",
     padding: 5,
     borderRadius: 5,
-  },
-
-  //
-  pricePercentage: {
-    // textAlign: "right",
-  },
-  priceUp: {
-    color: "#00B589",
-  },
-  priceDown: {
-    color: "#fc4422",
-  },
-  textPrice: {
-    color: "gray",
-    fontWeight: "bold",
-  },
-  image: {
-    width: 30,
-    height: 30,
   },
 })
 

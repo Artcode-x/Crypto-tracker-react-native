@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   pricePercentage: {
-    // textAlign: "right",
+    textAlign: "right",
   },
   priceUp: {
     color: "#00B589",
