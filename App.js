@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react"
 import { View, Text, StyleSheet, StatusBar, FlatList, TextInput, Image } from "react-native"
 
+import CoinItem from "./components/CoinItem"
+
 const App = () => {
   const [coins, setCoins] = useState([])
   const [refreshing, setRefreshing] = useState(false)
@@ -42,22 +44,8 @@ const App = () => {
         )}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
-          // <CoinItem coin={item} />
           <View style={styles.itemContainer}>
-            <Image source={{ uri: item.image }} style={styles.image} />
-            <Text>{item.market_cap_rank}</Text>
-            <Text>{item.name}</Text>
-            <Text>{item.symbol}</Text>
-
-            <Text
-              style={[
-                styles.pricePercentage,
-                item.price_change_percentage_24h > 0 ? styles.priceUp : styles.priceDown,
-              ]}
-            >
-              {item.price_change_percentage_24h.toFixed(2)}%
-            </Text>
-            <Text style={styles.textPrice}>${item.current_price}</Text>
+            <CoinItem coin={item} />
           </View>
         )}
         numColumns={2}
@@ -103,7 +91,7 @@ const styles = StyleSheet.create({
   itemContainer: {
     flex: 1, // Указываем, что каждый элемент будет занимать равное пространство
     margin: 5, // Добавляем отступ между элементами
-    backgroundColor: "darkgray",
+    backgroundColor: "#696969",
     alignItems: "center",
     justifyContent: "center",
     padding: 5,
