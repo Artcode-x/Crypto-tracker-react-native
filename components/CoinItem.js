@@ -1,8 +1,8 @@
 import React from "react"
-import { View, Text, StyleSheet, Image } from "react-native"
+import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native"
 
-const CoinItem = ({ coin }) => (
-  <View style={styles.containerItem}>
+const CoinItem = ({ coin, onPress }) => (
+  <TouchableOpacity style={styles.containerItem} onPress={onPress}>
     <View style={styles.leftBlock}>
       <View style={styles.title}>
         <Text>{coin.name}</Text>
@@ -26,7 +26,7 @@ const CoinItem = ({ coin }) => (
         {coin.price_change_percentage_24h.toFixed(2)}%
       </Text>
     </View>
-  </View>
+  </TouchableOpacity>
 )
 
 const styles = StyleSheet.create({

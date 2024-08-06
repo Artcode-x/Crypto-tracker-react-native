@@ -2,6 +2,17 @@ import React, { useEffect, useState } from "react"
 import { View, Text, StyleSheet, StatusBar, FlatList, TextInput, Image } from "react-native"
 
 import CoinItem from "./components/CoinItem"
+import { getMarketData } from "./services/cryptoService"
+import ListItem from "./components/ListItem"
+
+// const ListHeader = () => (
+//   <>
+//     <View style={styles.titleWrapper}>
+//       <Text style={styles.largeTitle}>Markets</Text>
+//     </View>
+//     <View style={styles.divider} />
+//   </>
+// )
 
 const App = () => {
   const [coins, setCoins] = useState([])
@@ -13,13 +24,31 @@ const App = () => {
       "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false"
     )
     const data = await res.json()
-    console.log("data: ", data)
+    // console.log("data: ", data)
     setCoins(data)
   }
 
   useEffect(() => {
     loadData()
   }, [])
+
+  const [data, setData] = useState([])
+  const [selectedCoinData, setSelectedCoinData] = useState(null)
+
+  useEffect(() => {
+    const fetchMarketData = async () => {
+      const marketData = await getMarketData()
+      setData(marketData)
+    }
+
+    fetchMarketData()
+  }, [])
+
+  const openModal = (item) => {
+    setSelectedCoinData(item)
+    console.log(selectedCoinData)
+    // bottomSheetModalRef.current?.present()
+  }
 
   return (
     <View style={styles.container}>
@@ -35,6 +64,22 @@ const App = () => {
         />
       </View>
 
+      {/* <FlatList
+        keyExtractor={(item) => item.id}
+        data={data}
+        renderItem={({ item }) => (
+          <ListItem
+            name={item.name}
+            symbol={item.symbol}
+            currentPrice={item.current_price}
+            priceChangePercentage7d={item.price_change_percentage_7d_in_currency}
+            logoUrl={item.image}
+            onPress={() => openModal(item)}
+          />
+        )}
+        ListHeaderComponent={<ListHeader />}
+      /> */}
+
       <FlatList
         style={styles.list}
         data={coins.filter(
@@ -45,7 +90,7 @@ const App = () => {
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <View style={styles.itemContainer}>
-            <CoinItem coin={item} />
+            <CoinItem coin={item} onPress={() => openModal(item)} />
           </View>
         )}
         numColumns={2}
