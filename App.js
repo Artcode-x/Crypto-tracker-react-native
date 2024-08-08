@@ -32,7 +32,7 @@ const App = () => {
 
   const fetchCoinHistoricalData = async (coinId) => {
     const response = await fetch(
-      `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=30`
+      `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=7`
     ) // Получаем данные за 30 дней
     if (!response.ok) {
       throw new Error("Ошибка при получении данных")
@@ -69,9 +69,25 @@ const App = () => {
 
   const prepareChartData = (data) => {
     const labels = data.map(([timestamp]) => new Date(timestamp).toLocaleDateString()) // Получаем метки для графика
+
+    const uniquedates = uniqueDates(labels)
+    uniquedates.forEach((uniqueDate, index) => (uniquedates[index] = `Day ${index + 1}`)) // Заменяем метки на дни
+
     const prices = data.map(([, price]) => price) // Получаем цены
-    return { labels, prices }
+
+    console.log(uniquedates)
+    return { uniquedates, prices }
   }
+
+  const uniqueDates = (datesArray) => {
+    // Используем Set для хранения уникальных значений
+    const uniqueSet = new Set(datesArray)
+
+    // Преобразуем Set обратно в массив
+    return Array.from(uniqueSet)
+  }
+
+  // Вызов функции и вывод результата
 
   const chartData = prepareChartData(coinHistoryData)
 
@@ -124,7 +140,7 @@ const App = () => {
                   {coinHistoryData.length > 0 && (
                     <LineChart
                       data={{
-                        labels: chartData.labels,
+                        labels: chartData.uniquedates,
                         datasets: [
                           {
                             data: chartData.prices,
@@ -151,6 +167,10 @@ const App = () => {
                         },
                         propsForHorizontalLines: {
                           strokeDasharray: "", // Сплошная линия
+                        },
+                        // Новый стиль для меток
+                        propsForLabels: {
+                          fontSize: 10, // Уменьшение шрифта меток
                         },
                       }}
                       bezier // Добавляем Bezier для сплошных линий
