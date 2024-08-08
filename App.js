@@ -9,6 +9,7 @@ import {
   Modal,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
 } from "react-native"
 import { LineChart } from "react-native-chart-kit" // Добавлено для графиков
 import CoinItem from "./components/CoinItem"
@@ -21,6 +22,8 @@ const App = () => {
   const [selectedCoinData, setSelectedCoinData] = useState(null)
   const [coinHistoryData, setCoinHistoryData] = useState([]) // Добавлено для хранения исторических данных
   const [modalVisible, setModalVisible] = useState(false)
+
+  const [isloading, setIsLoading] = useState(false)
 
   const fetchMarketData = async () => {
     const marketData = await getMarketData()
@@ -46,11 +49,15 @@ const App = () => {
     setSelectedCoinData(item)
     setModalVisible(true)
 
+    setIsLoading(true)
+
     try {
       const historicalData = await fetchCoinHistoricalData(item.id)
       setCoinHistoryData(historicalData)
     } catch (error) {
       console.error(error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -111,49 +118,51 @@ const App = () => {
             {selectedCoinData && (
               <>
                 <Text style={styles.modalTitle}>{selectedCoinData.name}</Text>
-
+                {isloading ? <ActivityIndicator size="large" color="#0000ff" /> : null}
                 {/* График */}
-                {coinHistoryData.length > 0 && (
-                  <LineChart
-                    data={{
-                      labels: chartData.labels,
-                      datasets: [
-                        {
-                          data: chartData.prices,
-                          strokeWidth: 3, // Установите толщину линии
+                <View>
+                  {coinHistoryData.length > 0 && (
+                    <LineChart
+                      data={{
+                        labels: chartData.labels,
+                        datasets: [
+                          {
+                            data: chartData.prices,
+                            strokeWidth: 3, // Установите толщину линии
+                          },
+                        ],
+                      }}
+                      width={Dimensions.get("window").width * 0.9} // Ширина графика
+                      height={300}
+                      chartConfig={{
+                        backgroundColor: "#ffffff",
+                        backgroundGradientFrom: "#ffffff",
+                        backgroundGradientTo: "#ffffff",
+                        decimalPlaces: 2,
+                        color: (opacity = 1) => `rgba(0, 121, 191, ${opacity})`, // Цвет линии
+                        labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Цвет меток
+                        style: {
+                          borderRadius: 16,
+                          borderWidth: 1, // Установите ширину границы
+                          borderColor: "#e0e0e0", // Цвет границы
                         },
-                      ],
-                    }}
-                    width={Dimensions.get("window").width * 0.9} // Ширина графика
-                    height={300}
-                    chartConfig={{
-                      backgroundColor: "#ffffff",
-                      backgroundGradientFrom: "#ffffff",
-                      backgroundGradientTo: "#ffffff",
-                      decimalPlaces: 2,
-                      color: (opacity = 1) => `rgba(0, 121, 191, ${opacity})`, // Цвет линии
-                      labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Цвет меток
-                      style: {
+                        propsForDots: {
+                          r: "0", // Установите радиус до 0, чтобы скрыть точки
+                        },
+                        propsForHorizontalLines: {
+                          strokeDasharray: "", // Сплошная линия
+                        },
+                      }}
+                      bezier // Добавляем Bezier для сплошных линий
+                      style={{
+                        marginVertical: 10,
                         borderRadius: 16,
-                        borderWidth: 1, // Установите ширину границы
-                        borderColor: "#e0e0e0", // Цвет границы
-                      },
-                      propsForDots: {
-                        r: "0", // Установите радиус до 0, чтобы скрыть точки
-                      },
-                      propsForHorizontalLines: {
-                        strokeDasharray: "", // Сплошная линия
-                      },
-                    }}
-                    bezier // Добавляем Bezier для сплошных линий
-                    style={{
-                      marginVertical: 10,
-                      borderRadius: 16,
-                      elevation: 10,
-                      borderColor: "#e0e0e0", // Цвет границы графика
-                    }}
-                  />
-                )}
+                        elevation: 10,
+                        borderColor: "#e0e0e0", // Цвет границы графика
+                      }}
+                    />
+                  )}
+                </View>
 
                 <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
                   <Text style={styles.closeButtonText}>Close</Text>
