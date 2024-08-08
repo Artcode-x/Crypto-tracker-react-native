@@ -32,7 +32,7 @@ const App = () => {
 
   const fetchCoinHistoricalData = async (coinId) => {
     const response = await fetch(
-      `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=7`
+      `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=14`
     ) // Получаем данные за 30 дней
     if (!response.ok) {
       throw new Error("Ошибка при получении данных")
@@ -71,12 +71,24 @@ const App = () => {
     const labels = data.map(([timestamp]) => new Date(timestamp).toLocaleDateString()) // Получаем метки для графика
 
     const uniquedates = uniqueDates(labels)
-    uniquedates.forEach((uniqueDate, index) => (uniquedates[index] = `Day ${index + 1}`)) // Заменяем метки на дни
+    // uniquedates.forEach((uniqueDate, index) => (uniquedates[index] = `Day ${index + 1}`)) // Заменяем метки на дни
+    const labelDate = removeYearFromDate(uniquedates)
 
     const prices = data.map(([, price]) => price) // Получаем цены
 
     console.log(uniquedates)
-    return { uniquedates, prices }
+    return { labelDate, prices }
+  }
+
+  const removeYearFromDate = (datesArray) => {
+    return datesArray.map((date) => {
+      // Разделяем строку даты по точке
+      const parts = date.split(".")
+      // Преобразуем день в число, чтобы удалить ведущие нули
+      const day = parseInt(parts[0], 10)
+      // Возвращаем только день в формате строки
+      return day.toString()
+    })
   }
 
   const uniqueDates = (datesArray) => {
@@ -140,7 +152,7 @@ const App = () => {
                   {coinHistoryData.length > 0 && (
                     <LineChart
                       data={{
-                        labels: chartData.uniquedates,
+                        labels: chartData.labelDate,
                         datasets: [
                           {
                             data: chartData.prices,
