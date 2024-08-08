@@ -1,59 +1,76 @@
 import React, { useEffect, useState } from "react"
-import { View, Text, StyleSheet, StatusBar, FlatList, TextInput, Image } from "react-native"
-
+import {
+  View,
+  Text,
+  StyleSheet,
+  StatusBar,
+  FlatList,
+  TextInput,
+  Modal,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native"
+import { LineChart } from "react-native-chart-kit" // Добавлено для графиков
 import CoinItem from "./components/CoinItem"
-import { getMarketData } from "./services/cryptoService"
-import ListItem from "./components/ListItem"
-
-// const ListHeader = () => (
-//   <>
-//     <View style={styles.titleWrapper}>
-//       <Text style={styles.largeTitle}>Markets</Text>
-//     </View>
-//     <View style={styles.divider} />
-//   </>
-// )
+import { getHistoricalData, getMarketData } from "./services/cryptoService"
 
 const App = () => {
-  const [coins, setCoins] = useState([])
   const [refreshing, setRefreshing] = useState(false)
   const [search, setSearch] = useState("")
+  const [data, setData] = useState([])
+  const [selectedCoinData, setSelectedCoinData] = useState(null)
+  const [coinHistoryData, setCoinHistoryData] = useState([]) // Добавлено для хранения исторических данных
+  const [modalVisible, setModalVisible] = useState(false)
 
-  const loadData = async () => {
-    const res = await fetch(
-      "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false"
-    )
-    const data = await res.json()
-    // console.log("data: ", data)
-    setCoins(data)
+  const fetchMarketData = async () => {
+    const marketData = await getMarketData()
+    setData(marketData)
+  }
+
+  const fetchCoinHistoricalData = async (coinId) => {
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=30`
+    ) // Получаем данные за 30 дней
+    if (!response.ok) {
+      throw new Error("Ошибка при получении данных")
+    }
+    const result = await response.json()
+    return result.prices // Возвращаем массив цен
   }
 
   useEffect(() => {
-    loadData()
-  }, [])
-
-  const [data, setData] = useState([])
-  const [selectedCoinData, setSelectedCoinData] = useState(null)
-
-  useEffect(() => {
-    const fetchMarketData = async () => {
-      const marketData = await getMarketData()
-      setData(marketData)
-    }
-
     fetchMarketData()
   }, [])
 
-  const openModal = (item) => {
+  const openModal = async (item) => {
     setSelectedCoinData(item)
-    console.log(selectedCoinData)
-    // bottomSheetModalRef.current?.present()
+    setModalVisible(true)
+
+    try {
+      const historicalData = await fetchCoinHistoricalData(item.id)
+      setCoinHistoryData(historicalData)
+    } catch (error) {
+      console.error(error)
+    }
   }
+
+  const closeModal = () => {
+    setModalVisible(false)
+    setSelectedCoinData(null)
+    setCoinHistoryData([]) // Сбрасываем исторические данные при закрытии
+  }
+
+  const prepareChartData = (data) => {
+    const labels = data.map(([timestamp]) => new Date(timestamp).toLocaleDateString()) // Получаем метки для графика
+    const prices = data.map(([, price]) => price) // Получаем цены
+    return { labels, prices }
+  }
+
+  const chartData = prepareChartData(coinHistoryData)
 
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#0e0275" />
-
       <View style={styles.header}>
         <Text style={styles.title}>CryptoCurrencies</Text>
         <TextInput
@@ -64,28 +81,12 @@ const App = () => {
         />
       </View>
 
-      {/* <FlatList
-        keyExtractor={(item) => item.id}
-        data={data}
-        renderItem={({ item }) => (
-          <ListItem
-            name={item.name}
-            symbol={item.symbol}
-            currentPrice={item.current_price}
-            priceChangePercentage7d={item.price_change_percentage_7d_in_currency}
-            logoUrl={item.image}
-            onPress={() => openModal(item)}
-          />
-        )}
-        ListHeaderComponent={<ListHeader />}
-      /> */}
-
       <FlatList
         style={styles.list}
-        data={coins.filter(
+        data={data.filter(
           (coin) =>
-            coin.name.toLowerCase().includes(search.toLocaleLowerCase()) ||
-            coin.symbol.toLocaleLowerCase().includes(search.toLocaleLowerCase())
+            coin.name.toLowerCase().includes(search.toLowerCase()) ||
+            coin.symbol.toLowerCase().includes(search.toLowerCase())
         )}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
@@ -98,10 +99,70 @@ const App = () => {
         refreshing={refreshing}
         onRefresh={async () => {
           setRefreshing(true)
-          await loadData()
+          await fetchMarketData()
           setRefreshing(false)
         }}
       />
+
+      {/* Модальное окно с графиком */}
+      <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={closeModal}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            {selectedCoinData && (
+              <>
+                <Text style={styles.modalTitle}>{selectedCoinData.name}</Text>
+
+                {/* График */}
+                {coinHistoryData.length > 0 && (
+                  <LineChart
+                    data={{
+                      labels: chartData.labels,
+                      datasets: [
+                        {
+                          data: chartData.prices,
+                          strokeWidth: 3, // Установите толщину линии
+                        },
+                      ],
+                    }}
+                    width={Dimensions.get("window").width * 0.9} // Ширина графика
+                    height={300}
+                    chartConfig={{
+                      backgroundColor: "#ffffff",
+                      backgroundGradientFrom: "#ffffff",
+                      backgroundGradientTo: "#ffffff",
+                      decimalPlaces: 2,
+                      color: (opacity = 1) => `rgba(0, 121, 191, ${opacity})`, // Цвет линии
+                      labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Цвет меток
+                      style: {
+                        borderRadius: 16,
+                        borderWidth: 1, // Установите ширину границы
+                        borderColor: "#e0e0e0", // Цвет границы
+                      },
+                      propsForDots: {
+                        r: "0", // Установите радиус до 0, чтобы скрыть точки
+                      },
+                      propsForHorizontalLines: {
+                        strokeDasharray: "", // Сплошная линия
+                      },
+                    }}
+                    bezier // Добавляем Bezier для сплошных линий
+                    style={{
+                      marginVertical: 10,
+                      borderRadius: 16,
+                      elevation: 10,
+                      borderColor: "#e0e0e0", // Цвет границы графика
+                    }}
+                  />
+                )}
+
+                <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+                  <Text style={styles.closeButtonText}>Close</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -141,6 +202,48 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 5,
     borderRadius: 5,
+  },
+  //
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.7)", // Темный полупрозрачный фон
+  },
+  modalContent: {
+    width: "90%",
+    maxWidth: 500,
+    backgroundColor: "white",
+    borderRadius: 20,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 24, // Увеличенный размер заголовка
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 20,
+  },
+  closeButton: {
+    marginTop: 20,
+    backgroundColor: "#ff4757",
+    borderRadius: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    alignItems: "center",
+  },
+  closeButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
 })
 
