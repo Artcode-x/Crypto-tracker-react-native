@@ -14,6 +14,7 @@ import {
 import { LineChart } from "react-native-chart-kit" // Добавлено для графиков
 import CoinItem from "./components/CoinItem"
 import { getHistoricalData, getMarketData } from "./services/cryptoService"
+import { removeYearFromDate, uniqueDates } from "./helpers/helpers"
 
 const App = () => {
   const [refreshing, setRefreshing] = useState(false)
@@ -75,31 +76,8 @@ const App = () => {
     const labelDate = removeYearFromDate(uniquedates)
 
     const prices = data.map(([, price]) => price) // Получаем цены
-
-    console.log(uniquedates)
     return { labelDate, prices }
   }
-
-  const removeYearFromDate = (datesArray) => {
-    return datesArray.map((date) => {
-      // Разделяем строку даты по точке
-      const parts = date.split(".")
-      // Преобразуем день в число, чтобы удалить ведущие нули
-      const day = parseInt(parts[0], 10)
-      // Возвращаем только день в формате строки
-      return day.toString()
-    })
-  }
-
-  const uniqueDates = (datesArray) => {
-    // Используем Set для хранения уникальных значений
-    const uniqueSet = new Set(datesArray)
-
-    // Преобразуем Set обратно в массив
-    return Array.from(uniqueSet)
-  }
-
-  // Вызов функции и вывод результата
 
   const chartData = prepareChartData(coinHistoryData)
 
