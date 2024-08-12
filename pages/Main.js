@@ -15,6 +15,7 @@ import { LineChart } from "react-native-chart-kit" // Добавлено для 
 import CoinItem from "../components/CoinItem"
 import { getMarketData } from "../services/cryptoService"
 import { removeYearFromDate, uniqueDates } from "../helpers/helpers"
+import Ionicons from "react-native-vector-icons/Ionicons"
 
 const Main = () => {
   const [refreshing, setRefreshing] = useState(false)
@@ -105,6 +106,10 @@ const Main = () => {
         renderItem={({ item }) => (
           <View style={styles.itemContainer}>
             <CoinItem coin={item} onPress={() => openModal(item)} />
+            {/* Иконка + */}
+            <TouchableOpacity onPress={() => console.log(`Добавить ${item.name}`)} style={styles.addButton}>
+              <Ionicons name="add-circle" size={24} color="#000" />
+            </TouchableOpacity>
           </View>
         )}
         numColumns={2}
