@@ -16,6 +16,10 @@ import CoinItem from "../components/CoinItem"
 import { getMarketData } from "../services/cryptoService"
 import { removeYearFromDate, uniqueDates } from "../helpers/helpers"
 import Ionicons from "react-native-vector-icons/Ionicons"
+import { useDispatch } from "react-redux"
+import { setCoin } from "../store/reducersSlice"
+
+import { pick } from "lodash"
 
 const Main = () => {
   const [refreshing, setRefreshing] = useState(false)
@@ -27,6 +31,8 @@ const Main = () => {
 
   const [isloading, setIsLoading] = useState(false)
 
+  const dispatch = useDispatch()
+
   const fetchMarketData = async () => {
     const marketData = await getMarketData()
     setData(marketData)
@@ -35,12 +41,12 @@ const Main = () => {
   const fetchCoinHistoricalData = async (coinId) => {
     const response = await fetch(
       `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=14`
-    ) // Получаем данные за 30 дней
+    ) // Получаем данные за кол-во дней, до 30
     if (!response.ok) {
       throw new Error("Ошибка при получении данных")
     }
     const result = await response.json()
-    return result.prices // Возвращаем массив цен
+    return result.prices
   }
 
   useEffect(() => {
@@ -73,10 +79,9 @@ const Main = () => {
     const labels = data.map(([timestamp]) => new Date(timestamp).toLocaleDateString()) // Получаем метки для графика
 
     const uniquedates = uniqueDates(labels)
-    // uniquedates.forEach((uniqueDate, index) => (uniquedates[index] = `Day ${index + 1}`)) // Заменяем метки на дни
     const labelDate = removeYearFromDate(uniquedates)
 
-    const prices = data.map(([, price]) => price) // Получаем цены
+    const prices = data.map(([, price]) => price)
     return { labelDate, prices }
   }
 
@@ -106,8 +111,33 @@ const Main = () => {
         renderItem={({ item }) => (
           <View style={styles.itemContainer}>
             <CoinItem coin={item} onPress={() => openModal(item)} />
-            {/* Иконка + */}
-            <TouchableOpacity onPress={() => console.log(`Добавить ${item.name}`)} style={styles.addButton}>
+            {/* Иконка добавления в избранное+ */}
+            <TouchableOpacity
+              onPress={() => {
+                const {
+                  name,
+                  current_price,
+                  price_change_percentage_24h,
+                  image,
+                  otherInfo,
+                  market_cap_rank,
+                  symbol,
+                } = item // Деструктурирую нужные поля
+                const coinData = {
+                  name,
+                  current_price,
+                  price_change_percentage_24h,
+                  image,
+                  otherInfo,
+                  market_cap_rank,
+                  symbol,
+                }
+                console.log(coinData)
+                dispatch(setCoin(coinData)) // Диспатчим только необходимые данные из огромного обьекта
+                // dispatch((prevState) => ({ ...prevState, coinData }))
+              }}
+              style={styles.addButton}
+            >
               <Ionicons name="add-circle" size={24} color="#000" />
             </TouchableOpacity>
           </View>
@@ -139,7 +169,7 @@ const Main = () => {
                         datasets: [
                           {
                             data: chartData.prices,
-                            strokeWidth: 3, // Установите толщину линии
+                            strokeWidth: 3, // толщина линии
                           },
                         ],
                       }}
@@ -168,7 +198,7 @@ const Main = () => {
                           fontSize: 10, // Уменьшение шрифта меток
                         },
                       }}
-                      bezier // Добавляем Bezier для сплошных линий
+                      bezier //  Bezier для сплошных линий
                       style={{
                         marginVertical: 10,
                         borderRadius: 16,
