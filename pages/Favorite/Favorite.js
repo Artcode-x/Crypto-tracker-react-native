@@ -1,9 +1,7 @@
 import React from "react"
-import { View, Text, TextInput, StatusBar, StyleSheet, FlatList } from "react-native"
+import { View, StyleSheet, FlatList } from "react-native"
 import { useSelector } from "react-redux"
 import { coinSelector } from "../../store/toolkitSelectors"
-
-import Test from "../test/test"
 import CoinItem from "../../components/CoinItem"
 
 export default function Favorite() {
