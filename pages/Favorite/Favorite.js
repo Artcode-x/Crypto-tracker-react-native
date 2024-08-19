@@ -1,22 +1,43 @@
 import React from "react"
-import { View, Text, TextInput, StatusBar, StyleSheet } from "react-native"
-import Test from "../../pages/test/test"
+import { View, Text, TextInput, StatusBar, StyleSheet, FlatList } from "react-native"
+import { useSelector } from "react-redux"
+import { coinSelector } from "../../store/toolkitSelectors"
+
+import Test from "../test/test"
+import CoinItem from "../../components/CoinItem"
 
 export default function Favorite() {
+  const coinData = useSelector(coinSelector)
+
   return (
-    <View style={styles.container}>
-      <StatusBar backgroundColor="#0e0275" />
-      <View style={styles.header}>
-        <Text style={styles.title}>CryptoCurrencies</Text>
-        <TextInput style={styles.searchInput} placeholder="Search Cryptos" placeholderTextColor="#858585" />
-      </View>
-      <View style={styles.list}>
-        <View style={styles.itemContainer}>
-          <Test />
-        </View>
-      </View>
-      <View></View>
+    // <View style={styles.container}>
+    //   <StatusBar backgroundColor="#0e0275" />
+    //   <View style={styles.header}>
+    //     <Text style={styles.title}>CryptoCurrencies</Text>
+    //     <TextInput style={styles.searchInput} placeholder="Search Cryptos" placeholderTextColor="#858585" />
+    //   </View>
+    //   <View style={styles.list}>
+    //     <View style={styles.itemContainer}>
+    //       <Test onPress={() => console.log(item)} />
+    //     </View>
+    //   </View>
+    <View>
+      <FlatList
+        // style={styles.list}
+        data={coinData.filter((coin) => coin.name.toLowerCase() || coin.symbol.toLowerCase())}
+        renderItem={({ item }) => (
+          <View style={styles.itemContainer}>
+            <CoinItem coin={item} />
+            {/* <Test coin={item} /> */}
+            {/* Иконка добавления в избранное+ */}
+          </View>
+        )}
+        numColumns={2}
+        keyExtractor={(item) => item.id}
+        // refreshing={refreshing}
+      />
     </View>
+    // </View>
   )
 }
 

@@ -133,6 +133,7 @@ const Main = () => {
                   symbol,
                 }
                 console.log(coinData)
+                // dispatch(savePreviousState(coinData))
                 dispatch(setCoin(coinData)) // Диспатчим только необходимые данные из огромного обьекта
                 // dispatch((prevState) => ({ ...prevState, coinData }))
               }}

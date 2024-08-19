@@ -28,7 +28,7 @@ const Test = ({ onPress }) => {
             coinData.price_change_percentage_24h > 0 ? styles.priceUp : styles.priceDown,
           ]}
         >
-          {coinData.price_change_percentage_24h.toFixed(2)}%
+          {coinData.price_change_percentage_24h}%
         </Text>
       </View>
     </TouchableOpacity>
