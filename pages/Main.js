@@ -19,14 +19,12 @@ import Ionicons from "react-native-vector-icons/Ionicons"
 import { useDispatch } from "react-redux"
 import { setCoin } from "../store/reducersSlice"
 
-import { pick } from "lodash"
-
 const Main = () => {
   const [refreshing, setRefreshing] = useState(false)
   const [search, setSearch] = useState("")
   const [data, setData] = useState([])
   const [selectedCoinData, setSelectedCoinData] = useState(null)
-  const [coinHistoryData, setCoinHistoryData] = useState([]) // Добавлено для хранения исторических данных
+  const [coinHistoryData, setCoinHistoryData] = useState([])
   const [modalVisible, setModalVisible] = useState(false)
 
   const [isloading, setIsLoading] = useState(false)
@@ -72,7 +70,7 @@ const Main = () => {
   const closeModal = () => {
     setModalVisible(false)
     setSelectedCoinData(null)
-    setCoinHistoryData([]) // Сбрасываем исторические данные при закрытии
+    setCoinHistoryData([]) // Сброс исторических данных при закрытии
   }
 
   const prepareChartData = (data) => {
@@ -111,7 +109,7 @@ const Main = () => {
         renderItem={({ item }) => (
           <View style={styles.itemContainer}>
             <CoinItem coin={item} onPress={() => openModal(item)} />
-            {/* Иконка добавления в избранное+ */}
+            {/* Добавить в избранное+ */}
             <TouchableOpacity
               onPress={() => {
                 const {
