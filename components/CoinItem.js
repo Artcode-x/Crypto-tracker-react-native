@@ -36,8 +36,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     height: "auto",
     flexWrap: "wrap",
-    gap: 25,
-    justifyContent: "space-between",
+    gap: 2,
+     justifyContent: "space-between",
+  
   },
   containerNames: {
     marginLeft: 10,
@@ -50,7 +51,7 @@ const styles = StyleSheet.create({
   },
   textPrice: {
     color: "#fff",
-    fontWeight: "bold",
+    fontWeight: "400",
   },
   pricePercentage: {
     textAlign: "right",
@@ -76,7 +77,9 @@ const styles = StyleSheet.create({
   },
   otherInfo: {
     flex: 1,
-    justifyContent: "right",
+    // justifyContent: "right",
+    alignItems: 'center',
+    
   },
   title: {
     flex: 1,

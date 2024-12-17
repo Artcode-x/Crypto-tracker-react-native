@@ -20,8 +20,17 @@ const reducersSlice = createSlice({
     setFlag: (state, action) => {
       state.flag = action.payload
     },
+    removeCoin: (state, action) => {
+    //  const idToRemove = action.payload; // Получаем ID объекта для удаления
+      // console.log(idToRemove.id);
+      // state.coinItem = state.coinItem.filter(coin => coin.id !== idToRemove);
+      const nameCoinForRemove = action.payload;
+      state.coinItem = state.coinItem.filter(coin => coin.name !== nameCoinForRemove.name);
+      // Метод filter() создает новый массив, который включает все элементы, кроме того, у которого coin.name совпадает с nameCoinForRemove.
+    
+    }
   },
 })
 
-export const { setCoin, setFlag } = reducersSlice.actions
+export const { setCoin, setFlag,removeCoin } = reducersSlice.actions
 export default reducersSlice.reducer

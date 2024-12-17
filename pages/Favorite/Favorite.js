@@ -1,13 +1,21 @@
 import React from "react"
 import { View, StyleSheet, FlatList } from "react-native"
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { coinSelector } from "../../store/toolkitSelectors"
 import CoinItem from "../../components/CoinItem"
 import Ionicons from "react-native-vector-icons/Ionicons"
 import { TouchableOpacity } from "react-native"
+import { removeCoin } from "../../store/reducersSlice"
 
 export default function Favorite() {
+  const dispatch = useDispatch()
   const coinData = useSelector(coinSelector)
+
+
+  const removeFromFav = (coin) => {
+console.log(coin);
+    dispatch(removeCoin(coin));
+  }
 
   return (
  
@@ -19,9 +27,8 @@ export default function Favorite() {
         renderItem={({ item }) => (
          
           <View style={styles.itemContainer}>
-           
             <CoinItem coin={item} />
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => removeFromFav(item)}>
             <Ionicons name="remove-circle-sharp" size={24} color="#000" />
             </TouchableOpacity>
           </View>
