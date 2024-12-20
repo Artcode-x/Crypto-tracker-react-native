@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -10,82 +10,105 @@ import {
   TouchableOpacity,
   Dimensions,
   ActivityIndicator,
-} from "react-native"
-import { LineChart } from "react-native-chart-kit" // Добавлено для графиков
-import CoinItem from "../components/CoinItem"
-import { getMarketData } from "../services/cryptoService"
-import { removeYearFromDate, uniqueDates } from "../helpers/helpers"
-import Ionicons from "react-native-vector-icons/Ionicons"
-import { useDispatch } from "react-redux"
-import { setCoin } from "../store/reducersSlice"
-
-import { pick } from "lodash"
+} from "react-native";
+import CoinItem from "../components/CoinItem";
+import { getMarketData } from "../services/cryptoService";
+import { removeYearFromDate, uniqueDates } from "../helpers/helpers";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import { useDispatch } from "react-redux";
+import { setCoin } from "../store/reducersSlice";
+import { LineChart } from "react-native-chart-kit";
+import { pick } from "lodash";
+import { CandleChart } from "react-native-wagmi-charts";
 
 const Main = () => {
-  const [refreshing, setRefreshing] = useState(false)
-  const [search, setSearch] = useState("")
-  const [data, setData] = useState([])
-  const [selectedCoinData, setSelectedCoinData] = useState(null)
-  const [coinHistoryData, setCoinHistoryData] = useState([]) // Добавлено для хранения исторических данных
-  const [modalVisible, setModalVisible] = useState(false)
+  const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState("");
+  const [data, setData] = useState([]);
+  const [selectedCoinData, setSelectedCoinData] = useState(null);
+  const [coinHistoryData, setCoinHistoryData] = useState([]); // Добавлено для хранения исторических данных
+  const [modalVisible, setModalVisible] = useState(false);
+  const [isloading, setIsLoading] = useState(false);
+  const [chartDays, setChartDays] = useState(1)
 
-  const [isloading, setIsLoading] = useState(false)
-
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
 
   const fetchMarketData = async () => {
-    const marketData = await getMarketData()
-    setData(marketData)
-  }
+    const marketData = await getMarketData();
+    setData(marketData);
+  };
 
-  const fetchCoinHistoricalData = async (coinId) => {
+  const fetchCoinHistoricalData = async (coinId, chartDays) => {
     const response = await fetch(
-      `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=14`
-    ) // Получаем данные за кол-во дней, до 30
+      `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${chartDays}`
+    ); // Получаем данные для графика за разные таймфреймы/дни
     if (!response.ok) {
-      throw new Error("Ошибка при получении данных")
+      throw new Error("Ошибка при получении данных");
     }
-    const result = await response.json()
-    return result.prices
-  }
+    const result = await response.json();
+    return result.prices;
+  };
 
   useEffect(() => {
-    fetchMarketData()
-  }, [])
+    fetchMarketData();
+  }, []);
 
   const openModal = async (item) => {
-    setSelectedCoinData(item)
-    setModalVisible(true)
-
-    setIsLoading(true)
-
+    setSelectedCoinData(item);
+    setModalVisible(true);
+    setIsLoading(true);
     try {
-      const historicalData = await fetchCoinHistoricalData(item.id)
-      setCoinHistoryData(historicalData)
+      const historicalData = await fetchCoinHistoricalData(item.id);
+      setCoinHistoryData(historicalData);
     } catch (error) {
-      console.error(error)
+      console.error(error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const closeModal = () => {
-    setModalVisible(false)
-    setSelectedCoinData(null)
-    setCoinHistoryData([]) // Сбрасываем исторические данные при закрытии
-  }
+    setModalVisible(false);
+    setSelectedCoinData(null);
+    setCoinHistoryData([]); // Сбрасываем исторические данные при закрытии
+  };
 
   const prepareChartData = (data) => {
-    const labels = data.map(([timestamp]) => new Date(timestamp).toLocaleDateString()) // Получаем метки для графика
+    const labels = data.map(([timestamp]) =>
+      new Date(timestamp).toLocaleDateString()
+    ); // Получаем метки для графика
 
-    const uniquedates = uniqueDates(labels)
-    const labelDate = removeYearFromDate(uniquedates)
+    const uniquedates = uniqueDates(labels);
+    const labelDate = removeYearFromDate(uniquedates);
+    const prices = data.map(([, price]) => price);
+    return { labelDate, prices };
+  };
 
-    const prices = data.map(([, price]) => price)
-    return { labelDate, prices }
+  const chartData = prepareChartData(coinHistoryData);
+
+  const openChart = (days) => {
+    setChartDays(days)
   }
+ 
+// Эффект для получения новых исторических данных при изменении chartDays, чтобы данные на графике менялись не закрывая его.
+// При переключении Таймфрейма график будет перерисован
+useEffect(() => {
+  if (selectedCoinData) { // Проверяем, выбрана ли монета
+    const fetchHistoricalData = async () => {
+      setIsLoading(true);
+      try {
+        const historicalData = await fetchCoinHistoricalData(selectedCoinData.id, chartDays);
+        setCoinHistoryData(historicalData);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const chartData = prepareChartData(coinHistoryData)
+    fetchHistoricalData();
+  }
+}, [chartDays, selectedCoinData]); 
 
   return (
     <View style={styles.container}>
@@ -102,7 +125,7 @@ const Main = () => {
 
       <FlatList
         style={styles.list}
-        data={data.filter(
+        data={data?.filter(
           (coin) =>
             coin.name.toLowerCase().includes(search.toLowerCase()) ||
             coin.symbol.toLowerCase().includes(search.toLowerCase())
@@ -122,7 +145,7 @@ const Main = () => {
                   otherInfo,
                   market_cap_rank,
                   symbol,
-                } = item // Деструктурирую нужные поля
+                } = item; // Деструктурирую нужные поля
                 const coinData = {
                   name,
                   current_price,
@@ -131,10 +154,9 @@ const Main = () => {
                   otherInfo,
                   market_cap_rank,
                   symbol,
-                }
-                console.log(coinData)
+                };
 
-                dispatch(setCoin(coinData)) // Диспатчим только необходимые данные из огромного обьекта
+                dispatch(setCoin(coinData)); // Диспатчим только необходимые данные из огромного обьекта
               }}
               style={styles.addButton}
             >
@@ -146,20 +168,26 @@ const Main = () => {
         keyExtractor={(item) => item.id}
         refreshing={refreshing}
         onRefresh={async () => {
-          setRefreshing(true)
-          await fetchMarketData()
-          setRefreshing(false)
+          setRefreshing(true);
+          await fetchMarketData();
+          setRefreshing(false);
         }}
       />
-
       {/* Модальное окно с графиком */}
-      <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={closeModal}>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={closeModal}
+      >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             {selectedCoinData && (
               <>
                 <Text style={styles.modalTitle}>{selectedCoinData.name}</Text>
-                {isloading ? <ActivityIndicator size="large" color="#0000ff" /> : null}
+                {isloading ? (
+                  <ActivityIndicator size="large" color="#0000ff" />
+                ) : null}
                 {/* График */}
                 <View>
                   {coinHistoryData.length > 0 && (
@@ -170,46 +198,99 @@ const Main = () => {
                           {
                             data: chartData.prices,
                             strokeWidth: 3, // толщина линии
+                            // Цвет линии: Логика определения цвета была изменена таким образом, чтобы проверять только последние две цены: lastPrice и previousPrice. Если последняя цена выше предыдущей, линия становится зеленой, если ниже — красной.
+                            color: (opacity = 1) => {
+                              const lastPrice =
+                                chartData.prices[chartData.prices.length - 1];
+                              const previousPrice =
+                                chartData.prices[chartData.prices.length - 2];
+                              return lastPrice > previousPrice
+                                ? `rgba(0, 255, 0, ${opacity})` // зеленый цвет при росте
+                                : `rgba(255, 0, 0, ${opacity})`; // красный цвет при падении
+                            },
                           },
                         ],
                       }}
                       width={Dimensions.get("window").width * 0.9} // Ширина графика
-                      height={300}
+                      height={400}
                       chartConfig={{
                         backgroundColor: "#ffffff",
                         backgroundGradientFrom: "#ffffff",
                         backgroundGradientTo: "#ffffff",
                         decimalPlaces: 2,
-                        color: (opacity = 1) => `rgba(0, 121, 191, ${opacity})`, // Цвет линии
-                        labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Цвет меток
+                        // color: (opacity = 1) => `rgba(0, 121, 191, ${opacity})`, // Цвет линии
+                        color: (opacity = 1) => `none`,
+                        labelColor: (opacity = 1) => `black`, // Цвет меток
                         style: {
                           borderRadius: 16,
                           borderWidth: 1, // Установите ширину границы
-                          borderColor: "#e0e0e0", // Цвет границы
+                          // borderColor: "#e0e0e0", // Цвет границы
                         },
                         propsForDots: {
-                          r: "0", // Установите радиус до 0, чтобы скрыть точки
+                          r: "0", // радиус 0, чтобы скрыть точки
                         },
-                        propsForHorizontalLines: {
-                          strokeDasharray: "", // Сплошная линия
-                        },
+                        
+                        // propsForHorizontalLines: {
+                        //   strokeDasharray: "", // Сплошная линия
+                        // },
                         // Новый стиль для меток
                         propsForLabels: {
                           fontSize: 10, // Уменьшение шрифта меток
                         },
                       }}
-                      bezier //  Bezier для сплошных линий
+                      // bezier //  Bezier для сплошных линий
                       style={{
                         marginVertical: 10,
                         borderRadius: 16,
                         elevation: 10,
-                        borderColor: "#e0e0e0", // Цвет границы графика
+                      // borderColor: "#e0e0e0", // Цвет границы графика
                       }}
                     />
                   )}
+                 
                 </View>
+{isloading ? (null) : ( 
+  // <>
+  //  <Text>Выбранный диапазон дней: {chartDays}</Text>
+  // <View style={styles.chartButtons}>
+  // <TouchableOpacity><Text style={styles.chartButton} onPress={() => openChart(1)}>24H</Text></TouchableOpacity>
+  // <TouchableOpacity><Text style={styles.chartButton} onPress={() => openChart(7)}>7D</Text></TouchableOpacity>
+  // <TouchableOpacity><Text style={styles.chartButton} onPress={() => openChart(14)}>14D</Text></TouchableOpacity>
+  // <TouchableOpacity><Text style={styles.chartButton} onPress={() => openChart(30)}>30D</Text></TouchableOpacity>
+  // </View>
+  // </>
 
-                <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+<>
+    <Text>Выбранный диапазон дней: {chartDays}</Text>
+    <View style={styles.chartButtons}>
+      <TouchableOpacity onPress={() => openChart(1)}>
+        <Text style={[styles.chartButton, chartDays === 1 && styles.activeButton]}>
+          <Text style={[styles.buttonText, chartDays === 1 && styles.activeButtonText]}>24H</Text>
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => openChart(7)}>
+        <Text style={[styles.chartButton, chartDays === 7 && styles.activeButton]}>
+          <Text style={[styles.buttonText, chartDays === 7 && styles.activeButtonText]}>7D</Text>
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => openChart(14)}>
+        <Text style={[styles.chartButton, chartDays === 14 && styles.activeButton]}>
+          <Text style={[styles.buttonText, chartDays === 14 && styles.activeButtonText]}>14D</Text>
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => openChart(30)}>
+        <Text style={[styles.chartButton, chartDays === 30 && styles.activeButton]}>
+          <Text style={[styles.buttonText, chartDays === 30 && styles.activeButtonText]}>30D</Text>
+        </Text>
+      </TouchableOpacity>
+    </View>
+  </>
+
+ )}
+                <TouchableOpacity
+                  onPress={closeModal}
+                  style={styles.closeButton}
+                >
                   <Text style={styles.closeButtonText}>Close</Text>
                 </TouchableOpacity>
               </>
@@ -218,8 +299,8 @@ const Main = () => {
         </View>
       </Modal>
     </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -299,6 +380,43 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
   },
-})
+  chartButtons: {
+  //  flex: 1,
+     alignItems: "center",
+     flexDirection: 'row',
+     gap: '10',
+     marginBottom: 20,
+  },
+  chartButton: {
+    marginTop: 0,
+    backgroundColor: '#cccccc',
+    borderRadius: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    alignItems: "center",
+  },
+  
 
-export default Main
+  // chartButtons: {
+  //   flexDirection: 'row',
+  //   justifyContent: 'space-between',
+  //   margin: 10,
+  // },
+  // chartButton: {
+  //   padding: 10,
+  //   backgroundColor: '#fff', // Начальный цвет фона
+  //   borderRadius: 5,
+  //   margin: 5,
+  // },
+  activeButton: {
+    backgroundColor: '#000', // Цвет фона для активной кнопки
+  },
+  buttonText: {
+    color: '#000',
+  },
+  activeButtonText: {
+    color: '#fff', // Цвет текста для активной кнопки
+  },
+});
+
+export default Main;
