@@ -16,7 +16,7 @@ import { getMarketData } from "../services/cryptoService";
 import { removeYearFromDate, uniqueDates } from "../helpers/helpers";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useDispatch } from "react-redux";
-import { setCoin } from "../store/reducersSlice";
+import { setCoin, updateFavorite } from "../store/reducersSlice";
 import { LineChart } from "react-native-chart-kit";
 import { pick } from "lodash";
 import { CandleChart } from "react-native-wagmi-charts";
@@ -29,14 +29,44 @@ const Main = () => {
   const [coinHistoryData, setCoinHistoryData] = useState([]); // Добавлено для хранения исторических данных
   const [modalVisible, setModalVisible] = useState(false);
   const [isloading, setIsLoading] = useState(false);
-  const [chartDays, setChartDays] = useState(1)
+  const [chartDays, setChartDays] = useState('1')
 
   const dispatch = useDispatch();
 
   const fetchMarketData = async () => {
     const marketData = await getMarketData();
     setData(marketData);
+
+    // Для обновления избранного
+    // marketData.forEach(coin => {
+
+    //   const coinData = {
+    //     name: coin.name,
+    //     current_price: coin.current_price,
+    //     price_change_percentage_24h: coin.price_change_percentage_24h,
+    //     image: coin.image,
+    //     otherInfo: coin.otherInfo,
+    //     market_cap_rank: coin.market_cap_rank,
+    //     symbol: coin.symbol,
+    //   };
+
+
+    //   dispatch(updateFavorite(test));
+    //  });
   };
+  
+  // для авто-обновления котировок на главной
+  useEffect(() => {
+    fetchMarketData(); // Получаем данные при первом монтировании компонента
+    // Устанавливаем интервал для обновления данных каждые 15 секунд
+    const interval = setInterval(() => {
+      fetchMarketData();
+ console.log('data update');
+    }, 40000);
+ // Очистка интервала при размонтировании компонента
+  return () => clearInterval(interval);
+}, []);
+ // [selectedCoinData]
 
   const fetchCoinHistoricalData = async (coinId, chartDays) => {
     const response = await fetch(
@@ -48,10 +78,6 @@ const Main = () => {
     const result = await response.json();
     return result.prices;
   };
-
-  useEffect(() => {
-    fetchMarketData();
-  }, []);
 
   const openModal = async (item) => {
     setSelectedCoinData(item);
