@@ -30,12 +30,21 @@ const Main = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isloading, setIsLoading] = useState(false);
   const [chartDays, setChartDays] = useState('1')
-
+  const [flagForLoader, setFlagForLoader] = useState(false)
+   
   const dispatch = useDispatch();
 
   const fetchMarketData = async () => {
-    const marketData = await getMarketData();
-    setData(marketData);
+    try {
+      setFlagForLoader(true)
+      const marketData = await getMarketData();
+      setData(marketData);
+    } catch (error) {
+      console.log(error.message);
+    } finally {
+      setFlagForLoader(false)
+    }
+   
 
     // Для обновления избранного
     // marketData.forEach(coin => {
@@ -148,8 +157,8 @@ useEffect(() => {
           onChangeText={(text) => text && setSearch(text)}
         />
       </View>
-
-      <FlatList
+      {flagForLoader ? ( <ActivityIndicator size="large" color="red" />) : ( 
+        <FlatList
         style={styles.list}
         data={data?.filter(
           (coin) =>
@@ -199,6 +208,9 @@ useEffect(() => {
           setRefreshing(false);
         }}
       />
+      )}
+     
+     
       {/* Модальное окно с графиком */}
       <Modal
         animationType="slide"
@@ -223,7 +235,7 @@ useEffect(() => {
                         datasets: [
                           {
                             data: chartData.prices,
-                            strokeWidth: 3, // толщина линии
+                            strokeWidth: 4, // толщина линии
                             // Цвет линии: Логика определения цвета была изменена таким образом, чтобы проверять только последние две цены: lastPrice и previousPrice. Если последняя цена выше предыдущей, линия становится зеленой, если ниже — красной.
                             color: (opacity = 1) => {
                               const lastPrice =
