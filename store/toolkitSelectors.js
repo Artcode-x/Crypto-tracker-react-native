@@ -4,3 +4,4 @@ export default mainSelector
 
 export const flagSelector = (store) => mainSelector(store).flag
 export const coinSelector = (store) => mainSelector(store).coinItem
+export const daysSelector = (store) => mainSelector(store).chartDays

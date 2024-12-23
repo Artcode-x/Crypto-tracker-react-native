@@ -5,6 +5,7 @@ const initialState = {
   coinItem: [],
   //   previousState: null,
   flag: false,
+  chartDays: '1',
 }
 
 const reducersSlice = createSlice({
@@ -28,9 +29,12 @@ const reducersSlice = createSlice({
       state.coinItem = state.coinItem.filter(coin => coin.name !== nameCoinForRemove.name);
       // Метод filter() создает новый массив, который включает все элементы, кроме того, у которого coin.name совпадает с nameCoinForRemove.
     
+    },
+    setChartDays: (state, action) => {
+    state.chartDays = action.payload
     }
   },
 })
 
-export const { setCoin, setFlag,removeCoin } = reducersSlice.actions
+export const { setCoin, setFlag,removeCoin, setChartDays } = reducersSlice.actions
 export default reducersSlice.reducer
