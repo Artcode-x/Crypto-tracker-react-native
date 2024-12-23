@@ -4,26 +4,22 @@ import {
   Text,
   StyleSheet,
   StatusBar,
-  FlatList,
   TextInput,
   Modal,
   TouchableOpacity,
   Dimensions,
   ActivityIndicator,
 } from "react-native";
-import CoinItem from "../components/CoinItem";
 import { getMarketData } from "../services/cryptoService";
 import { removeYearFromDate, uniqueDates } from "../helpers/helpers";
-import Ionicons from "react-native-vector-icons/Ionicons";
-import { useDispatch } from "react-redux";
-import { setCoin, updateFavorite } from "../store/reducersSlice";
 import { LineChart } from "react-native-chart-kit";
 import { pick } from "lodash";
 import { CandleChart } from "react-native-wagmi-charts";
+import CoinList from "../components/CoinList/CoinList";
 
 const Main = () => {
-  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState([]);
   const [selectedCoinData, setSelectedCoinData] = useState(null);
   const [coinHistoryData, setCoinHistoryData] = useState([]); // Добавлено для хранения исторических данных
@@ -32,8 +28,6 @@ const Main = () => {
   const [chartDays, setChartDays] = useState('1')
   const [flagForLoader, setFlagForLoader] = useState(false)
    
-  const dispatch = useDispatch();
-
   const fetchMarketData = async () => {
     try {
       setFlagForLoader(true)
@@ -58,24 +52,20 @@ const Main = () => {
     //     market_cap_rank: coin.market_cap_rank,
     //     symbol: coin.symbol,
     //   };
-
-
     //   dispatch(updateFavorite(test));
     //  });
   };
   
-  // для авто-обновления котировок на главной
+  //  Авто-обновления котировок на главной
   useEffect(() => {
     fetchMarketData(); // Получаем данные при первом монтировании компонента
-    // Устанавливаем интервал для обновления данных каждые 15 секунд
     const interval = setInterval(() => {
       fetchMarketData();
  console.log('data update');
-    }, 40000);
+    }, 60000);
  // Очистка интервала при размонтировании компонента
   return () => clearInterval(interval);
 }, []);
- // [selectedCoinData]
 
   const fetchCoinHistoricalData = async (coinId, chartDays) => {
     const response = await fetch(
@@ -125,7 +115,7 @@ const Main = () => {
     setChartDays(days)
   }
  
-// Эффект для получения новых исторических данных при изменении chartDays, чтобы данные на графике менялись не закрывая его.
+// Для получения новых исторических данных при изменении chartDays(таймфрейм недельки/дни), чтобы данные на графике менялись не закрывая его.
 // При переключении Таймфрейма график будет перерисован
 useEffect(() => {
   if (selectedCoinData) { // Проверяем, выбрана ли монета
@@ -158,56 +148,15 @@ useEffect(() => {
         />
       </View>
       {flagForLoader ? ( <ActivityIndicator size="large" color="red" />) : ( 
-        <FlatList
-        style={styles.list}
-        data={data?.filter(
-          (coin) =>
-            coin.name.toLowerCase().includes(search.toLowerCase()) ||
-            coin.symbol.toLowerCase().includes(search.toLowerCase())
-        )}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <View style={styles.itemContainer}>
-            <CoinItem coin={item} onPress={() => openModal(item)} />
-            {/* Иконка добавления в избранное+ */}
-            <TouchableOpacity
-              onPress={() => {
-                const {
-                  name,
-                  current_price,
-                  price_change_percentage_24h,
-                  image,
-                  otherInfo,
-                  market_cap_rank,
-                  symbol,
-                } = item; // Деструктурирую нужные поля
-                const coinData = {
-                  name,
-                  current_price,
-                  price_change_percentage_24h,
-                  image,
-                  otherInfo,
-                  market_cap_rank,
-                  symbol,
-                };
-
-                dispatch(setCoin(coinData)); // Диспатчим только необходимые данные из огромного обьекта
-              }}
-              style={styles.addButton}
-            >
-              <Ionicons name="add-circle" size={24} color="#000" />
-            </TouchableOpacity>
-          </View>
-        )}
-        numColumns={2}
-        keyExtractor={(item) => item.id}
-        refreshing={refreshing}
-        onRefresh={async () => {
-          setRefreshing(true);
-          await fetchMarketData();
-          setRefreshing(false);
-        }}
-      />
+    // ...flatlist...
+    <CoinList 
+    data={data}
+    openModal={openModal}
+    refreshing={refreshing}
+    setRefreshing={setRefreshing}
+    search={search}
+    fetchMarketData={fetchMarketData}
+    />
       )}
      
      
@@ -256,7 +205,6 @@ useEffect(() => {
                         backgroundGradientFrom: "#ffffff",
                         backgroundGradientTo: "#ffffff",
                         decimalPlaces: 2,
-                        // color: (opacity = 1) => `rgba(0, 121, 191, ${opacity})`, // Цвет линии
                         color: (opacity = 1) => `none`,
                         labelColor: (opacity = 1) => `black`, // Цвет меток
                         style: {
@@ -288,16 +236,6 @@ useEffect(() => {
                  
                 </View>
 {isloading ? (null) : ( 
-  // <>
-  //  <Text>Выбранный диапазон дней: {chartDays}</Text>
-  // <View style={styles.chartButtons}>
-  // <TouchableOpacity><Text style={styles.chartButton} onPress={() => openChart(1)}>24H</Text></TouchableOpacity>
-  // <TouchableOpacity><Text style={styles.chartButton} onPress={() => openChart(7)}>7D</Text></TouchableOpacity>
-  // <TouchableOpacity><Text style={styles.chartButton} onPress={() => openChart(14)}>14D</Text></TouchableOpacity>
-  // <TouchableOpacity><Text style={styles.chartButton} onPress={() => openChart(30)}>30D</Text></TouchableOpacity>
-  // </View>
-  // </>
-
 <>
     <Text>Выбранный диапазон дней: {chartDays}</Text>
     <View style={styles.chartButtons}>
@@ -357,9 +295,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginTop: 10,
   },
-  list: {
-    width: "90%",
-  },
   searchInput: {
     color: "#fff",
     borderBottomColor: "#c8cbfa",
@@ -367,16 +302,6 @@ const styles = StyleSheet.create({
     width: "40%",
     textAlign: "left",
   },
-  itemContainer: {
-    flex: 1,
-    margin: 5,
-    backgroundColor: "#696969",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 5,
-    borderRadius: 5,
-  },
-  //
   modalContainer: {
     flex: 1,
     justifyContent: "center",
@@ -401,7 +326,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   modalTitle: {
-    fontSize: 24, // Увеличенный размер заголовка
+    fontSize: 24, 
     fontWeight: "bold",
     color: "#333",
     marginBottom: 20,
@@ -433,19 +358,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: "center",
   },
-  
-
-  // chartButtons: {
-  //   flexDirection: 'row',
-  //   justifyContent: 'space-between',
-  //   margin: 10,
-  // },
-  // chartButton: {
-  //   padding: 10,
-  //   backgroundColor: '#fff', // Начальный цвет фона
-  //   borderRadius: 5,
-  //   margin: 5,
-  // },
   activeButton: {
     backgroundColor: '#000', // Цвет фона для активной кнопки
   },
