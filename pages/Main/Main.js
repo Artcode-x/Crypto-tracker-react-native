@@ -16,6 +16,7 @@ import { LineChart } from "react-native-chart-kit";
 import CoinList from "../../components/CoinList/CoinList";
 import { pick } from "lodash";
 import { CandleChart } from "react-native-wagmi-charts";
+import prepareChartData from '../../components/PrepareChartData/PrepareChartData'
 
 const Main = () => {
   const [search, setSearch] = useState("");
@@ -96,17 +97,6 @@ const Main = () => {
     setModalVisible(false);
     setSelectedCoinData(null);
     setCoinHistoryData([]); // Сбрасываем исторические данные при закрытии
-  };
-
-  const prepareChartData = (data) => {
-    const labels = data.map(([timestamp]) =>
-      new Date(timestamp).toLocaleDateString()
-    ); // Получаем метки для графика
-
-    const uniquedates = uniqueDates(labels);
-    const labelDate = removeYearFromDate(uniquedates);
-    const prices = data.map(([, price]) => price);
-    return { labelDate, prices };
   };
 
   const chartData = prepareChartData(coinHistoryData);
