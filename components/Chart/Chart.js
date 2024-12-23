@@ -1,19 +1,21 @@
 import { ActivityIndicator, Dimensions, Modal, Text, TouchableOpacity, View } from "react-native";
 import { LineChart } from "react-native-chart-kit";
-import {styles} from './Chart.styles'
-import { useDispatch } from "react-redux";
+import { styles } from './Chart.styles'
+import { useDispatch, useSelector } from "react-redux";
 import { setChartDays } from "../../store/reducersSlice";
+import { daysSelector } from "../../store/toolkitSelectors";
 
-
-export const Chart = ({selectedCoinData, chartData,  modalVisible, closeModal, isloading, coinHistoryData, chartDays}) => {
+export const Chart = ({selectedCoinData, chartData,  modalVisible, closeModal, isloading, coinHistoryData}) => {
     
+// selectedCoinData - тут лежат данные для свечных графиков
+
+const chartDays = useSelector(daysSelector)
 const dispatch = useDispatch()
 
     const openChart = (days) => {
-        // setChartDays(days)
         dispatch(setChartDays(days))
       }
-    
+
     return ( 
         <Modal
         animationType="slide"
@@ -91,6 +93,13 @@ const dispatch = useDispatch()
                 </View>
 {isloading ? (null) : ( 
 <>
+
+<View>
+    <Text style={{fontWeight: 'bold', marginBottom: '15'}}>
+    Current Price: {selectedCoinData?.current_price} $
+    </Text>
+</View>
+
     <Text>Выбранный диапазон дней: {chartDays}</Text>
     <View style={styles.chartButtons}>
       <TouchableOpacity onPress={() => openChart(1)}>

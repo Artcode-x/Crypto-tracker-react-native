@@ -5,21 +5,17 @@ import {
   Text,
   StatusBar,
   TextInput,
-  Modal,
-  TouchableOpacity,
-  Dimensions,
   ActivityIndicator,
 } from "react-native";
 import { getMarketData } from "../../services/cryptoService";
-import {  removeYearFromDate, uniqueDates } from "../../helpers/helpers";
-// import { LineChart } from "react-native-chart-kit";
 import CoinList from "../../components/CoinList/CoinList";
-import { pick } from "lodash";
-import { CandleChart } from "react-native-wagmi-charts";
 import prepareChartData from '../../components/PrepareChartData/PrepareChartData'
 import { Chart } from "../../components/Chart/Chart";
 import { useSelector } from "react-redux";
 import { daysSelector } from "../../store/toolkitSelectors";
+import { pick } from "lodash";
+import { CandleChart } from "react-native-wagmi-charts";
+import fetchCoinHistoricalData from "../../components/fetchCoinHistoricalData/fetchCoinHistoricalData";
 
 const Main = () => {
   const [search, setSearch] = useState("");
@@ -29,13 +25,13 @@ const Main = () => {
   const [coinHistoryData, setCoinHistoryData] = useState([]); // Добавлено для хранения исторических данных
   const [modalVisible, setModalVisible] = useState(false);
   const [isloading, setIsLoading] = useState(false);
-  // const [chartDays, setChartDays] = useState('1')
   const [flagForLoader, setFlagForLoader] = useState(false)
-   
-const switchChartDays = useSelector(daysSelector)
+
+  const switchChartDays = useSelector(daysSelector)
 
   const fetchMarketData = async () => {
     try {
+      
       setFlagForLoader(true)
       const marketData = await getMarketData();
       setData(marketData);
@@ -72,17 +68,6 @@ const switchChartDays = useSelector(daysSelector)
  // Очистка интервала при размонтировании компонента
   return () => clearInterval(interval);
 }, []);
-
-  const fetchCoinHistoricalData = async (coinId, switchChartDays) => {
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${switchChartDays}`
-    ); // Получаем данные для графика за разные таймфреймы/дни
-    if (!response.ok) {
-      throw new Error("Ошибка при получении данных");
-    }
-    const result = await response.json();
-    return result.prices;
-  };
 
   const openModal = async (item) => {
     setSelectedCoinData(item);
@@ -124,6 +109,8 @@ useEffect(() => {
 
     fetchHistoricalData();
   }
+
+  
 }, [switchChartDays, selectedCoinData]); 
 
   return (
@@ -159,8 +146,6 @@ useEffect(() => {
     closeModal={closeModal}
     isloading={isloading}
     coinHistoryData={coinHistoryData}
-    // chartDays={chartDays}
-  
     />
     </View>
   );
