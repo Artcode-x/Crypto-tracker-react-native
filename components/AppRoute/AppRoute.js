@@ -1,7 +1,7 @@
 import React from "react"
 import { NavigationContainer } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
-import Main from "../../pages/Main"
+import Main from "../../pages/Main/Main"
 import Favorite from "../../pages/Favorite/Favorite"
 import { Ionicons } from "react-native-vector-icons"
 import { StyleSheet } from "react-native"

@@ -2,10 +2,11 @@ import React from "react"
 import { View, StyleSheet, FlatList } from "react-native"
 import { useDispatch, useSelector } from "react-redux"
 import { coinSelector } from "../../store/toolkitSelectors"
-import CoinItem from "../../components/CoinItem"
+import CoinItem from "../../components/CoinItem/CoinItem"
 import Ionicons from "react-native-vector-icons/Ionicons"
 import { TouchableOpacity } from "react-native"
 import { removeCoin } from "../../store/reducersSlice"
+import { styles } from './Favorite.styles'
 
 export default function Favorite() {
   const dispatch = useDispatch()
@@ -43,26 +44,3 @@ console.log(coin);
   
   )
 }
-
-const styles = StyleSheet.create({
-  favlist: {
-    backgroundColor: "#141414",
-    flex: 1,
-    alignItems: "center",
-  },
-  favCoins: {
-    marginTop: "2%",
-    width: "90%",
-  },
-
-  itemContainer: {
-    flex: 1,
-    margin: 5,
-    backgroundColor: "#696969",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 5,
-    borderRadius: 5,
-  },
-  list: {},
-})

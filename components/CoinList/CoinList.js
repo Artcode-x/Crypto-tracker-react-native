@@ -2,7 +2,7 @@ import react, { useState } from "react";
 import { FlatList, TouchableOpacity, View } from "react-native";
 import { styles } from "./CoinItem.styles"
 import { useDispatch } from "react-redux";
-import CoinItem from "../CoinItem";
+import CoinItem from "../CoinItem/CoinItem";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { setCoin } from "../../store/reducersSlice";
 
