@@ -137,7 +137,7 @@ useEffect(() => {
     />
       )}
      
-     
+  
       {/* Модальное окно с графиком */}
     <Chart 
     selectedCoinData={selectedCoinData}

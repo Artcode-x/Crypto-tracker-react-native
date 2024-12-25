@@ -32,9 +32,13 @@ const reducersSlice = createSlice({
     },
     setChartDays: (state, action) => {
     state.chartDays = action.payload
+    },
+    rewriteFavorite: (state, action) => {
+      state.coinItem = action.payload
     }
+
   },
 })
 
-export const { setCoin, setFlag,removeCoin, setChartDays } = reducersSlice.actions
+export const { setCoin, setFlag,removeCoin, setChartDays, rewriteFavorite } = reducersSlice.actions
 export default reducersSlice.reducer

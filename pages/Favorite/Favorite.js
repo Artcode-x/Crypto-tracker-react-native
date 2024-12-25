@@ -1,5 +1,5 @@
 import React from "react"
-import { View, StyleSheet, FlatList } from "react-native"
+import { View, FlatList } from "react-native"
 import { useDispatch, useSelector } from "react-redux"
 import { coinSelector } from "../../store/toolkitSelectors"
 import CoinItem from "../../components/CoinItem/CoinItem"
@@ -12,9 +12,7 @@ export default function Favorite() {
   const dispatch = useDispatch()
   const coinData = useSelector(coinSelector)
 
-
   const removeFromFav = (coin) => {
-console.log(coin);
     dispatch(removeCoin(coin));
   }
 
