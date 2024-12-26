@@ -31,66 +31,69 @@ const dispatch = useDispatch()
                 {isloading ? (
                   <ActivityIndicator size="large" color="#0000ff" />
                 ) : null}
+
                 {/* График */}
                 <View>
-                  {coinHistoryData.length > 0 && (
-                    <LineChart
-                      data={{
-                        labels: chartData.labelDate,
-                        datasets: [
-                          {
-                            data: chartData.prices,
-                            strokeWidth: 4, // толщина линии
-                            // Цвет линии: Логика определения цвета была изменена таким образом, чтобы проверять только последние две цены: lastPrice и previousPrice. Если последняя цена выше предыдущей, линия становится зеленой, если ниже — красной.
-                            color: (opacity = 1) => {
-                              const lastPrice =
-                                chartData.prices[chartData.prices.length - 1];
-                              const previousPrice =
-                                chartData.prices[chartData.prices.length - 2];
-                              return lastPrice > previousPrice
-                                ? `rgba(0, 255, 0, ${opacity})` // зеленый цвет при росте
-                                : `rgba(255, 0, 0, ${opacity})`; // красный цвет при падении
-                            },
-                          },
-                        ],
-                      }}
-                      width={Dimensions.get("window").width * 0.9} // Ширина графика
-                      height={400}
-                      chartConfig={{
-                        backgroundColor: "#ffffff",
-                        backgroundGradientFrom: "#ffffff",
-                        backgroundGradientTo: "#ffffff",
-                        decimalPlaces: 2,
-                        color: (opacity = 1) => `none`,
-                        labelColor: (opacity = 1) => `black`, // Цвет меток
-                        style: {
-                          borderRadius: 16,
-                          borderWidth: 1, // Установите ширину границы
-                          // borderColor: "#e0e0e0", // Цвет границы
-                        },
-                        propsForDots: {
-                          r: "0", // радиус 0, чтобы скрыть точки
-                        },
-                        
-                        // propsForHorizontalLines: {
-                        //   strokeDasharray: "", // Сплошная линия
-                        // },
-                        // Новый стиль для меток
-                        propsForLabels: {
-                          fontSize: 10, // Уменьшение шрифта меток
-                        },
-                      }}
-                      // bezier //  Bezier для сплошных линий
-                      style={{
-                        marginVertical: 10,
-                        borderRadius: 16,
-                        elevation: 10,
-                      // borderColor: "#e0e0e0", // Цвет границы графика
-                      }}
-                    />
-                  )}
-                 
-                </View>
+  {coinHistoryData.length > 0 && (
+    <>
+      <View style={{
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 'auto', 
+      backgroundColor: chartData.prices[chartData.prices.length - 1] > chartData.prices[0]
+          ? 'green' 
+          : 'red', 
+      }} />
+      
+      <LineChart
+        data={{
+          labels: chartData.labelDate,
+          datasets: [
+            {
+              data: chartData.prices,
+              strokeWidth: 4,
+              color: (opacity = 1) => {
+                const firstPrice = chartData.prices[0]
+                const lastPrice = chartData.prices[chartData.prices.length - 1];        
+                return lastPrice > firstPrice
+                  ? `rgba(0, 255, 0, ${opacity})` // зеленый цвет при росте
+                  : `rgba(255, 0, 0, ${opacity})`; // красный цвет при падении
+              },
+            },
+          ],
+        }}
+        width={Dimensions.get("window").width * 0.9} // Ширина графика
+        height={400}
+        chartConfig={{
+          backgroundColor: "#ffffff",
+          backgroundGradientFrom: "#ffffff",
+          backgroundGradientTo: "#ffffff",
+          decimalPlaces: 2,
+          color: (opacity = 1) => `rgba(0, 0, 0, ${opacity * 0})`, // Цвет линий
+          labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Цвет меток
+          style: {
+            borderRadius: 16,
+            borderWidth: 1,
+          },
+          propsForDots: {
+            r: "0", // радиус 0, чтобы скрыть точки
+          },
+          propsForLabels: {
+            fontSize: 10, // Уменьшение шрифта меток
+          },
+        }}
+        style={{
+          marginVertical: 10,
+          borderRadius: 16,
+          elevation: 10,
+        }}
+      />
+    </>
+  )}
+</View>
+
+
 {isloading ? (null) : ( 
 <>
 
