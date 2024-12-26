@@ -13,8 +13,21 @@ export const styles = StyleSheet.create({
       padding: 5,
       borderRadius: 5,
     },
-   
-
+    modalBox: {
+       flex: 1,
+       justifyContent: 'center',
+       alignItems: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalCont: {
+      backgroundColor: 'wheat',
+      padding: 20,
+      borderRadius: 10,
+    },
+    modalT: {
+      fontSize: 18,
+      color: '#000',
+    },
   
 
 

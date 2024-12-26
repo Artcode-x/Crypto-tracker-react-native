@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { FlatList, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import { FlatList, Modal, Text, TouchableOpacity, View } from "react-native";
 import { styles } from "./CoinItem.styles"
 import { useDispatch, useSelector } from "react-redux";
 import CoinItem from "../CoinItem/CoinItem";
@@ -9,7 +9,9 @@ import { coinSelector } from "../../store/toolkitSelectors";
 
 const CoinList = ({data, openModal, search, refreshing, setRefreshing, fetchMarketData}) => {
   const favoriteCoins = useSelector(coinSelector)
+  const [modalVisible, setModalVisible] = useState(false)
     const dispatch = useDispatch();
+
 
 
   useEffect(() => {
@@ -61,7 +63,19 @@ console.log(updatedCoins);
     //     }
     // }, [data]); 
 
+    const addToFavorite = (coinData) => {
+          dispatch(setCoin(coinData))
+         setModalVisible(true)
+
+        setTimeout(() => {
+            setModalVisible(false);
+        }, 500);
+    }
+
+  
+
     return (
+      <>
         <FlatList
         style={styles.list}
         data={data?.filter(
@@ -97,7 +111,8 @@ console.log(updatedCoins);
                   id
                 };
 
-                dispatch(setCoin(coinData)); // Диспатчим только необходимые данные из огромного обьекта
+              //  dispatch(setCoin(coinData)); // Диспатчим только необходимые данные из огромного обьекта
+              addToFavorite(coinData)
               }}
               style={styles.addButton}
             >
@@ -113,7 +128,18 @@ console.log(updatedCoins);
           await fetchMarketData();
           setRefreshing(false);
         }}
+        
       />
+      <Modal transparent visible={modalVisible}  
+    onRequestClose={() => setModalVisible(false)}>
+      <View style={styles.modalBox}>
+        <View style={styles.modalCont}>
+          <Text style={styles.modalT}>Added to favorite!</Text>
+        </View>
+     </View>
+    </Modal>
+    </>
+         
     )
     
 }
