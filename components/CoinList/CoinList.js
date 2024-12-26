@@ -7,7 +7,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { rewriteFavorite, setCoin } from "../../store/reducersSlice";
 import { coinSelector } from "../../store/toolkitSelectors";
 
-const CoinList = ({data, openModal, search, refreshing, setRefreshing, fetchMarketData}) => {
+const CoinList = ({data, openModal, search, refreshing, setRefreshing, fetchMarketData, errorMessage}) => {
   const favoriteCoins = useSelector(coinSelector)
   const [modalVisible, setModalVisible] = useState(false)
     const dispatch = useDispatch();
@@ -75,8 +75,9 @@ console.log(updatedCoins);
   
 
     return (
+      
       <>
-        <FlatList
+      {errorMessage !== null ? (   <Text style={styles.errorMsg}>{errorMessage}</Text>) : (  <FlatList
         style={styles.list}
         data={data?.filter(
           (coin) =>
@@ -129,7 +130,9 @@ console.log(updatedCoins);
           setRefreshing(false);
         }}
         
-      />
+      />)}
+      
+      
       <Modal transparent visible={modalVisible}  
     onRequestClose={() => setModalVisible(false)}>
       <View style={styles.modalBox}>

@@ -26,8 +26,9 @@ const Main = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isloading, setIsLoading] = useState(false);
   const [flagForLoader, setFlagForLoader] = useState(false)
-
+  const [errorMessage, setErrorMessage] = useState(null)
   const switchChartDays = useSelector(daysSelector)
+
 
   const fetchMarketData = async () => {
     try {
@@ -36,26 +37,16 @@ const Main = () => {
       const marketData = await getMarketData();
       setData(marketData);
     } catch (error) {
-      console.log(error.message);
+  console.log(error.message);
+  if (error.message === 'Request failed with status code 429') {
+    setErrorMessage('Ошибка, слишком много запросов к серверу, соединение будет восстановлено автоматически');
+    // dispatch(setErr('Слишком много запросов к серверу, попробуйте повторить позднее'));
+  } else {
+    setErrorMessage('Произошла ошибка при загрузке данных. Пожалуйста, попробуйте снова.');
+  }
     } finally {
       setFlagForLoader(false)
     }
-   
-
-    // Для обновления избранного
-    // marketData.forEach(coin => {
-
-    //   const coinData = {
-    //     name: coin.name,
-    //     current_price: coin.current_price,
-    //     price_change_percentage_24h: coin.price_change_percentage_24h,
-    //     image: coin.image,
-    //     otherInfo: coin.otherInfo,
-    //     market_cap_rank: coin.market_cap_rank,
-    //     symbol: coin.symbol,
-    //   };
-    //   dispatch(updateFavorite(test));
-    //  });
   };
   
   //  Авто-обновления котировок на главной
@@ -64,6 +55,7 @@ const Main = () => {
     const interval = setInterval(() => {
       fetchMarketData();
  console.log('data update');
+ setErrorMessage(null)
     }, 60000);
  // Очистка интервала при размонтировании компонента
   return () => clearInterval(interval);
@@ -134,6 +126,7 @@ useEffect(() => {
     setRefreshing={setRefreshing}
     search={search}
     fetchMarketData={fetchMarketData}
+    errorMessage={errorMessage}
     />
       )}
      

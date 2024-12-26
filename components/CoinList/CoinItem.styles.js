@@ -28,7 +28,11 @@ export const styles = StyleSheet.create({
       fontSize: 18,
       color: '#000',
     },
-  
+  errorMsg: {
+    color: 'red', 
+    flex: '1', 
+    textAlign: 'center', 
+    padding: '20'}
 
 
 })
