@@ -1,6 +1,7 @@
 import {
     ActivityIndicator,
     Dimensions,
+    Image,
     Modal,
     Text,
     TouchableOpacity,
@@ -11,7 +12,7 @@ import {
   import { useDispatch, useSelector } from "react-redux";
   import { setChartDays } from "../../store/reducersSlice";
   import { daysSelector } from "../../store/toolkitSelectors";
-  import { useState } from "react";
+  import { useEffect, useState } from "react";
   
   export const Chart = ({
     selectedCoinData,
@@ -21,6 +22,8 @@ import {
     isloading,
     coinHistoryData,
   }) => {
+    console.log(selectedCoinData);
+    
     // selectedCoinData - тут лежат данные для свечных графиков
     const [is30DSelected, setIs30DSelected] = useState(false);
     const chartDays = useSelector(daysSelector);
@@ -34,7 +37,7 @@ import {
       }
       dispatch(setChartDays(days));
     };
-  
+
     return (
       <Modal
         animationType='slide'
@@ -47,6 +50,23 @@ import {
             {selectedCoinData && (
               <>
                 <Text style={styles.modalTitle}>{selectedCoinData.name}</Text>
+                <View style={{flex: '1', flexDirection: 'row', gap: '15', justifyContent: 'space-between', borderRadius: '2%', paddingLeft: '10', paddingRight: '10', alignItems: "center", backgroundColor: 'whitesmoke',}}>
+
+<Text style={{ fontWeight: "300" }}>
+            Макс. 24 часа
+            <Text style={{color: '#007bff'}}> {selectedCoinData?.high_24h.toFixed(2)}$
+
+            </Text>
+            
+        </Text>
+        <Text style={{ fontWeight: "300" }}>
+             Мин. 24 часа
+            <Text style={{color: '#007bff'}}> {selectedCoinData?.low_24h.toFixed(2)}$
+
+            </Text>
+            
+        </Text> 
+</View>     
                 {isloading ? <ActivityIndicator size='large' color='#0000ff' /> : null}
   
                 {/* График */}
@@ -115,6 +135,7 @@ import {
                           marginVertical: 10,
                           borderRadius: 16,
                           elevation: 10,
+                           
                         }}
                       />
                     </>
@@ -123,11 +144,49 @@ import {
   
                 {isloading ? null : (
                   <>
-                    <View>
-                      <Text style={{ fontWeight: "bold", marginBottom: "15" }}>
-                        Current Price: {selectedCoinData?.current_price} $
-                      </Text>
-                    </View>
+                  
+                  <View style={styles.coinInfo}>
+    <View style={styles.coinInfoBox}>
+         <Text style={{ fontWeight: "bold" }}>
+            Место в CoinMarcetCup: 
+            <Text style={{ color: '#007bff' }}> {selectedCoinData?.market_cap_rank}</Text>
+        </Text>
+        <Text style={{ fontWeight: "bold" }}>
+            Изменение цены за сегодня: 
+            <Text style={{ color: selectedCoinData?.price_change_percentage_24h >= 0 ? 'green' : 'red' }}> {selectedCoinData?.price_change_percentage_24h.toFixed(2)}%
+
+            </Text>
+            
+        </Text>
+       
+    </View>
+    <View style={styles.coinInfoBox}>
+         <Text style={{ fontWeight: "bold" }}>
+            Изменение цены за 24 часа: 
+            <Text style={{ color: selectedCoinData?.price_change_percentage_24h >= 0 ? 'green' : 'red' }}> {selectedCoinData?.price_change_24h.toFixed(2)}$</Text>
+          
+        </Text>
+        <Text style={{ fontWeight: "bold" }}>
+        Разница в процентах за 7 дней
+        : 
+        <Text style={{ color: selectedCoinData?.price_change_percentage_7d_in_currency >= 0 ? 'green' : 'red' }}> {selectedCoinData?.price_change_percentage_7d_in_currency.toFixed(2)}%
+        </Text>
+        
+        </Text>
+
+    </View>
+</View>
+
+                    <View style={styles.container}>
+            <Image 
+                source={{ uri: selectedCoinData?.image }} 
+                style={styles.image} 
+                resizeMode="contain" // Для сохранения пропорций изображения
+            />
+            <Text style={styles.priceText}>
+                Current Price: {selectedCoinData?.current_price} $
+            </Text>
+        </View>
   
                     <Text>Выбранный диапазон дней: {chartDays}</Text>
                     <View style={styles.chartButtons}>

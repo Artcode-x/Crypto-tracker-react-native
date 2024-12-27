@@ -32,7 +32,7 @@ export const styles = StyleSheet.create({
       marginBottom: 20,
     },
     closeButton: {
-      marginTop: 20,
+      marginTop: 10,
       backgroundColor: "#ff4757",
       borderRadius: 5,
       paddingVertical: 10,
@@ -48,7 +48,19 @@ export const styles = StyleSheet.create({
        alignItems: "center",
        flexDirection: 'row',
        gap: '10',
-       marginBottom: 20,
+       marginBottom: 10,
+      backgroundColor: 'whitesmoke',
+      padding: '10',
+      borderRadius: '2%',
+      // add
+      shadowColor: '#000',
+      shadowOffset: {
+          width: 0,
+          height: 4,
+      },
+      shadowOpacity: 0.15,
+      shadowRadius: 6,
+      elevation: 5, // Для Android
     },
     chartButton: {
       marginTop: 0,
@@ -67,4 +79,43 @@ export const styles = StyleSheet.create({
     activeButtonText: {
       color: '#fff', // Цвет текста для активной кнопки
     },
+    container: {
+      alignItems: 'center',
+      marginBottom: 15,
+  },
+  image: {
+      width: 30, // Установите желаемую ширину
+      height: 30, // Установите желаемую высоту
+      marginBottom: 5, // Отступ между изображением и текстом
+  },
+  priceText: {
+      fontWeight: 'bold',
+      fontSize: 16,
+      color: '#333',
+  },
+  coinInfo: {
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    borderRadius: '2%', 
+    paddingLeft: '10', 
+    paddingRight: '10', 
+    alignItems: "center", 
+    backgroundColor: 'whitesmoke',
+     marginBottom: 10,
+     // add
+     padding: '3',
+     shadowColor: '#000',
+     shadowOffset: {
+         width: 0,
+         height: 4,
+     },
+     shadowOpacity: 0.15,
+     shadowRadius: 6,
+     elevation: 5, // Для Android
+  },
+  coinInfoBox: {
+    flex: 1,
+     alignItems: 'flex-start', 
+     paddingRight: 10 
+  }
   });
