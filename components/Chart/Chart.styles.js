@@ -11,10 +11,11 @@ export const styles = StyleSheet.create({
     modalContent: {
       width: "90%",
       maxWidth: 500,
+      height: 'auto',
       backgroundColor: "white",
       borderRadius: 20,
-      paddingVertical: 30,
-      paddingHorizontal: 20,
+       paddingVertical: 5,
+       paddingHorizontal: 5,
       alignItems: "center",
       shadowColor: "#000",
       shadowOffset: {
@@ -29,10 +30,11 @@ export const styles = StyleSheet.create({
       fontSize: 24, 
       fontWeight: "bold",
       color: "#333",
-      marginBottom: 20,
+      paddingBottom: '10',
     },
     closeButton: {
-      marginTop: 10,
+       marginTop: 10,
+  
       backgroundColor: "#ff4757",
       borderRadius: 5,
       paddingVertical: 10,
@@ -44,11 +46,8 @@ export const styles = StyleSheet.create({
       fontWeight: "bold",
     },
     chartButtons: {
-    //  flex: 1,
-       alignItems: "center",
        flexDirection: 'row',
        gap: '10',
-       marginBottom: 10,
       backgroundColor: 'whitesmoke',
       padding: '10',
       borderRadius: '2%',
@@ -66,27 +65,27 @@ export const styles = StyleSheet.create({
       marginTop: 0,
       backgroundColor: '#cccccc',
       borderRadius: 5,
-      paddingVertical: 10,
+      paddingVertical: 7,
       paddingHorizontal: 20,
       alignItems: "center",
     },
     activeButton: {
-      backgroundColor: '#000', // Цвет фона для активной кнопки
+      backgroundColor: '#000', 
     },
     buttonText: {
       color: '#000',
     },
     activeButtonText: {
-      color: '#fff', // Цвет текста для активной кнопки
+      color: '#fff', 
     },
     container: {
       alignItems: 'center',
-      marginBottom: 15,
+      padding: '5',
   },
   image: {
-      width: 30, // Установите желаемую ширину
-      height: 30, // Установите желаемую высоту
-      marginBottom: 5, // Отступ между изображением и текстом
+      width: 30,
+      height: 30, 
+      marginTop: 5,
   },
   priceText: {
       fontWeight: 'bold',
@@ -101,7 +100,6 @@ export const styles = StyleSheet.create({
     paddingRight: '10', 
     alignItems: "center", 
     backgroundColor: 'whitesmoke',
-     marginBottom: 10,
      // add
      padding: '3',
      shadowColor: '#000',

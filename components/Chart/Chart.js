@@ -5,6 +5,7 @@ import {
     Modal,
     Text,
     TouchableOpacity,
+   // useWindowDimensions,
     View,
   } from "react-native";
   import { LineChart } from "react-native-chart-kit";
@@ -22,8 +23,11 @@ import {
     isloading,
     coinHistoryData,
   }) => {
-    console.log(selectedCoinData);
     
+    const Spacer = ({ width }) => {
+      return <View style={{ width }} />;
+  };
+
     // selectedCoinData - тут лежат данные для свечных графиков
     const [is30DSelected, setIs30DSelected] = useState(false);
     const chartDays = useSelector(daysSelector);
@@ -50,23 +54,27 @@ import {
             {selectedCoinData && (
               <>
                 <Text style={styles.modalTitle}>{selectedCoinData.name}</Text>
-                <View style={{flex: '1', flexDirection: 'row', gap: '15', justifyContent: 'space-between', borderRadius: '2%', paddingLeft: '10', paddingRight: '10', alignItems: "center", backgroundColor: 'whitesmoke',}}>
 
+                {!isloading ? (     <View style={{ 
+                   flexDirection: 'row', 
+                   justifyContent: 'space-evenely', 
+                   borderRadius: '2%', 
+                   backgroundColor: 'whitesmoke',
+                  }}>
+
+                <Text style={{ fontWeight: "300" }}>
+             Мин. 24 часа
+            <Text style={{color: '#007bff'}}> {selectedCoinData?.low_24h}$
+            </Text>
+        </Text> 
+ <Spacer width={10} />
 <Text style={{ fontWeight: "300" }}>
             Макс. 24 часа
-            <Text style={{color: '#007bff'}}> {selectedCoinData?.high_24h.toFixed(2)}$
-
-            </Text>
-            
-        </Text>
-        <Text style={{ fontWeight: "300" }}>
-             Мин. 24 часа
-            <Text style={{color: '#007bff'}}> {selectedCoinData?.low_24h.toFixed(2)}$
-
-            </Text>
-            
-        </Text> 
-</View>     
+            <Text style={{color: '#007bff'}}> {selectedCoinData?.high_24h}$
+            </Text>         
+        </Text>      
+</View>     ) : (null)}
+           
                 {isloading ? <ActivityIndicator size='large' color='#0000ff' /> : null}
   
                 {/* График */}
@@ -88,11 +96,7 @@ import {
                       />
   
                       <LineChart
-                        // data={{
-                        //   labels: chartData.labelDate,
-                        // data={{
-                        //   labels: chartData.labelDate.filter((_, index) => index % 2 === 0), // Показываем каждую вторую метку даты для всех таймфреймов
-                        data={{
+                      data={{
                           labels: is30DSelected
                             ? chartData.labelDate.filter((_, index) => index % 2 === 0) // Показываем каждую вторую метку даты только если выбран 30D таймфрейм
                             : chartData.labelDate, // Показываем все метки, если не 30D
@@ -111,8 +115,10 @@ import {
                             },
                           ],
                         }}
+                      
                         width={Dimensions.get("window").width * 0.9} // Ширина графика
-                        height={400}
+                        height={Dimensions.get("window").height * 0.3}
+  
                         chartConfig={{
                           backgroundColor: "#ffffff",
                           backgroundGradientFrom: "#ffffff",
@@ -121,8 +127,8 @@ import {
                           color: (opacity = 1) => `rgba(0, 0, 0, ${opacity * 0})`, // Цвет линий
                           labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Цвет меток
                           style: {
-                            borderRadius: 16,
-                            borderWidth: 1,
+                            // borderRadius: 16,
+                            // borderWidth: 1,
                           },
                           propsForDots: {
                             r: "0", // радиус 0, чтобы скрыть точки
@@ -133,9 +139,9 @@ import {
                         }}
                         style={{
                           marginVertical: 10,
-                          borderRadius: 16,
+                        //  borderRadius: 16,
                           elevation: 10,
-                           
+                        
                         }}
                       />
                     </>
