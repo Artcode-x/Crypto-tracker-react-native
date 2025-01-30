@@ -1,5 +1,6 @@
 {
   "expo": {
+    "newArchEnabled": true,
     "name": "Crypto-Tracker",
     "slug": "Crypto-Tracker",
     "version": "1.0.0",
