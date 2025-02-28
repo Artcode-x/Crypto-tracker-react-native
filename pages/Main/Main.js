@@ -36,7 +36,17 @@ const Main = () => {
   //   setDropdownVisible(!dropdownVisible)
   // }
   const [modal, setModal] = useState(false)
+
   const toggleModal = () => {
+    setModal(!modal)
+  }
+
+  const handlePress = (e) => {
+    if (e === 1) {
+      console.log("open small")
+    } else {
+      console.log("open large")
+    }
     setModal(!modal)
   }
 
@@ -143,40 +153,23 @@ const Main = () => {
         transparent={true}
         visible={modal}
         animationType='fade'
-        onRequestClose={toggleModal}
+        onRequestClose={handlePress}
       >
         <View style={styles.dropdown}>
           <View style={styles.dropbox}>
-            <TouchableOpacity style={styles.dropdownItem} onPress={toggleModal}>
+            <TouchableOpacity style={styles.dropdownItem} onPress={() => handlePress(1)}>
               <Text style={styles.dropdownText}>Compact</Text>
               <Ionicons style={styles.changePoint} name='grid' size={20} />
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.dropdownItem} onPress={toggleModal}>
+          <TouchableOpacity style={styles.dropdownItem} onPress={() => handlePress(2)}>
             <Text style={styles.dropdownText}>Medium</Text>
             <Ionicons style={styles.changePoint} name='list' size={20} />
           </TouchableOpacity>
         </View>
       </Modal>
 
-      {/* {dropdownVisible && (
-        <View style={styles.dropdown}>
-          <View style={styles.dropbox}>
-            <TouchableOpacity style={styles.dropdownItem} onPress={toggleDropdown}>
-              <Text style={styles.dropdownText}>Compact</Text>
-              <Ionicons style={styles.changePoint} name='apps' size={20} />
-            </TouchableOpacity>
-          </View>
-
-          <View>
-            <TouchableOpacity style={styles.dropdownItem} onPress={toggleDropdown}>
-              <Text style={styles.dropdownText}>Medium</Text>
-              <Ionicons style={styles.changePoint} name='list' size={20} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      )} */}
       {flagForLoader ? (
         <ActivityIndicator size='large' color='red' />
       ) : (
