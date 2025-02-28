@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react"
 import { FlatList, Modal, Text, TouchableOpacity, View } from "react-native"
-import { styles } from "./CoinList.styles"
+import { styles } from "./CoinList2.styles"
 import { useDispatch, useSelector } from "react-redux"
 import CoinItem from "../CoinItem/CoinItem"
 import Ionicons from "react-native-vector-icons/Ionicons"
 import { rewriteFavorite, setCoin } from "../../store/reducersSlice"
-import { coinSelector } from "../../store/toolkitSelectors"
+import { coinSelector, viewMarketFlagSelector } from "../../store/toolkitSelectors"
 
-const CoinList = ({
+const CoinList2 = ({
   data,
   openModal,
   search,
@@ -19,6 +19,8 @@ const CoinList = ({
   const favoriteCoins = useSelector(coinSelector)
   const [modalVisible, setModalVisible] = useState(false)
   const dispatch = useDispatch()
+
+  const marketView = useSelector(viewMarketFlagSelector)
 
   useEffect(() => {
     if (data) {
@@ -53,22 +55,6 @@ const CoinList = ({
     }
   }, [data])
 
-  // useEffect(() => {
-  //     if (data) {
-  //         data.forEach(coin => {
-  //             const existingCoin = favoriteCoins.find(favCoin => favCoin.id === coin.id);
-
-  //             if (existingCoin) {
-  //
-  //                 if (existingCoin.current_price !== coin.current_price) {
-  //                     console.log(coin);
-  //                     dispatch(rewriteFavorite(coin)); // сохр полные данные о монете
-  //                 }
-  //             }
-  //         });
-  //     }
-  // }, [data]);
-
   const addToFavorite = (coinData) => {
     dispatch(setCoin(coinData))
     setModalVisible(true)
@@ -93,7 +79,11 @@ const CoinList = ({
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <View style={styles.itemContainer}>
-              <CoinItem coin={item} onPress={() => openModal(item)} />
+              <CoinItem
+                coin={item}
+                marketView={marketView}
+                onPress={() => openModal(item)}
+              />
               {/* Иконка добавления в избранное+ */}
               <TouchableOpacity
                 onPress={() => {
@@ -105,8 +95,16 @@ const CoinList = ({
                     otherInfo,
                     market_cap_rank,
                     symbol,
-                    id
+                    id,
+                    low_24h,
+                    atl_date,
+                    circulating_supply,
+                    high_24h,
+                    price_change_percentage_7d_in_currency,
+                    total_volume,
+                    total_supply
                   } = item // Деструктурирую нужные поля
+
                   const coinData = {
                     name,
                     current_price,
@@ -116,6 +114,13 @@ const CoinList = ({
                     market_cap_rank,
                     symbol,
                     id
+                    // low_24,
+                    // atl_date,
+                    // circulating_supply,
+                    // high_24h,
+                    // price_change_percentage_7d_in_currency,
+                    // total_volume,
+                    // total_supply
                   }
 
                   //  dispatch(setCoin(coinData)); // Диспатчим только необходимые данные из огромного обьекта
@@ -127,7 +132,7 @@ const CoinList = ({
               </TouchableOpacity>
             </View>
           )}
-          numColumns={2}
+          numColumns={1}
           keyExtractor={(item) => item.id}
           refreshing={refreshing}
           onRefresh={async () => {
@@ -153,4 +158,4 @@ const CoinList = ({
   )
 }
 
-export default CoinList
+export default CoinList2

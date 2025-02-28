@@ -15,23 +15,27 @@ export const AppRoute = () => {
         style={styles.tabBarStyle}
         screenOptions={{
           tabBarActiveTintColor: "#FF6347", // Цвет активного элемента
-          tabBarInactiveTintColor: "#aaa", // Цвет неактивного элемента
+          tabBarInactiveTintColor: "#aaa" // Цвет неактивного элемента
         }}
       >
         <Tab.Screen
-          name="Home"
+          name='Home'
           component={Main}
           options={{
             title: "CryptoTracker",
-            tabBarIcon: ({ color }) => <Ionicons name="home-outline" size={24} color={color} />,
+            tabBarIcon: ({ color }) => (
+              <Ionicons name='home-outline' size={24} color={color} />
+            )
           }}
         />
         <Tab.Screen
-          name="Favorite"
+          name='Favorite'
           component={Favorite}
           options={{
-            title: "Избранное",
-            tabBarIcon: ({ color }) => <Ionicons name="star-outline" size={24} color={color} />,
+            title: "Favorite",
+            tabBarIcon: ({ color }) => (
+              <Ionicons name='star-outline' size={24} color={color} />
+            )
           }}
         />
       </Tab.Navigator>
@@ -49,6 +53,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopColor: "#e4e4e4",
     borderTopWidth: 1,
-    height: 60,
-  },
+    height: 60
+  }
 })

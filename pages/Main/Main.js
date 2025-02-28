@@ -6,20 +6,20 @@ import {
   StatusBar,
   TextInput,
   ActivityIndicator,
-  TouchableOpacity,
-  Modal
+  TouchableOpacity
 } from "react-native"
 import CoinList from "../../components/CoinList/CoinList"
 import prepareChartData from "../../components/PrepareChartData/PrepareChartData"
 import { Chart } from "../../components/Chart/Chart"
 import { useSelector } from "react-redux"
-import { daysSelector } from "../../store/toolkitSelectors"
+import { daysSelector, viewMarketFlagSelector } from "../../store/toolkitSelectors"
 import { pick } from "lodash"
 import { CandleChart } from "react-native-wagmi-charts"
 import { FetchCoinHistoricalData, GetMarketData } from "../../components/Api/Api"
 
 import Ionicons from "react-native-vector-icons/Ionicons"
 import { ModalView } from "../../components/ModalView/ModalView"
+import CoinList2 from "../../components/CoinList2/Coinlist2"
 const Main = () => {
   const [search, setSearch] = useState("")
   const [refreshing, setRefreshing] = useState(false)
@@ -32,6 +32,7 @@ const Main = () => {
   const [errorMessage, setErrorMessage] = useState(null)
   const switchChartDays = useSelector(daysSelector)
 
+  const marketViewFlag = useSelector(viewMarketFlagSelector)
   const [modal, setModal] = useState(false)
   const toggleModal = () => {
     setModal(!modal)
@@ -143,15 +144,29 @@ const Main = () => {
         <ActivityIndicator size='large' color='red' />
       ) : (
         // ...flatlist...
-        <CoinList
-          data={data}
-          openModal={openModal}
-          refreshing={refreshing}
-          setRefreshing={setRefreshing}
-          search={search}
-          fetchMarketData={fetchMarketData}
-          errorMessage={errorMessage}
-        />
+        <>
+          {!marketViewFlag ? (
+            <CoinList
+              data={data}
+              openModal={openModal}
+              refreshing={refreshing}
+              setRefreshing={setRefreshing}
+              search={search}
+              fetchMarketData={fetchMarketData}
+              errorMessage={errorMessage}
+            />
+          ) : (
+            <CoinList2
+              data={data}
+              openModal={openModal}
+              refreshing={refreshing}
+              setRefreshing={setRefreshing}
+              search={search}
+              fetchMarketData={fetchMarketData}
+              errorMessage={errorMessage}
+            />
+          )}
+        </>
       )}
 
       {/* Модальное окно с графиком */}
