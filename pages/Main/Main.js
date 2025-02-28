@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from "react"
 import { styles } from "./Main.styles"
-import { View, Text, StatusBar, TextInput, ActivityIndicator } from "react-native"
+import {
+  View,
+  Text,
+  StatusBar,
+  TextInput,
+  ActivityIndicator,
+  TouchableOpacity,
+  Modal
+} from "react-native"
 import CoinList from "../../components/CoinList/CoinList"
 import prepareChartData from "../../components/PrepareChartData/PrepareChartData"
 import { Chart } from "../../components/Chart/Chart"
@@ -10,6 +18,7 @@ import { pick } from "lodash"
 import { CandleChart } from "react-native-wagmi-charts"
 import { FetchCoinHistoricalData, GetMarketData } from "../../components/Api/Api"
 
+import Ionicons from "react-native-vector-icons/Ionicons"
 const Main = () => {
   const [search, setSearch] = useState("")
   const [refreshing, setRefreshing] = useState(false)
@@ -21,6 +30,15 @@ const Main = () => {
   const [flagForLoader, setFlagForLoader] = useState(false)
   const [errorMessage, setErrorMessage] = useState(null)
   const switchChartDays = useSelector(daysSelector)
+
+  // const [dropdownVisible, setDropdownVisible] = useState(false)
+  // const toggleDropdown = () => {
+  //   setDropdownVisible(!dropdownVisible)
+  // }
+  const [modal, setModal] = useState(false)
+  const toggleModal = () => {
+    setModal(!modal)
+  }
 
   const fetchMarketData = async () => {
     try {
@@ -113,7 +131,52 @@ const Main = () => {
           placeholderTextColor='#858585'
           onChangeText={(text) => text && setSearch(text)}
         />
+        <View style={styles.openMenu}>
+          <TouchableOpacity onPress={toggleModal}>
+            <Ionicons style={styles.changeView} name='apps' size={20} />
+          </TouchableOpacity>
+        </View>
+
+        {/* logo-codepen, logo-buffer, tv, pulse, menu, list, analytics , grid, */}
       </View>
+      <Modal
+        transparent={true}
+        visible={modal}
+        animationType='fade'
+        onRequestClose={toggleModal}
+      >
+        <View style={styles.dropdown}>
+          <View style={styles.dropbox}>
+            <TouchableOpacity style={styles.dropdownItem} onPress={toggleModal}>
+              <Text style={styles.dropdownText}>Compact</Text>
+              <Ionicons style={styles.changePoint} name='grid' size={20} />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity style={styles.dropdownItem} onPress={toggleModal}>
+            <Text style={styles.dropdownText}>Medium</Text>
+            <Ionicons style={styles.changePoint} name='list' size={20} />
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/* {dropdownVisible && (
+        <View style={styles.dropdown}>
+          <View style={styles.dropbox}>
+            <TouchableOpacity style={styles.dropdownItem} onPress={toggleDropdown}>
+              <Text style={styles.dropdownText}>Compact</Text>
+              <Ionicons style={styles.changePoint} name='apps' size={20} />
+            </TouchableOpacity>
+          </View>
+
+          <View>
+            <TouchableOpacity style={styles.dropdownItem} onPress={toggleDropdown}>
+              <Text style={styles.dropdownText}>Medium</Text>
+              <Ionicons style={styles.changePoint} name='list' size={20} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )} */}
       {flagForLoader ? (
         <ActivityIndicator size='large' color='red' />
       ) : (
