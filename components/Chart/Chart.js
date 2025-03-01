@@ -6,14 +6,16 @@ import {
   Text,
   TouchableOpacity,
   // useWindowDimensions,
-  View,
-} from "react-native";
-import { LineChart } from "react-native-chart-kit";
-import { styles } from "./Chart.styles";
-import { useDispatch, useSelector } from "react-redux";
-import { setChartDays } from "../../store/reducersSlice";
-import { daysSelector } from "../../store/toolkitSelectors";
-import { useEffect, useState } from "react";
+  View
+} from "react-native"
+import { LineChart } from "react-native-chart-kit"
+import { styles } from "./Chart.styles"
+import { useDispatch, useSelector } from "react-redux"
+import { setChartDays } from "../../store/reducersSlice"
+import { daysSelector } from "../../store/toolkitSelectors"
+import { useEffect, useState } from "react"
+
+import { RFPercentage, RFValue } from "react-native-responsive-fontsize"
 
 export const Chart = ({
   selectedCoinData,
@@ -21,25 +23,25 @@ export const Chart = ({
   modalVisible,
   closeModal,
   isloading,
-  coinHistoryData,
+  coinHistoryData
 }) => {
   const Spacer = ({ width }) => {
-    return <View style={{ width }} />;
-  };
+    return <View style={{ width }} />
+  }
 
   // selectedCoinData - тут лежат данные для свечных графиков
-  const [is30DSelected, setIs30DSelected] = useState(false);
-  const chartDays = useSelector(daysSelector);
-  const dispatch = useDispatch();
+  const [is30DSelected, setIs30DSelected] = useState(false)
+  const chartDays = useSelector(daysSelector)
+  const dispatch = useDispatch()
 
   const openChart = (days) => {
     if (days === 30) {
-      setIs30DSelected(true);
+      setIs30DSelected(true)
     } else {
-      setIs30DSelected(false);
+      setIs30DSelected(false)
     }
-    dispatch(setChartDays(days));
-  };
+    dispatch(setChartDays(days))
+  }
 
   return (
     <Modal
@@ -60,10 +62,10 @@ export const Chart = ({
                     flexDirection: "row",
                     justifyContent: "space-evenely",
                     borderRadius: "2%",
-                    backgroundColor: "whitesmoke",
+                    backgroundColor: "whitesmoke"
                   }}
                 >
-                  <Text style={{ fontWeight: "300" }}>
+                  <Text style={{ fontWeight: "300", fontSize: RFValue(11) }}>
                     Мин. 24 часа
                     <Text style={{ color: "#007bff" }}>
                       {" "}
@@ -71,7 +73,7 @@ export const Chart = ({
                     </Text>
                   </Text>
                   <Spacer width={10} />
-                  <Text style={{ fontWeight: "300" }}>
+                  <Text style={{ fontWeight: "300", fontSize: RFValue(11) }}>
                     Макс. 24 часа
                     <Text style={{ color: "#007bff" }}>
                       {" "}
@@ -97,7 +99,7 @@ export const Chart = ({
                           chartData.prices[chartData.prices.length - 1] >
                           chartData.prices[0]
                             ? "green"
-                            : "red",
+                            : "red"
                       }}
                     />
 
@@ -111,15 +113,15 @@ export const Chart = ({
                             data: chartData.prices,
                             strokeWidth: 4,
                             color: (opacity = 1) => {
-                              const firstPrice = chartData.prices[0];
+                              const firstPrice = chartData.prices[0]
                               const lastPrice =
-                                chartData.prices[chartData.prices.length - 1];
+                                chartData.prices[chartData.prices.length - 1]
                               return lastPrice > firstPrice
                                 ? `rgba(0, 255, 0, ${opacity})` // зеленый цвет при росте
-                                : `rgba(255, 0, 0, ${opacity})`; // красный цвет при падении
-                            },
-                          },
-                        ],
+                                : `rgba(255, 0, 0, ${opacity})` // красный цвет при падении
+                            }
+                          }
+                        ]
                       }}
                       width={Dimensions.get("window").width * 0.9} // Ширина графика
                       height={Dimensions.get("window").height * 0.3}
@@ -135,16 +137,16 @@ export const Chart = ({
                           // borderWidth: 1,
                         },
                         propsForDots: {
-                          r: "0", // радиус 0, чтобы скрыть точки
+                          r: "0" // радиус 0, чтобы скрыть точки
                         },
                         propsForLabels: {
-                          fontSize: 10, // Уменьшение шрифта меток
-                        },
+                          fontSize: 10 // Уменьшение шрифта меток
+                        }
                       }}
                       style={{
                         marginVertical: 10,
                         //  borderRadius: 16,
-                        elevation: 10,
+                        elevation: 10
                       }}
                     />
                   </>
@@ -169,7 +171,7 @@ export const Chart = ({
                             color:
                               selectedCoinData?.price_change_percentage_24h >= 0
                                 ? "green"
-                                : "red",
+                                : "red"
                           }}
                         >
                           {" "}
@@ -185,7 +187,7 @@ export const Chart = ({
                             color:
                               selectedCoinData?.price_change_percentage_24h >= 0
                                 ? "green"
-                                : "red",
+                                : "red"
                           }}
                         >
                           {" "}
@@ -200,7 +202,7 @@ export const Chart = ({
                               selectedCoinData?.price_change_percentage_7d_in_currency >=
                               0
                                 ? "green"
-                                : "red",
+                                : "red"
                           }}
                         >
                           {" "}
@@ -230,13 +232,13 @@ export const Chart = ({
                       <Text
                         style={[
                           styles.chartButton,
-                          chartDays === 1 && styles.activeButton,
+                          chartDays === 1 && styles.activeButton
                         ]}
                       >
                         <Text
                           style={[
                             styles.buttonText,
-                            chartDays === 1 && styles.activeButtonText,
+                            chartDays === 1 && styles.activeButtonText
                           ]}
                         >
                           24H
@@ -247,13 +249,13 @@ export const Chart = ({
                       <Text
                         style={[
                           styles.chartButton,
-                          chartDays === 7 && styles.activeButton,
+                          chartDays === 7 && styles.activeButton
                         ]}
                       >
                         <Text
                           style={[
                             styles.buttonText,
-                            chartDays === 7 && styles.activeButtonText,
+                            chartDays === 7 && styles.activeButtonText
                           ]}
                         >
                           7D
@@ -264,13 +266,13 @@ export const Chart = ({
                       <Text
                         style={[
                           styles.chartButton,
-                          chartDays === 14 && styles.activeButton,
+                          chartDays === 14 && styles.activeButton
                         ]}
                       >
                         <Text
                           style={[
                             styles.buttonText,
-                            chartDays === 14 && styles.activeButtonText,
+                            chartDays === 14 && styles.activeButtonText
                           ]}
                         >
                           14D
@@ -281,13 +283,13 @@ export const Chart = ({
                       <Text
                         style={[
                           styles.chartButton,
-                          chartDays === 30 && styles.activeButton,
+                          chartDays === 30 && styles.activeButton
                         ]}
                       >
                         <Text
                           style={[
                             styles.buttonText,
-                            chartDays === 30 && styles.activeButtonText,
+                            chartDays === 30 && styles.activeButtonText
                           ]}
                         >
                           30D
@@ -305,5 +307,5 @@ export const Chart = ({
         </View>
       </View>
     </Modal>
-  );
-};
+  )
+}
