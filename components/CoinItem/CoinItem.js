@@ -4,6 +4,8 @@ import { styles } from "./CoinItem.styles"
 import { format } from "date-fns"
 import { ru } from "date-fns/locale"
 
+// import { RFPercentage, RFValue } from "react-native-responsive-fontsize"
+
 const CoinItem = ({ coin, onPress, marketView }) => (
   <TouchableOpacity style={styles.containerItem} onPress={onPress}>
     <View style={[marketView && { flexWrap: "wrap" }, styles.leftBlock]}>
@@ -63,6 +65,7 @@ const CoinItem = ({ coin, onPress, marketView }) => (
     <View style={styles.otherInfo}>
       {marketView && (
         <>
+          {/* <Text style={{ fontSize: RFValue(14) }}>Ваш текст здесь</Text> */}
           <Text style={styles.titleInfo}>Market cup rank: {coin.market_cap_rank}</Text>
           <View style={styles.box}>
             <View style={{ flexDirection: "row" }}>
@@ -85,7 +88,11 @@ const CoinItem = ({ coin, onPress, marketView }) => (
         </>
       )}
 
-      {!marketView && <Text style={styles.textPrice}>${coin.current_price}</Text>}
+      {!marketView && (
+        <Text style={[!marketView && { color: "white" }, styles.viewPrice]}>
+          ${coin.current_price}
+        </Text>
+      )}
 
       {!marketView && (
         <View style={styles.box2}>

@@ -1,5 +1,5 @@
 import { StyleSheet } from "react-native"
-
+import { RFPercentage, RFValue } from "react-native-responsive-fontsize"
 export const styles = StyleSheet.create({
   containerItem: {
     paddingTop: 0,
@@ -22,7 +22,12 @@ export const styles = StyleSheet.create({
   textPrice: {
     color: "#fff",
     fontWeight: "400",
-    fontSize: 10
+    //fontSize: 14
+    fontSize: RFValue(11)
+  },
+  viewPrice: {
+    // color: "#C99E10",
+    fontSize: RFValue(13)
   },
   textPrice2: {
     color: "#fff",
@@ -35,10 +40,12 @@ export const styles = StyleSheet.create({
   pricePercentageS: {
     textAlign: "right",
     fontWeight: "bold",
-    fontSize: 13
+    // fontSize: 13
+    fontSize: RFValue(13)
   },
   pricePercentage2: {
-    textAlign: "center"
+    textAlign: "center",
+    fontSize: RFValue(13)
   },
   priceUp: {
     color: "#00B589"
