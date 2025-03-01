@@ -32,7 +32,7 @@ export const AppRoute = () => {
           name='Favorite'
           component={Favorite}
           options={{
-            title: "Favorite",
+            title: "Favorites",
             tabBarIcon: ({ color }) => (
               <Ionicons name='star-outline' size={24} color={color} />
             )

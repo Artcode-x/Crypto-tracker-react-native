@@ -10,7 +10,9 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     width: "90%",
     justifyContent: "space-between",
-    marginBottom: 10
+    marginBottom: 10,
+    //
+    alignItems: "center"
   },
   title: {
     fontSize: 20,
@@ -22,7 +24,9 @@ export const styles = StyleSheet.create({
     borderBottomColor: "#c8cbfa",
     borderBottomWidth: 1,
     width: "40%",
-    textAlign: "left"
+    textAlign: "left",
+    marginTop: 7,
+    padding: 3
   },
   // modalContainer: {
   //   flex: 1,

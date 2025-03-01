@@ -47,7 +47,8 @@ export const styles = StyleSheet.create({
   },
   leftBlock: {
     flex: 1,
-    alignItems: "center"
+    alignItems: "center",
+    flexWrap: "wrap"
   },
   image: {
     alignItems: "center",
