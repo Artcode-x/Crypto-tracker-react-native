@@ -53,7 +53,7 @@ const CoinItem = ({ coin, onPress, marketView }) => (
             {/* <Text>{coin.total_supply}</Text> */}
           </View>
         ) : (
-          <Text>{coin.name}</Text>
+          <Text style={{ color: "white" }}>{coin.name}</Text>
         )}
       </View>
 

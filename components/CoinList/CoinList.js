@@ -18,6 +18,7 @@ const CoinList = ({
 }) => {
   const favoriteCoins = useSelector(coinSelector)
   const [modalVisible, setModalVisible] = useState(false)
+  const [flag, setFlag] = useState({})
   const dispatch = useDispatch()
 
   useEffect(() => {
@@ -73,6 +74,11 @@ const CoinList = ({
     dispatch(setCoin(coinData))
     setModalVisible(true)
 
+    setFlag((prevFlag) => ({ ...prevFlag, [coinData.id]: true }))
+    setTimeout(() => {
+      setFlag((prevFlag) => ({ ...prevFlag, [coinData.id]: false })) // Сброс флага через время
+    }, 1800)
+
     setTimeout(() => {
       setModalVisible(false)
     }, 500)
@@ -123,7 +129,15 @@ const CoinList = ({
                 }}
                 style={styles.addButton}
               >
-                <Ionicons name='add-circle' size={24} color='#000' />
+                {flag[item.id] ? (
+                  <Ionicons
+                    name='checkmark-circle-outline'
+                    size={24}
+                    color='green'
+                  ></Ionicons>
+                ) : (
+                  <Ionicons name='add-circle-outline' size={24} color='gray' />
+                )}
               </TouchableOpacity>
             </View>
           )}

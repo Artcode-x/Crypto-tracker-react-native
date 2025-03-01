@@ -5,12 +5,14 @@ export const styles = StyleSheet.create({
     position: "absolute",
     top: "16%",
     right: "5%",
-    backgroundColor: "gray",
+    //  backgroundColor: "gray",
     borderWidth: 2,
     borderColor: "wheat",
-    borderRadius: 5,
+    // borderRadius: 5,
+    borderRadius: 15,
     padding: 10,
-    elevation: 5
+    elevation: 5,
+    backgroundColor: "rgba(50, 48, 49, 0.8)"
   },
   dropbox: {
     borderBottomColor: "#c8cbfa",

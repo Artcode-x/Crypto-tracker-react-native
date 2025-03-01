@@ -22,9 +22,11 @@ export const AppRoute = () => {
           name='Home'
           component={Main}
           options={{
-            title: "CryptoTracker",
+            title: "Watchlists",
+            // CryptoTracker
             tabBarIcon: ({ color }) => (
-              <Ionicons name='home-outline' size={24} color={color} />
+              <Ionicons name='pulse' size={24} color={color} />
+              // home-outline
             )
           }}
         />
@@ -34,7 +36,8 @@ export const AppRoute = () => {
           options={{
             title: "Favorites",
             tabBarIcon: ({ color }) => (
-              <Ionicons name='star-outline' size={24} color={color} />
+              <Ionicons name='logo-bitcoin' size={24} color={color} />
+              //   star-outline
             )
           }}
         />
