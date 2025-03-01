@@ -6,7 +6,7 @@ import { ru } from "date-fns/locale"
 
 const CoinItem = ({ coin, onPress, marketView }) => (
   <TouchableOpacity style={styles.containerItem} onPress={onPress}>
-    <View style={styles.leftBlock}>
+    <View style={[marketView && { flexWrap: "wrap" }, styles.leftBlock]}>
       <View style={styles.title}>
         {marketView ? (
           <View>
@@ -34,8 +34,10 @@ const CoinItem = ({ coin, onPress, marketView }) => (
                 </>
               )}
             </View>
+            <View style={{ paddingTop: 3 }}>
+              <Text style={styles.textPrice}>Price difference in 7 days:</Text>
+            </View>
 
-            <Text style={styles.textPrice2}>Price difference in 7 days:</Text>
             <Text
               style={[
                 styles.pricePercentage2,
@@ -63,8 +65,14 @@ const CoinItem = ({ coin, onPress, marketView }) => (
         <>
           <Text style={styles.titleInfo}>Market cup rank: {coin.market_cap_rank}</Text>
           <View style={styles.box}>
-            <Text style={styles.textPrice}>High 24H {coin.high_24h}</Text>
-            <Text style={styles.textPrice}>Low 24H {coin.low_24h}</Text>
+            <View style={{ flexDirection: "row" }}>
+              <Text style={styles.textPrice}>High 24H: </Text>
+              <Text style={{ color: "#C99E10" }}>${coin.high_24h}</Text>
+            </View>
+            <View style={{ flexDirection: "row" }}>
+              <Text style={styles.textPrice}>Low 24H: </Text>
+              <Text style={{ color: "#C99E10" }}>${coin.low_24h}</Text>
+            </View>
           </View>
           <Text style={styles.textPrice}>Total Vol: {coin.total_volume}</Text>
 

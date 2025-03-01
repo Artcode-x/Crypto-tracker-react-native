@@ -21,7 +21,8 @@ export const styles = StyleSheet.create({
   },
   textPrice: {
     color: "#fff",
-    fontWeight: "400"
+    fontWeight: "400",
+    fontSize: 10
   },
   textPrice2: {
     color: "#fff",
@@ -48,7 +49,9 @@ export const styles = StyleSheet.create({
   leftBlock: {
     flex: 1,
     alignItems: "center",
-    flexWrap: "wrap"
+    // flexWrap: "wrap",
+    paddingLeft: 5
+    // paddingRight: "auto"
   },
   image: {
     alignItems: "center",
@@ -63,6 +66,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     // justifyContent: "right",
     alignItems: "center"
+    // paddingLeft: 5
   },
   title: {
     flex: 1,

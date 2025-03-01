@@ -125,7 +125,7 @@ const Main = () => {
         <Text style={styles.title}>CryptoCurrencies</Text>
         <TextInput
           style={styles.searchInput}
-          placeholder='Search Cryptos'
+          placeholder='Search Crypto'
           placeholderTextColor='#858585'
           onChangeText={(text) => text && setSearch(text)}
         />
