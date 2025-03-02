@@ -38,14 +38,14 @@ export const styles = StyleSheet.create({
     textAlign: "right"
   },
   pricePercentageS: {
-    textAlign: "right",
+    textAlign: "center",
     fontWeight: "bold",
     // fontSize: 13
-    fontSize: RFValue(13)
+    fontSize: RFValue(12)
   },
   pricePercentage2: {
     textAlign: "center",
-    fontSize: RFValue(13)
+    fontSize: RFValue(12)
   },
   priceUp: {
     color: "#00B589"
@@ -101,7 +101,8 @@ export const styles = StyleSheet.create({
     // borderTopWidth: 1,
     // padding: 3,
     flexDirection: "row",
-    fontSize: 14,
+    // fontSize: 14,
+    fontSize: RFValue(12),
     fontWeight: "bold",
     color: "#C99E10"
   },
@@ -124,5 +125,31 @@ export const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#C99E10",
     paddingTop: 2
+  },
+  smallText: {
+    color: "wheat",
+    fontWeight: "300",
+    //fontSize: 14
+    fontSize: RFValue(11.5),
+    textAlign: "center"
+  },
+  textBox: {
+    flexDirection: "row"
+  },
+  textBox1: {
+    flexDirection: "row"
+    // borderTopColor: "#c8cbfa"
+    // borderTopWidth: 1
+  },
+  textBox2: {
+    flex: 1,
+    flexWrap: "wrap",
+    borderBottomColor: "#c8cbfa",
+    borderBottomWidth: 1
+  },
+  price24: {
+    textAlign: "center",
+    color: "#C99E10",
+    fontSize: RFValue(11.5)
   }
 })

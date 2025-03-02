@@ -68,13 +68,13 @@ const CoinItem = ({ coin, onPress, marketView }) => (
           {/* <Text style={{ fontSize: RFValue(14) }}>Ваш текст здесь</Text> */}
           <Text style={styles.titleInfo}>Market cup rank: {coin.market_cap_rank}</Text>
           <View style={styles.box}>
-            <View style={{ flexDirection: "row" }}>
+            <View style={styles.textBox}>
               <Text style={styles.textPrice}>High 24H: </Text>
-              <Text style={{ color: "#C99E10" }}>${coin.high_24h}</Text>
+              <Text style={styles.price24}>${coin.high_24h}</Text>
             </View>
-            <View style={{ flexDirection: "row" }}>
+            <View style={styles.textBox}>
               <Text style={styles.textPrice}>Low 24H: </Text>
-              <Text style={{ color: "#C99E10" }}>${coin.low_24h}</Text>
+              <Text style={styles.price24}>${coin.low_24h}</Text>
             </View>
           </View>
           <Text style={styles.textPrice}>Total Vol: {coin.total_volume}</Text>
@@ -82,8 +82,14 @@ const CoinItem = ({ coin, onPress, marketView }) => (
           <Text style={styles.textPrice}>
             ATL Date: {format(new Date(coin.atl_date), "dd MMMM yyyy", { locale: ru })}
           </Text>
-          <Text>{coin.circulating_supply}</Text>
-
+          <View style={styles.textBox1}>
+            <Text style={styles.textPrice}>Total supply: </Text>
+            <Text style={styles.smallText}>{coin.total_supply.toFixed(0)}</Text>
+          </View>
+          <View style={styles.textBox2}>
+            <Text style={styles.textPrice}>Circulating supply: </Text>
+            <Text style={styles.smallText}>{coin.circulating_supply.toFixed(0)}</Text>
+          </View>
           {/* <Text>{coin.symbol}</Text> */}
         </>
       )}

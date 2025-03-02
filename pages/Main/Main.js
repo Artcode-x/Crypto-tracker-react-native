@@ -131,7 +131,7 @@ const Main = () => {
         />
         <View style={styles.openMenu}>
           <TouchableOpacity onPress={toggleModal}>
-            <Ionicons style={styles.changeView} name='apps' size={20} />
+            <Ionicons style={styles.changeView} name='list' size={20} />
           </TouchableOpacity>
         </View>
 

@@ -27,13 +27,13 @@ export const ModalView = ({ modal, setModal }) => {
         <View style={styles.dropbox}>
           <TouchableOpacity style={styles.dropdownItem} onPress={() => handlePress(1)}>
             <Text style={styles.dropdownText}>Small</Text>
-            <Ionicons style={styles.changePoint} name='grid' size={20} />
+            <Ionicons style={styles.changePoint} name='apps' size={20} />
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={styles.dropdownItem} onPress={() => handlePress(2)}>
           <Text style={styles.dropdownText}>Large</Text>
-          <Ionicons style={styles.changePoint} name='list' size={20} />
+          <Ionicons style={styles.changePoint} name='grid' size={20} />
         </TouchableOpacity>
       </View>
     </Modal>
