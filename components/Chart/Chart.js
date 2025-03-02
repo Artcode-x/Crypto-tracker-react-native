@@ -62,23 +62,18 @@ export const Chart = ({
                     flexDirection: "row",
                     justifyContent: "space-evenely",
                     borderRadius: "2%",
-                    backgroundColor: "whitesmoke"
+                    // backgroundColor: "whitesmoke"
+                    backgroundColor: "rgba(75, 73, 74, 0.9)"
                   }}
                 >
-                  <Text style={{ fontWeight: "300", fontSize: RFValue(11) }}>
-                    Мин. 24 часа
-                    <Text style={{ color: "#007bff" }}>
-                      {" "}
-                      {selectedCoinData?.low_24h}$
-                    </Text>
+                  <Text style={styles.textUp}>
+                    Мин. 24 часа:
+                    <Text style={{ color: "wheat" }}> {selectedCoinData?.low_24h}$</Text>
                   </Text>
                   <Spacer width={10} />
-                  <Text style={{ fontWeight: "300", fontSize: RFValue(11) }}>
-                    Макс. 24 часа
-                    <Text style={{ color: "#007bff" }}>
-                      {" "}
-                      {selectedCoinData?.high_24h}$
-                    </Text>
+                  <Text style={styles.textUp}>
+                    Макс. 24 часа:
+                    <Text style={{ color: "wheat" }}> {selectedCoinData?.high_24h}$</Text>
                   </Text>
                 </View>
               ) : null}
@@ -124,10 +119,11 @@ export const Chart = ({
                         ]
                       }}
                       width={Dimensions.get("window").width * 0.9} // Ширина графика
-                      height={Dimensions.get("window").height * 0.3}
+                      height={Dimensions.get("window").height * 0.35}
                       chartConfig={{
-                        backgroundColor: "#ffffff",
-                        backgroundGradientFrom: "#ffffff",
+                        // backgroundColor: "#ffffff",
+                        backgroundColor: "black",
+                        backgroundGradientFrom: "#ACE1AF",
                         backgroundGradientTo: "#ffffff",
                         decimalPlaces: 2,
                         color: (opacity = 1) => `rgba(0, 0, 0, ${opacity * 0})`, // Цвет линий
@@ -157,14 +153,14 @@ export const Chart = ({
                 <>
                   <View style={styles.coinInfo}>
                     <View style={styles.coinInfoBox}>
-                      <Text style={{ fontWeight: "bold" }}>
+                      <Text style={styles.textMiddle}>
                         Место в CoinMarcetCup:
                         <Text style={{ color: "#007bff" }}>
                           {" "}
                           {selectedCoinData?.market_cap_rank}
                         </Text>
                       </Text>
-                      <Text style={{ fontWeight: "bold" }}>
+                      <Text style={styles.textMiddle}>
                         Изменение цены за сегодня:
                         <Text
                           style={{
@@ -180,7 +176,7 @@ export const Chart = ({
                       </Text>
                     </View>
                     <View style={styles.coinInfoBox}>
-                      <Text style={{ fontWeight: "bold" }}>
+                      <Text style={styles.textMiddle}>
                         Изменение цены за 24 часа:
                         <Text
                           style={{
@@ -194,7 +190,7 @@ export const Chart = ({
                           {selectedCoinData?.price_change_24h.toFixed(2)}$
                         </Text>
                       </Text>
-                      <Text style={{ fontWeight: "bold" }}>
+                      <Text style={styles.textMiddle}>
                         Разница в процентах за 7 дней :
                         <Text
                           style={{
@@ -221,12 +217,12 @@ export const Chart = ({
                       style={styles.image}
                       resizeMode='contain' // Для сохранения пропорций изображения
                     />
-                    <Text style={styles.priceText}>
+                    <Text style={styles.text}>
                       Current Price: {selectedCoinData?.current_price} $
                     </Text>
                   </View>
 
-                  <Text>Выбранный диапазон дней: {chartDays}</Text>
+                  <Text style={styles.text}>Выбранный диапазон дней: {chartDays}</Text>
                   <View style={styles.chartButtons}>
                     <TouchableOpacity onPress={() => openChart(1)}>
                       <Text

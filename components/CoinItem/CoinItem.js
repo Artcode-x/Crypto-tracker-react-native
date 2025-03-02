@@ -102,7 +102,11 @@ const CoinItem = ({ coin, onPress, marketView }) => (
               coin.price_change_percentage_24h > 0 ? styles.priceUp : styles.priceDown
             ]}
           >
-            {coin.price_change_percentage_24h.toFixed(2)}%
+            {[
+              typeof coin.price_change_percentage_24h === "number" &&
+                `${coin.price_change_percentage_24h.toFixed(2)}`
+            ]}
+            %
           </Text>
         </View>
       )}

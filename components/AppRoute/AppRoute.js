@@ -17,6 +17,7 @@ export const AppRoute = () => {
           tabBarActiveTintColor: "#FF6347", // Цвет активного элемента
           tabBarInactiveTintColor: "#aaa", // Цвет неактивного элемента
           tabBarStyle: styles.tabBarStyle,
+          headerTintColor: "#fff",
           headerStyle: {
             backgroundColor: "rgba(50, 48, 49, 0.8)",
             // borderBottomColor: "#e4e4e4",
