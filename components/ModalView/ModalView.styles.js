@@ -27,7 +27,7 @@ export const styles = StyleSheet.create({
     textAlign: "center",
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 10
+    gap: 40
   },
   dropdownText: {
     color: "white"

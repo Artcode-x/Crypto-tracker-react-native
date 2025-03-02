@@ -14,6 +14,8 @@ export const styles = StyleSheet.create({
     borderRadius: 5,
     // test color
     backgroundColor: "rgba(50, 48, 49, 0.8)"
+    // borderLeftColor: "orange",
+    // borderLeftWidth: 2
     //
   },
   modalBox: {

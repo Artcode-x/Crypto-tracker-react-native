@@ -98,7 +98,13 @@ const CoinList = ({
           )}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
-            <View style={styles.itemContainer}>
+            // <View style={[marketView && { flexWrap: "wrap" }, styles.leftBlock]}>
+            <View
+              style={[
+                flag[item.id] && { borderLeftWidth: 2, borderLeftColor: "orange" },
+                styles.itemContainer
+              ]}
+            >
               <CoinItem coin={item} onPress={() => openModal(item)} />
               {/* Иконка добавления в избранное+ */}
               <TouchableOpacity
