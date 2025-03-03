@@ -116,16 +116,6 @@ const CoinItem = ({ coin, onPress, marketView }) => (
           </Text>
         </View>
       )}
-
-      {/* <Text>In circulation: {coin.circulating_supply}</Text> */}
-      {/* <Text
-        style={[
-          styles.pricePercentage,
-          coin.price_change_percentage_24h > 0 ? styles.priceUp : styles.priceDown
-        ]}
-      >
-        {coin.price_change_percentage_24h.toFixed(2)}%
-      </Text> */}
     </View>
   </TouchableOpacity>
 )

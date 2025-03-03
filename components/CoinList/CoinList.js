@@ -54,22 +54,6 @@ const CoinList = ({
     }
   }, [data])
 
-  // useEffect(() => {
-  //     if (data) {
-  //         data.forEach(coin => {
-  //             const existingCoin = favoriteCoins.find(favCoin => favCoin.id === coin.id);
-
-  //             if (existingCoin) {
-  //
-  //                 if (existingCoin.current_price !== coin.current_price) {
-  //                     console.log(coin);
-  //                     dispatch(rewriteFavorite(coin)); // сохр полные данные о монете
-  //                 }
-  //             }
-  //         });
-  //     }
-  // }, [data]);
-
   const addToFavorite = (coinData) => {
     dispatch(setCoin(coinData))
     setModalVisible(true)

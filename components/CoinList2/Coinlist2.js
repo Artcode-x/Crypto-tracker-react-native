@@ -56,7 +56,7 @@ const CoinList2 = ({
   }, [data])
 
   const addToFavorite = (coinData) => {
-    dispatch(setCoin(coinData))
+    dispatch(setCoin(coinData)) // Диспатчим только необходимые данные из огромного обьекта
     setModalVisible(true)
 
     setTimeout(() => {
@@ -123,7 +123,6 @@ const CoinList2 = ({
                     // total_supply
                   }
 
-                  //  dispatch(setCoin(coinData)); // Диспатчим только необходимые данные из огромного обьекта
                   addToFavorite(coinData)
                 }}
                 style={styles.addButton}

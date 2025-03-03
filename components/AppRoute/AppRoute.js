@@ -23,7 +23,6 @@ export const AppRoute = () => {
             // borderBottomColor: "#e4e4e4",
             borderBottomColor: "wheat",
             borderBottomWidth: 1
-
             // height: "auto"
           }
         }}
