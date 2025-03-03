@@ -5,6 +5,7 @@ import Main from "../../pages/Main/Main"
 import Favorite from "../../pages/Favorite/Favorite"
 import { Ionicons } from "react-native-vector-icons"
 import { StyleSheet } from "react-native"
+import News from "../News/News"
 
 const Tab = createBottomTabNavigator()
 
@@ -46,6 +47,17 @@ export const AppRoute = () => {
             title: "Favorites",
             tabBarIcon: ({ color }) => (
               <Ionicons name='logo-bitcoin' size={24} color={color} />
+              //   star-outline
+            )
+          }}
+        />
+        <Tab.Screen
+          name='News'
+          component={News}
+          options={{
+            title: "News",
+            tabBarIcon: ({ color }) => (
+              <Ionicons name='today' size={24} color={color} />
               //   star-outline
             )
           }}
