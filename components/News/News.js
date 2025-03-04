@@ -2,7 +2,7 @@
 import { styles } from "./News.styles"
 
 import React, { useEffect, useState } from "react"
-import { View, Text, FlatList, ActivityIndicator } from "react-native"
+import { View, Text, FlatList, ActivityIndicator, TouchableOpacity } from "react-native"
 import axios from "axios"
 import { format } from "date-fns"
 import { ru } from "date-fns/locale"
@@ -10,10 +10,11 @@ import { ru } from "date-fns/locale"
 export default function News() {
   const [news, setNews] = useState([])
   const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState(null)
 
   const fetchNews = async () => {
     const apiKey = "dad4990451984ac944d6f7e25e0cfeb5edeb9ef4"
-    const url = `https://cryptopanic.com/api/v1/posts/?auth_token=${apiKey}`
+    const url = `https://cryptopanic.com/api/v1/posts/?auth_token=${apiKey}&filter=${filter}`
 
     try {
       const response = await axios.get(url)
@@ -33,15 +34,86 @@ export default function News() {
     }
 
     getNews()
-  }, [])
+  }, [filter])
 
   if (loading) {
     return <ActivityIndicator size='large' color='#0000ff' />
   }
 
+  const select = (button) => {
+    switch (button) {
+      case 1:
+        setFilter("bullish")
+        break
+      case 2:
+        setFilter("bearish")
+        break
+      case 3:
+        setFilter("important")
+        break
+      case 4:
+        setFilter("hot")
+        break
+      default:
+        break
+    }
+  }
   return (
     <View style={styles.container}>
       <View style={styles.box}>
+        <View style={styles.chartButtons}>
+          <TouchableOpacity onPress={() => select(1)}>
+            <Text
+              style={[styles.chartButton, filter === "bullish" && styles.activeButton]}
+            >
+              <Text
+                style={[
+                  styles.buttonText,
+                  filter === "bullish" && styles.activeButtonText
+                ]}
+              >
+                Bullish
+              </Text>
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => select(2)}>
+            <Text
+              style={[styles.chartButton, filter === "bearish" && styles.activeButton]}
+            >
+              <Text
+                style={[
+                  styles.buttonText,
+                  filter === "bearish" && styles.activeButtonText
+                ]}
+              >
+                Bearish
+              </Text>
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => select(3)}>
+            <Text
+              style={[styles.chartButton, filter === "important" && styles.activeButton]}
+            >
+              <Text
+                style={[
+                  styles.buttonText,
+                  filter === "important" && styles.activeButtonText
+                ]}
+              >
+                Important
+              </Text>
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => select(4)}>
+            <Text style={[styles.chartButton, filter === "hot" && styles.activeButton]}>
+              <Text
+                style={[styles.buttonText, filter === "hot" && styles.activeButtonText]}
+              >
+                Hot
+              </Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
         <FlatList
           data={news}
           keyExtractor={(item) => item.id.toString()}

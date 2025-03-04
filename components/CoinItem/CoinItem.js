@@ -48,7 +48,11 @@ const CoinItem = ({ coin, onPress, marketView }) => (
                   : styles.priceDown
               ]}
             >
-              {coin.price_change_percentage_7d_in_currency.toFixed(2)} %
+              {/* {coin.price_change_percentage_7d_in_currency.toFixed(2)} % */}
+              {[
+                typeof coin.price_change_percentage_7d_in_currency === "number" &&
+                  `${coin.price_change_percentage_7d_in_currency.toFixed(2)}`
+              ]}
             </Text>
             {/* <Text>{coin.total_supply}</Text> */}
           </View>
