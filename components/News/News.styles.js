@@ -9,17 +9,18 @@ export const styles = StyleSheet.create({
   },
 
   box: {
-    marginTop: "2%",
-    width: "90%"
+    position: "absolute",
+    bottom: "9.5%",
+    left: "5%",
+    right: "5%",
+    justifyContent: "center",
+    alignItems: "center",
+
+    // marginTop: "2%",
+    width: "90%",
+    gap: 3
   },
-  //   newsItem: {
-  //     padding: 10,
-  //     borderBottomWidth: 1,
-  //     borderBottomColor: "#ccc"
-  //   },
-  //   title: {
-  //     fontWeight: "bold"
-  //   }
+
   item: {
     padding: 10,
     borderBottomWidth: 1,
@@ -57,6 +58,25 @@ export const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 5 // Для Android
   },
+  language: {
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: "10",
+    backgroundColor: "rgba(75, 73, 74, 0.9)",
+    borderWidth: 0.5,
+    borderColor: "wheat",
+    padding: "5",
+    borderRadius: 10,
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 5 // Для Android
+  },
   chartButton: {
     marginTop: 0,
     backgroundColor: "#cccccc",
@@ -64,7 +84,16 @@ export const styles = StyleSheet.create({
     paddingVertical: 7,
     paddingHorizontal: 15,
     alignItems: "center",
-    fontSize: RFValue(12)
+    fontSize: RFValue(10)
+  },
+  chartButton2: {
+    marginTop: 0,
+    backgroundColor: "#cccccc",
+    borderRadius: 5,
+    paddingVertical: 7,
+    paddingHorizontal: 15,
+    alignItems: "center",
+    fontSize: RFValue(8)
   },
   activeButton: {
     backgroundColor: "#000"

@@ -3,7 +3,7 @@ export const removeYearFromDate = (datesArray) => {
     // Разделяем строку даты по точке
     const parts = date.split("/")
     // Преобразуем день в число, чтобы удалить ведущие нули
-    const day = parseInt(parts[1], 10)
+    const day = parseInt(parts[0], 10)
     // Возвращаем только день в формате строки
     return day.toString()
   })
