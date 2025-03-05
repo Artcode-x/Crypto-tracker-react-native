@@ -13,9 +13,7 @@ import { styles } from "./Chart.styles"
 import { useDispatch, useSelector } from "react-redux"
 import { setChartDays } from "../../store/reducersSlice"
 import { daysSelector } from "../../store/toolkitSelectors"
-import { useEffect, useState } from "react"
-
-import { RFPercentage, RFValue } from "react-native-responsive-fontsize"
+import { useState } from "react"
 
 export const Chart = ({
   selectedCoinData,
@@ -31,6 +29,8 @@ export const Chart = ({
 
   // selectedCoinData - тут лежат данные для свечных графиков
   const [is30DSelected, setIs30DSelected] = useState(false)
+  const [isDarkTheme, setIsDarkTheme] = useState(false)
+
   const chartDays = useSelector(daysSelector)
   const dispatch = useDispatch()
 
@@ -43,6 +43,9 @@ export const Chart = ({
     dispatch(setChartDays(days))
   }
 
+  const theme = (color) => {
+    setIsDarkTheme(!isDarkTheme)
+  }
   return (
     <Modal
       animationType='slide'
@@ -55,7 +58,6 @@ export const Chart = ({
           {selectedCoinData && (
             <>
               <Text style={styles.modalTitle}>{selectedCoinData.name}</Text>
-
               {!isloading ? (
                 <View
                   style={{
@@ -77,80 +79,162 @@ export const Chart = ({
                   </Text>
                 </View>
               ) : null}
-
               {isloading ? <ActivityIndicator size='large' color='#0000ff' /> : null}
 
               {/* График */}
-              <View>
-                {coinHistoryData.length > 0 && (
-                  <>
-                    <View
-                      style={{
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        height: "auto",
-                        backgroundColor:
-                          chartData.prices[chartData.prices.length - 1] >
-                          chartData.prices[0]
-                            ? "green"
-                            : "red"
-                      }}
-                    />
 
-                    <LineChart
-                      data={{
-                        labels: is30DSelected
-                          ? chartData.labelDate.filter((_, index) => index % 2 === 0) // Показываем каждую вторую метку даты только если выбран 30D таймфрейм
-                          : chartData.labelDate, // Показываем все метки, если не 30D
-                        datasets: [
-                          {
-                            data: chartData.prices,
-                            strokeWidth: 4,
-                            color: (opacity = 1) => {
-                              const firstPrice = chartData.prices[0]
-                              const lastPrice =
-                                chartData.prices[chartData.prices.length - 1]
-                              return lastPrice > firstPrice
-                                ? `rgba(0, 255, 0, ${opacity})` // зеленый цвет при росте
-                                : `rgba(255, 0, 0, ${opacity})` // красный цвет при падении
+              <>
+                {isDarkTheme ? (
+                  <View>
+                    {coinHistoryData.length > 0 && (
+                      <>
+                        <View
+                          style={{
+                            backgroundColor:
+                              chartData.prices[chartData.prices.length - 1] >
+                              chartData.prices[0]
+                                ? "green"
+                                : "red"
+                          }}
+                        />
+
+                        <LineChart
+                          data={{
+                            labels: is30DSelected
+                              ? chartData.labelDate.filter((_, index) => index % 2 === 0)
+                              : chartData.labelDate,
+                            datasets: [
+                              {
+                                data: chartData.prices,
+                                strokeWidth: 4,
+                                color: (opacity = 1) => {
+                                  const firstPrice = chartData.prices[0]
+                                  const lastPrice =
+                                    chartData.prices[chartData.prices.length - 1]
+                                  return lastPrice > firstPrice
+                                    ? `rgba(0, 255, 0, ${opacity})`
+                                    : `rgba(255, 0, 0, ${opacity})`
+                                }
+                              }
+                            ]
+                          }}
+                          width={Dimensions.get("window").width * 0.9}
+                          height={Dimensions.get("window").height * 0.38}
+                          chartConfig={{
+                            backgroundGradientFrom: "#000000",
+                            backgroundGradientTo: "#000000",
+                            decimalPlaces: 2,
+                            color: (opacity = 1) => `rgba(255, 255, 0, ${opacity * 0})`,
+                            labelColor: (opacity = 1) =>
+                              `rgba(255, 255, 255, ${opacity})`,
+                            style: {
+                              borderRadius: 16
+                            },
+                            propsForDots: {
+                              r: "0"
+                            },
+                            propsForLabels: {
+                              fontSize: 10
                             }
-                          }
-                        ]
-                      }}
-                      width={Dimensions.get("window").width * 0.9} // Ширина графика
-                      height={Dimensions.get("window").height * 0.35}
-                      chartConfig={{
-                        // backgroundColor: "#ffffff",
-                        backgroundColor: "black",
-                        backgroundGradientFrom: "#ACE1AF",
-                        backgroundGradientTo: "#ffffff",
-                        decimalPlaces: 2,
-                        color: (opacity = 1) => `rgba(0, 0, 0, ${opacity * 0})`, // Цвет линий
-                        labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Цвет меток
-                        style: {
-                          // borderRadius: 16,
-                          // borderWidth: 1,
-                        },
-                        propsForDots: {
-                          r: "0" // радиус 0, чтобы скрыть точки
-                        },
-                        propsForLabels: {
-                          fontSize: 10 // Уменьшение шрифта меток
-                        }
-                      }}
-                      style={{
-                        marginVertical: 10,
-                        //  borderRadius: 16,
-                        elevation: 10
-                      }}
-                    />
-                  </>
+                          }}
+                          style={{
+                            borderWidth: 1,
+                            borderColor: "wheat",
+                            marginVertical: 10,
+                            elevation: 10,
+                            borderRadius: 6
+                          }}
+                        />
+                      </>
+                    )}
+                  </View>
+                ) : (
+                  <View>
+                    {coinHistoryData.length > 0 && (
+                      <>
+                        <View
+                          style={{
+                            backgroundColor:
+                              chartData.prices[chartData.prices.length - 1] >
+                              chartData.prices[0]
+                                ? "green"
+                                : "red"
+                          }}
+                        />
+
+                        <LineChart
+                          data={{
+                            labels: is30DSelected
+                              ? chartData.labelDate.filter((_, index) => index % 2 === 0)
+                              : chartData.labelDate,
+                            datasets: [
+                              {
+                                data: chartData.prices,
+                                strokeWidth: 4,
+                                color: (opacity = 1) => {
+                                  const firstPrice = chartData.prices[0]
+                                  const lastPrice =
+                                    chartData.prices[chartData.prices.length - 1]
+                                  return lastPrice > firstPrice
+                                    ? `rgba(0, 255, 0, ${opacity})`
+                                    : `rgba(255, 0, 0, ${opacity})`
+                                }
+                              }
+                            ]
+                          }}
+                          width={Dimensions.get("window").width * 0.9} // Ширина графика
+                          height={Dimensions.get("window").height * 0.38}
+                          chartConfig={{
+                            backgroundGradientFrom: "#ACE1AF",
+                            backgroundGradientTo: "#ffffff",
+                            decimalPlaces: 2,
+                            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity * 0})`, // Цвет линий
+                            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Цвет меток
+                            style: {},
+                            propsForDots: {
+                              r: "0" // радиус 0, чтобы скрыть точки
+                            },
+                            propsForLabels: {
+                              fontSize: 10 // Уменьшение шрифта меток
+                            }
+                          }}
+                          style={{
+                            borderWidth: 1,
+                            borderBottomColor: "wheat",
+                            borderTopColor: "wheat",
+                            marginVertical: 10,
+
+                            elevation: 10
+                          }}
+                        />
+                      </>
+                    )}
+                  </View>
                 )}
-              </View>
+              </>
 
               {isloading ? null : (
                 <>
+                  <View
+                    style={{
+                      marginBottom: 5,
+                      alignItems: "start"
+                    }}
+                  >
+                    <TouchableOpacity onPress={() => theme()}>
+                      <Text style={[styles.themes, isDarkTheme && styles.activeButton]}>
+                        <Text
+                          style={[
+                            styles.buttonText,
+                            isDarkTheme && styles.activeButtonText
+                          ]}
+                        >
+                          {isDarkTheme ? "White chart" : "Dark chart"}
+                        </Text>
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
                   <View style={styles.coinInfo}>
                     <View style={styles.coinInfoBox}>
                       <Text style={styles.textMiddle}>

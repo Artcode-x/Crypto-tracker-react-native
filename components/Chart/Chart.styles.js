@@ -143,5 +143,15 @@ export const styles = StyleSheet.create({
     fontWeight: "300",
     color: "white",
     fontSize: RFValue(11)
+  },
+  themes: {
+    marginTop: 0,
+    backgroundColor: "#cccccc",
+    borderRadius: 5,
+    paddingVertical: 1,
+    paddingHorizontal: 8,
+    alignItems: "center",
+    borderColor: "wheat",
+    borderWidth: 1
   }
 })
