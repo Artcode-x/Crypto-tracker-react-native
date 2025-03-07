@@ -14,7 +14,8 @@ export const styles = StyleSheet.create({
   itemContainer: {
     flex: 1,
     margin: 5,
-    backgroundColor: "#696969",
+    // backgroundColor: "#696969",
+    backgroundColor: "rgba(50, 48, 49, 0.8)",
     alignItems: "center",
     justifyContent: "center",
     padding: 5,
