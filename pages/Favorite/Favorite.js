@@ -22,7 +22,7 @@ export default function Favorite() {
       dispatch(removeCoin(coin))
     }, 1500)
   }
-  console.log(flag)
+
   return (
     <View style={styles.favlist}>
       <FlatList
@@ -39,16 +39,6 @@ export default function Favorite() {
               ) : (
                 <Ionicons name='remove-circle-outline' size={24} color='gray' />
               )}
-
-              {/*   {flag[item.id] ? (
-                  <Ionicons
-                    name='checkmark-circle-outline'
-                    size={24}
-                    color='green'
-                  ></Ionicons>
-                ) : (
-                  <Ionicons name='add-circle-outline' size={24} color='gray' />
-                )}*/}
             </TouchableOpacity>
           </View>
         )}
