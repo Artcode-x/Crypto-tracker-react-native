@@ -21,5 +21,10 @@ export const styles = StyleSheet.create({
     padding: 5,
     borderRadius: 5
   },
-  list: {}
+  list: {},
+  cont: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 20
+  }
 })

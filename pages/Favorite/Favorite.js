@@ -7,12 +7,14 @@ import Ionicons from "react-native-vector-icons/Ionicons"
 import { TouchableOpacity } from "react-native"
 import { removeCoin } from "../../store/reducersSlice"
 import { styles } from "./Favorite.styles"
+import { FetchCandleData } from "../../components/FetchCandleData/FetchCandleData"
 
 export default function Favorite() {
   const dispatch = useDispatch()
   const coinData = useSelector(coinSelector)
 
   const [flag, setFlag] = useState({})
+  const [prices, setPrices] = useState([])
 
   const removeFromFav = (coin) => {
     setFlag((prev) => ({ ...prev, [coin.id]: true }))
@@ -21,6 +23,18 @@ export default function Favorite() {
       setFlag({})
       dispatch(removeCoin(coin))
     }, 1500)
+  }
+
+  const openModal = async (coin) => {
+    const symbol = coin.symbol.toUpperCase()
+    try {
+      const candlePrices = await FetchCandleData(symbol)
+
+      setPrices(candlePrices)
+      console.log(prices)
+    } catch (error) {
+      console.log(error.message)
+    }
   }
 
   return (
@@ -32,7 +46,8 @@ export default function Favorite() {
         )}
         renderItem={({ item }) => (
           <View style={styles.itemContainer}>
-            <CoinItem coin={item} />
+            <CoinItem coin={item} onPress={() => openModal(item)} />
+
             <TouchableOpacity onPress={() => removeFromFav(item)}>
               {flag[item.id] ? (
                 <Ionicons name='close-circle-outline' size={24} color='red'></Ionicons>
