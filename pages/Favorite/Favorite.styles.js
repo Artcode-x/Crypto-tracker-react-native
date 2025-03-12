@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native"
+import { RFPercentage, RFValue } from "react-native-responsive-fontsize"
 
 export const styles = StyleSheet.create({
   favlist: {
@@ -39,6 +40,20 @@ export const styles = StyleSheet.create({
     backgroundColor: "rgba(75, 73, 74, 0.9)",
     elevation: 5,
     padding: 20,
-    justifyContent: "center"
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  textUp: {
+    fontWeight: "300",
+    color: "white",
+    fontSize: RFValue(11)
+  },
+  modalTitle: {
+    // fontSize: 24,
+    fontSize: RFValue(23),
+    fontWeight: "bold",
+    // color: "#333",
+    color: "white",
+    paddingBottom: "10"
   }
 })

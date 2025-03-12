@@ -1,5 +1,5 @@
-import React, { useState } from "react"
-import { View, FlatList, Modal, Button, Dimensions } from "react-native"
+import React, { useEffect, useState } from "react"
+import { View, FlatList, Modal, Button, Dimensions, Text } from "react-native"
 import { useDispatch, useSelector } from "react-redux"
 import { coinSelector } from "../../store/toolkitSelectors"
 import CoinItem from "../../components/CoinItem/CoinItem"
@@ -10,6 +10,7 @@ import { styles } from "./Favorite.styles"
 import { FetchCandleData } from "../../components/FetchCandleData/FetchCandleData"
 import { LineChart } from "react-native-chart-kit"
 import { getTimeLabels } from "../../helpers/helpers"
+import { Get24hrMinMaxPrices } from "../../components/Api/Api"
 
 export default function Favorite() {
   const dispatch = useDispatch()
@@ -18,6 +19,7 @@ export default function Favorite() {
   const [flag, setFlag] = useState({})
   const [prices, setPrices] = useState([])
   const [isModalVisible, setModalVisible] = useState(false)
+  const [minMax, setMinMax] = useState({ minPrice: null, maxPrice: null })
 
   const removeFromFav = (coin) => {
     setFlag((prev) => ({ ...prev, [coin.id]: true }))
@@ -31,6 +33,12 @@ export default function Favorite() {
   const openModal = async (coin) => {
     console.log(coin.symbol)
     const symbol = coin.symbol.toUpperCase()
+    const minMaxPrice = await Get24hrMinMaxPrices(symbol)
+    setMinMax({
+      minPrice: minMaxPrice.minPrice,
+      maxPrice: minMaxPrice.maxPrice
+    })
+
     try {
       const candlePrices = await FetchCandleData(symbol)
       if (candlePrices && candlePrices.length > 0) {
@@ -73,7 +81,7 @@ export default function Favorite() {
       }
     ]
   }
-
+  console.log(prices)
   return (
     <View style={styles.favlist}>
       <FlatList
@@ -100,6 +108,28 @@ export default function Favorite() {
 
       <Modal visible={isModalVisible} animationType='slide'>
         <View style={styles.chartContainer}>
+          <Text style={styles.modalTitle}>{coinData.name}</Text>
+          <View
+            style={{
+              flexDirection: "row",
+              // justifyContent: "space-evenely",
+              borderRadius: "2%",
+              // backgroundColor: "whitesmoke"
+              backgroundColor: "rgba(75, 73, 74, 0.9)",
+              gap: 10
+            }}
+          >
+            <Text style={styles.textUp}>
+              Мин. 24 часа:
+              <Text style={{ color: "lightblue" }}> {minMax.minPrice}$</Text>
+            </Text>
+
+            <Text style={styles.textUp}>
+              Макс. 24 часа:
+              <Text style={{ color: "wheat" }}> {minMax.maxPrice}$</Text>
+            </Text>
+          </View>
+
           <LineChart
             data={chartData}
             // width={400}

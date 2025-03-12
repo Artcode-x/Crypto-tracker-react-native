@@ -19,3 +19,25 @@ export async function FetchCoinHistoricalData(coinId, switchChartDays) {
   const result = await response.json()
   return result.prices
 }
+
+export async function Get24hrMinMaxPrices(symbol) {
+  try {
+    const response = await fetch(
+      `https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}USDT`
+    )
+    const data = await response.json()
+
+    if (!data || Object.keys(data).length === 0) {
+      console.log("Нет данных для данного символа.")
+      return
+    }
+
+    const minPrice = parseFloat(data.lowPrice) // Минимальная цена за 24 часа
+    const maxPrice = parseFloat(data.highPrice) // Максимальная цена за 24 часа
+    return { minPrice, maxPrice }
+    // console.log(`Минимальная цена за 24 часа: ${minPrice}`)
+    // console.log(`Максимальная цена за 24 часа: ${maxPrice}`)
+  } catch (error) {
+    console.error("Ошибка при получении данных:", error)
+  }
+}
