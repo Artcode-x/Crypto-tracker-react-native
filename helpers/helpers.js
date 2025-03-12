@@ -16,3 +16,18 @@ export const uniqueDates = (datesArray) => {
   // Преобразуем Set обратно в массив
   return Array.from(uniqueSet)
 }
+
+// для графиков 1D
+export const getTimeLabels = (prices) => {
+  // Извлекаем время из объектов
+  const timeLabels = prices.map((item) => {
+    // item.time имеет формат "дата, время"
+    const time = item.time.split(", ")[1]
+    // Убираем секунды
+    return time.split(":").slice(0, 2).join(":")
+  })
+  // Показываем максимум 10 меток
+  const step = Math.ceil(timeLabels.length / 7)
+// Возвращаем только каждую n-ю метку
+  return timeLabels.filter((_, index) => index % step === 0) 
+}

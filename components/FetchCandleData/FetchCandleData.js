@@ -10,7 +10,8 @@ export const FetchCandleData = async (symbol) => {
       open: parseFloat(item[1]),
       high: parseFloat(item[2]),
       low: parseFloat(item[3]),
-      close: parseFloat(item[4])
+      close: parseFloat(item[4]),
+      volume: parseFloat(item[5])
     }))
 
     return prices

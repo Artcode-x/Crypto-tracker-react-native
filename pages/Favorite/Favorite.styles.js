@@ -26,5 +26,19 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 20
+  },
+  chartContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    // paddingTop: "15%",
+    // backgroundColor: "white",
+    // backgroundColor: "rgba(50, 48, 49, 0.8)",
+    backgroundColor: "rgba(75, 73, 74, 0.9)",
+    elevation: 5,
+    padding: 20,
+    justifyContent: "center"
   }
 })
