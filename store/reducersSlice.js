@@ -5,7 +5,7 @@ const initialState = {
   coinItem: [],
   //   previousState: null,
   flag: false,
-  chartDays: "1",
+  chartDays: "1h",
   flagForView: false
 }
 

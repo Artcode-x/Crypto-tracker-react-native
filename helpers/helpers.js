@@ -28,6 +28,6 @@ export const getTimeLabels = (prices) => {
   })
   // Показываем максимум 10 меток
   const step = Math.ceil(timeLabels.length / 7)
-// Возвращаем только каждую n-ю метку
-  return timeLabels.filter((_, index) => index % step === 0) 
+  // Возвращаем только каждую n-ю метку
+  return timeLabels.filter((_, index) => index % step === 0)
 }

@@ -59,7 +59,7 @@ export const styles = StyleSheet.create({
 
   chartButtons: {
     flexDirection: "row",
-    gap: "10",
+    gap: 10,
     backgroundColor: "rgba(50, 48, 49, 0.8)",
     borderWidth: 0.5,
     borderColor: "wheat",
@@ -98,5 +98,35 @@ export const styles = StyleSheet.create({
   textZ: {
     color: "wheat",
     fontSize: RFValue(12)
-  }
+  },
+  chartButtonsClose: {
+    marginTop: 5,
+    flexDirection: "row",
+    gap: 10,
+    backgroundColor: "rgba(50, 48, 49, 0.8)",
+    // borderWidth: 0.5,
+    // borderColor: "wheat",
+    // padding: 3,
+    // borderRadius: 15,
+
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 2,
+      height: 4
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 5 // Для Android
+  },
+  buttonClose: {
+    marginTop: 0,
+    backgroundColor: "lightgray",
+    borderRadius: 5,
+    borderColor: "wheat",
+    borderWidth: 0.5,
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    alignItems: "center"
+  },
+  closeb: { color: "black", fontSize: RFValue(14) }
 })

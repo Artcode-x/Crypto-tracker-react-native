@@ -198,13 +198,13 @@ export const Chart = ({
                       <Text
                         style={[
                           styles.chartButton,
-                          chartDays === 1 && styles.activeButton
+                          chartDays === "1h" && styles.activeButton
                         ]}
                       >
                         <Text
                           style={[
                             styles.buttonText,
-                            chartDays === 1 && styles.activeButtonText
+                            chartDays === "1h" && styles.activeButtonText
                           ]}
                         >
                           24H

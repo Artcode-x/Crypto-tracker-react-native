@@ -21,7 +21,7 @@ export default function Favorite() {
   const [prices, setPrices] = useState([])
   const [isModalVisible, setModalVisible] = useState(false)
   const [minMax, setMinMax] = useState({ minPrice: null, maxPrice: null })
-  const [days, setDays] = useState("1h")
+
   const [selectedCoin, setSelectedCoin] = useState(null)
 
   const removeFromFav = (coin) => {
@@ -42,20 +42,26 @@ export default function Favorite() {
     if (!selectedCoin) return
 
     const symbol = selectedCoin.symbol.toUpperCase()
+
     const days = chartDays
 
     try {
-      // const [minMaxPrice, candlePrices] = await Promise.all([
-      //   Get24hrMinMaxPrices(symbol),
-      //   FetchCandleData(symbol, days)
-      // ])
+      const [minMaxPrice, candlePrices] = await Promise.all([
+        Get24hrMinMaxPrices(symbol),
+        FetchCandleData(symbol, days)
+      ])
 
-      const candlePrices = await FetchCandleData(symbol, days)
+      // const candlePrices = await FetchCandleData(symbol, days)
+      // if (!candlePrices || candlePrices.length === 0) {
+      //   console.error("No candle prices returned")
+      // } else {
+      //   console.log("Candle prices:", candlePrices)
+      // }
       if (candlePrices && candlePrices.length > 0) {
         setPrices(candlePrices)
       }
-
-      const minMaxPrice = await Get24hrMinMaxPrices(symbol)
+      console.log(prices)
+      // const minMaxPrice = await Get24hrMinMaxPrices(symbol)
       setMinMax({
         minPrice: minMaxPrice.minPrice,
         maxPrice: minMaxPrice.maxPrice
@@ -75,24 +81,26 @@ export default function Favorite() {
     labels: getTimeLabels(prices),
     datasets: [
       {
-        data: prices.map((item) => item.high),
+        data: prices.map((item) => Number(item.high) || 0), // Приведение к числу
         color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
         strokeWidth: 2
       },
       {
-        data: prices.map((item) => item.low),
+        data: prices.map((item) => Number(item.low) || 0), // Приведение к числу
         color: (opacity = 1) => `rgba(0, 0, 255, ${opacity})`,
         strokeWidth: 2
       }
     ]
   }
+  console.log(prices)
 
   const volumeData = {
     // labels: prices.map((item) => item.time),
+    // отформотировать позже для корректного отображения на графике
     labels: getTimeLabels(prices),
     datasets: [
       {
-        data: prices.map((item) => item.volume),
+        data: prices.map((item) => Number(item.volume) || 0), // Приведение к числу
         color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
         strokeWidth: 2
       }
@@ -100,7 +108,6 @@ export default function Favorite() {
   }
 
   const switch1 = (days) => {
-    setDays(days)
     dispatch(setChartDays(days))
   }
 
@@ -130,7 +137,7 @@ export default function Favorite() {
 
       <Modal visible={isModalVisible} animationType='slide'>
         <View style={styles.chartContainer}>
-          <Text style={styles.modalTitle}>{coinData.name}</Text>
+          {/* <Text style={styles.modalTitle}>{coinData.name}</Text> */}
           <View
             style={{
               flexDirection: "row",
@@ -151,69 +158,77 @@ export default function Favorite() {
               <Text style={{ color: "wheat" }}> {minMax.maxPrice}$</Text>
             </Text>
           </View>
-          <LineChart
-            data={chartData}
-            // width={400}
-            // height={500}
-            width={Dimensions.get("window").width * 0.9}
-            height={Dimensions.get("window").height * 0.35}
-            yAxisLabel=''
-            yAxisSuffix=''
-            withVerticalLines={false}
-            withHorizontalLines={true}
-            chartConfig={{
-              backgroundColor: "#ffffff",
-              backgroundGradientFrom: "#ACE1AF",
-              backgroundGradientTo: "#ffffff",
-              decimalPlaces: 2,
-              color: (opacity = 1) => `rgba(0, 0, 0, ${opacity * 0})`, // Цвет линий
-              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Цвет меток
-              style: {
-                borderRadius: 16
-              },
-              propsForDots: {
-                r: "1",
-                strokeWidth: "2",
-                stroke: "#ffa726"
-              }
-            }}
-            style={{
-              marginVertical: 8,
-              borderRadius: 16,
 
-              alignItems: "center"
-            }}
-          />
-          <LineChart
-            data={volumeData}
-            // width={400}
-            // height={200}
-            width={Dimensions.get("window").width * 0.9}
-            height={Dimensions.get("window").height * 0.28}
-            chartConfig={{
-              backgroundColor: "#ffffff",
-              backgroundGradientFrom: "#ACE1AF",
-              backgroundGradientTo: "#ffffff",
-              decimalPlaces: 0, // кол-во знаков после запятой
-              color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
-              labelColor: (opacity = 1) => `black`,
+          {prices.length === 0 ? (
+            <Text style={{ color: "white" }}>Загрузка данных...</Text>
+          ) : (
+            <>
+              <LineChart
+                data={chartData}
+                // width={400}
+                // height={500}
+                width={Dimensions.get("window").width * 0.9}
+                height={Dimensions.get("window").height * 0.35}
+                yAxisLabel=''
+                yAxisSuffix=''
+                withVerticalLines={false}
+                withHorizontalLines={true}
+                chartConfig={{
+                  backgroundColor: "#ffffff",
+                  backgroundGradientFrom: "#ACE1AF",
+                  backgroundGradientTo: "#ffffff",
+                  decimalPlaces: 2,
+                  color: (opacity = 1) => `rgba(0, 0, 0, ${opacity * 0})`, // Цвет линий
+                  labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Цвет меток
+                  style: {
+                    borderRadius: 16
+                  },
+                  propsForDots: {
+                    r: "1",
+                    strokeWidth: "2",
+                    stroke: "#ffa726"
+                  }
+                }}
+                style={{
+                  marginVertical: 8,
+                  borderRadius: 16,
 
-              style: {
-                borderRadius: 16
-              },
-              propsForDots: {
-                r: "2",
-                strokeWidth: "2",
-                stroke: "#ffa726"
-              }
-            }}
-            bezier
-            style={{
-              marginVertical: 8,
-              borderRadius: 16,
-              alignItems: "center"
-            }}
-          />
+                  alignItems: "center"
+                }}
+              />
+              <LineChart
+                data={volumeData}
+                // width={400}
+                // height={200}
+                width={Dimensions.get("window").width * 0.9}
+                height={Dimensions.get("window").height * 0.28}
+                chartConfig={{
+                  backgroundColor: "#ffffff",
+                  backgroundGradientFrom: "#ACE1AF",
+                  backgroundGradientTo: "#ffffff",
+                  decimalPlaces: 0, // кол-во знаков после запятой
+                  color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
+                  labelColor: (opacity = 1) => `black`,
+
+                  style: {
+                    borderRadius: 16
+                  },
+                  propsForDots: {
+                    r: "2",
+                    strokeWidth: "2",
+                    stroke: "#ffa726"
+                  }
+                }}
+                bezier
+                style={{
+                  marginVertical: 8,
+                  borderRadius: 16,
+                  alignItems: "center"
+                }}
+              />
+            </>
+          )}
+
           {/* start */}
           <Text style={styles.text}>
             Выбранный диапазон дней:<Text style={styles.textZ}> {chartDays}</Text>
@@ -271,7 +286,7 @@ export default function Favorite() {
                     chartDays === "1w" && styles.activeButtonText
                   ]}
                 >
-                  1 week
+                  1W
                 </Text>
               </Text>
             </TouchableOpacity>
@@ -285,13 +300,21 @@ export default function Favorite() {
                     chartDays === "1M" && styles.activeButtonText
                   ]}
                 >
-                  1 Month
+                  1M
                 </Text>
               </Text>
             </TouchableOpacity>
           </View>
           {/* end */}
-          <Button title='Закрыть' onPress={() => setModalVisible(false)} />
+          <View style={styles.chartButtonsClose}>
+            <TouchableOpacity
+              style={styles.buttonClose}
+              title='Закрыть'
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.closeb}>Close</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </View>
