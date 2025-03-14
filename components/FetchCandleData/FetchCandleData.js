@@ -1,9 +1,9 @@
 import axios from "axios"
 
-export const FetchCandleData = async (symbol) => {
+export async function FetchCandleData(symbol, days) {
   try {
     const response = await axios.get(
-      `https://api.binance.com/api/v3/klines?symbol=${symbol}USDT&interval=1h&limit=10`
+      `https://api.binance.com/api/v3/klines?symbol=${symbol}USDT&interval=${days}&limit=10`
     )
     const prices = response.data.map((item) => ({
       time: new Date(item[0]).toLocaleString(),
@@ -17,5 +17,6 @@ export const FetchCandleData = async (symbol) => {
     return prices
   } catch (error) {
     console.log(error.message)
+    return []
   }
 }
