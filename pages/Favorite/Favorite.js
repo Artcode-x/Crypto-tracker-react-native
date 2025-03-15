@@ -11,6 +11,8 @@ import { FetchCandleData } from "../../components/FetchCandleData/FetchCandleDat
 import { LineChart } from "react-native-chart-kit"
 import { getTimeLabels } from "../../helpers/helpers"
 import { Get24hrMinMaxPrices } from "../../components/Api/Api"
+import { CandleChart } from "./FavoriteCharts/CandleChart/CandleChart"
+import { VolumeChart } from "./FavoriteCharts/VolumeChart/VolumeChart"
 
 export default function Favorite() {
   const dispatch = useDispatch()
@@ -163,69 +165,10 @@ export default function Favorite() {
             <Text style={{ color: "white" }}>Загрузка данных...</Text>
           ) : (
             <>
-              <LineChart
-                data={chartData}
-                // width={400}
-                // height={500}
-                width={Dimensions.get("window").width * 0.9}
-                height={Dimensions.get("window").height * 0.35}
-                yAxisLabel=''
-                yAxisSuffix=''
-                withVerticalLines={false}
-                withHorizontalLines={true}
-                chartConfig={{
-                  backgroundColor: "#ffffff",
-                  backgroundGradientFrom: "#ACE1AF",
-                  backgroundGradientTo: "#ffffff",
-                  decimalPlaces: 2,
-                  color: (opacity = 1) => `rgba(0, 0, 0, ${opacity * 0})`, // Цвет линий
-                  labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Цвет меток
-                  style: {
-                    borderRadius: 16
-                  },
-                  propsForDots: {
-                    r: "1",
-                    strokeWidth: "2",
-                    stroke: "#ffa726"
-                  }
-                }}
-                style={{
-                  marginVertical: 8,
-                  borderRadius: 16,
-
-                  alignItems: "center"
-                }}
-              />
-              <LineChart
-                data={volumeData}
-                // width={400}
-                // height={200}
-                width={Dimensions.get("window").width * 0.9}
-                height={Dimensions.get("window").height * 0.28}
-                chartConfig={{
-                  backgroundColor: "#ffffff",
-                  backgroundGradientFrom: "#ACE1AF",
-                  backgroundGradientTo: "#ffffff",
-                  decimalPlaces: 0, // кол-во знаков после запятой
-                  color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
-                  labelColor: (opacity = 1) => `black`,
-
-                  style: {
-                    borderRadius: 16
-                  },
-                  propsForDots: {
-                    r: "2",
-                    strokeWidth: "2",
-                    stroke: "#ffa726"
-                  }
-                }}
-                bezier
-                style={{
-                  marginVertical: 8,
-                  borderRadius: 16,
-                  alignItems: "center"
-                }}
-              />
+              <Text style={styles.text1}>Min and Max trade range:</Text>
+              <CandleChart chartData={chartData} />
+              <Text style={styles.text1}>Volume range:</Text>
+              <VolumeChart volumeData={volumeData} />
             </>
           )}
 

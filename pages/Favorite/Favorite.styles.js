@@ -95,6 +95,7 @@ export const styles = StyleSheet.create({
     fontWeight: "bold"
   },
   text: { color: "white", paddingBottom: 5, fontSize: RFValue(12) },
+  text1: { color: "white", fontSize: RFValue(12) },
   textZ: {
     color: "wheat",
     fontSize: RFValue(12)
