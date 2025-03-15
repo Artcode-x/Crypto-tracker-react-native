@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react"
-import { View, FlatList, Modal, Button, Dimensions, Text } from "react-native"
+import { View, FlatList, Modal, Text } from "react-native"
 import { useDispatch, useSelector } from "react-redux"
 import { coinSelector, daysSelector } from "../../store/toolkitSelectors"
 import CoinItem from "../../components/CoinItem/CoinItem"
 import Ionicons from "react-native-vector-icons/Ionicons"
 import { TouchableOpacity } from "react-native"
-import { removeCoin, setChartDays } from "../../store/reducersSlice"
+import { removeCoin } from "../../store/reducersSlice"
 import { styles } from "./Favorite.styles"
 import { FetchCandleData } from "../../components/FetchCandleData/FetchCandleData"
-import { LineChart } from "react-native-chart-kit"
 import { getTimeLabels } from "../../helpers/helpers"
 import { Get24hrMinMaxPrices } from "../../components/Api/Api"
 import { CandleChart } from "./FavoriteCharts/CandleChart/CandleChart"
 import { VolumeChart } from "./FavoriteCharts/VolumeChart/VolumeChart"
+import { SwitchTimeframeButtons } from "./SwitchTimeframeButtons/SwitchTimeframeButtons"
 
 export default function Favorite() {
   const dispatch = useDispatch()
@@ -109,9 +109,9 @@ export default function Favorite() {
     ]
   }
 
-  const switch1 = (days) => {
-    dispatch(setChartDays(days))
-  }
+  // const switch1 = (days) => {
+  //   dispatch(setChartDays(days))
+  // }
 
   return (
     <View style={styles.favlist}>
@@ -160,7 +160,6 @@ export default function Favorite() {
               <Text style={{ color: "wheat" }}> {minMax.maxPrice}$</Text>
             </Text>
           </View>
-
           {prices.length === 0 ? (
             <Text style={{ color: "white" }}>Загрузка данных...</Text>
           ) : (
@@ -171,83 +170,11 @@ export default function Favorite() {
               <VolumeChart volumeData={volumeData} />
             </>
           )}
-
           {/* start */}
           <Text style={styles.text}>
             Выбранный диапазон дней:<Text style={styles.textZ}> {chartDays}</Text>
           </Text>
-          <View style={styles.chartButtons}>
-            <TouchableOpacity onPress={() => switch1("1h")}>
-              <Text
-                style={[styles.chartButton, chartDays === "1h" && styles.activeButton]}
-              >
-                <Text
-                  style={[
-                    styles.buttonText,
-                    chartDays === "1h" && styles.activeButtonText
-                  ]}
-                >
-                  1H
-                </Text>
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => switch1("4h")}>
-              <Text
-                style={[styles.chartButton, chartDays === "4h" && styles.activeButton]}
-              >
-                <Text
-                  style={[
-                    styles.buttonText,
-                    chartDays === "4h" && styles.activeButtonText
-                  ]}
-                >
-                  4H
-                </Text>
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => switch1("1d")}>
-              <Text
-                style={[styles.chartButton, chartDays === "1d" && styles.activeButton]}
-              >
-                <Text
-                  style={[
-                    styles.buttonText,
-                    chartDays === "1d" && styles.activeButtonText
-                  ]}
-                >
-                  1D
-                </Text>
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => switch1("1w")}>
-              <Text
-                style={[styles.chartButton, chartDays === "1w" && styles.activeButton]}
-              >
-                <Text
-                  style={[
-                    styles.buttonText,
-                    chartDays === "1w" && styles.activeButtonText
-                  ]}
-                >
-                  1W
-                </Text>
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => switch1("1M")}>
-              <Text
-                style={[styles.chartButton, chartDays === "1M" && styles.activeButton]}
-              >
-                <Text
-                  style={[
-                    styles.buttonText,
-                    chartDays === "1M" && styles.activeButtonText
-                  ]}
-                >
-                  1M
-                </Text>
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <SwitchTimeframeButtons chartDays={chartDays} />
           {/* end */}
           <View style={styles.chartButtonsClose}>
             <TouchableOpacity
