@@ -8,7 +8,7 @@ import { TouchableOpacity } from "react-native"
 import { removeCoin } from "../../store/reducersSlice"
 import { styles } from "./Favorite.styles"
 import { FetchCandleData } from "../../components/FetchCandleData/FetchCandleData"
-import { getTimeLabels } from "../../helpers/helpers"
+import { formatTime, getTimeLabels } from "../../helpers/helpers"
 import { Get24hrMinMaxPrices } from "../../components/Api/Api"
 import { CandleChart } from "./FavoriteCharts/CandleChart/CandleChart"
 import { VolumeChart } from "./FavoriteCharts/VolumeChart/VolumeChart"
@@ -53,17 +53,10 @@ export default function Favorite() {
         FetchCandleData(symbol, days)
       ])
 
-      // const candlePrices = await FetchCandleData(symbol, days)
-      // if (!candlePrices || candlePrices.length === 0) {
-      //   console.error("No candle prices returned")
-      // } else {
-      //   console.log("Candle prices:", candlePrices)
-      // }
       if (candlePrices && candlePrices.length > 0) {
         setPrices(candlePrices)
       }
-      console.log(prices)
-      // const minMaxPrice = await Get24hrMinMaxPrices(symbol)
+
       setMinMax({
         minPrice: minMaxPrice.minPrice,
         maxPrice: minMaxPrice.maxPrice
@@ -80,7 +73,10 @@ export default function Favorite() {
   }, [isModalVisible, selectedCoin, chartDays])
 
   const chartData = {
-    labels: getTimeLabels(prices),
+    labels:
+      chartDays === "1h" || chartDays === "4h"
+        ? getTimeLabels(prices)
+        : formatTime(prices),
     datasets: [
       {
         data: prices.map((item) => Number(item.high) || 0), // Приведение к числу
@@ -88,30 +84,26 @@ export default function Favorite() {
         strokeWidth: 2
       },
       {
-        data: prices.map((item) => Number(item.low) || 0), // Приведение к числу
+        data: prices.map((item) => Number(item.low) || 0),
         color: (opacity = 1) => `rgba(0, 0, 255, ${opacity})`,
         strokeWidth: 2
       }
     ]
   }
-  console.log(prices)
 
   const volumeData = {
-    // labels: prices.map((item) => item.time),
-    // отформотировать позже для корректного отображения на графике
-    labels: getTimeLabels(prices),
+    labels:
+      chartDays === "1h" || chartDays === "4h"
+        ? getTimeLabels(prices)
+        : formatTime(prices),
     datasets: [
       {
-        data: prices.map((item) => Number(item.volume) || 0), // Приведение к числу
+        data: prices.map((item) => Number(item.volume) || 0),
         color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
         strokeWidth: 2
       }
     ]
   }
-
-  // const switch1 = (days) => {
-  //   dispatch(setChartDays(days))
-  // }
 
   return (
     <View style={styles.favlist}>
@@ -143,9 +135,7 @@ export default function Favorite() {
           <View
             style={{
               flexDirection: "row",
-              // justifyContent: "space-evenely",
               borderRadius: "2%",
-              // backgroundColor: "whitesmoke"
               backgroundColor: "rgba(75, 73, 74, 0.9)",
               gap: 10
             }}

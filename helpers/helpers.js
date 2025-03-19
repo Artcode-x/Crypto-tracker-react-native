@@ -17,7 +17,7 @@ export const uniqueDates = (datesArray) => {
   return Array.from(uniqueSet)
 }
 
-// для графиков 1D
+// для меньших ТФ
 export const getTimeLabels = (prices) => {
   // Извлекаем время из объектов
   const timeLabels = prices.map((item) => {
@@ -29,5 +29,19 @@ export const getTimeLabels = (prices) => {
   // Показываем максимум 10 меток
   const step = Math.ceil(timeLabels.length / 7)
   // Возвращаем только каждую n-ю метку
+  return timeLabels.filter((_, index) => index % step === 0)
+}
+
+// для больших ТФ
+export const formatTime = (prices) => {
+  const timeLabels = prices.map((item) => {
+    const time = item.time.split(", ")[0]
+    const dateParts = time.split(".")
+    const dayAndMonth = dateParts.slice(0, 2).join(".")
+    return dayAndMonth.split(":").join(":")
+  })
+
+  const step = Math.ceil(timeLabels.length / 8)
+
   return timeLabels.filter((_, index) => index % step === 0)
 }
