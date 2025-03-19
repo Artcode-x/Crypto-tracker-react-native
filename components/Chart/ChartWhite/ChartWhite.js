@@ -35,7 +35,7 @@ export const ChartWhite = ({ coinHistoryData, chartData, is30DSelected }) => {
               ]
             }}
             width={Dimensions.get("window").width * 0.9} // Ширина графика
-            height={Dimensions.get("window").height * 0.38}
+            height={Dimensions.get("window").height * 0.35}
             chartConfig={{
               backgroundGradientFrom: "#ACE1AF",
               backgroundGradientTo: "#ffffff",

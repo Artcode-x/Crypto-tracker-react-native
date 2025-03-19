@@ -36,7 +36,7 @@ export const ChartBlack = ({ coinHistoryData, chartData, is30DSelected }) => {
                 ]
               }}
               width={Dimensions.get("window").width * 0.9}
-              height={Dimensions.get("window").height * 0.38}
+              height={Dimensions.get("window").height * 0.35}
               chartConfig={{
                 backgroundGradientFrom: "#000000",
                 backgroundGradientTo: "#000000",
