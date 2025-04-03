@@ -6,7 +6,8 @@ const initialState = {
   //   previousState: null,
   flag: false,
   chartDays: "1h",
-  flagForView: false
+  flagForView: false,
+  duplicate: false
 }
 
 const reducersSlice = createSlice({
@@ -40,6 +41,9 @@ const reducersSlice = createSlice({
     },
     setFlagForView: (state, action) => {
       state.flagForView = action.payload
+    },
+    setDuplicate: (state, action) => {
+      state.duplicate = action.payload
     }
   }
 })
@@ -50,6 +54,7 @@ export const {
   removeCoin,
   setChartDays,
   rewriteFavorite,
-  setFlagForView
+  setFlagForView,
+  setDuplicate
 } = reducersSlice.actions
 export default reducersSlice.reducer

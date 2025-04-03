@@ -4,8 +4,8 @@ import { styles } from "./CoinList.styles"
 import { useDispatch, useSelector } from "react-redux"
 import CoinItem from "../CoinItem/CoinItem"
 import Ionicons from "react-native-vector-icons/Ionicons"
-import { rewriteFavorite, setCoin } from "../../store/reducersSlice"
-import { coinSelector } from "../../store/toolkitSelectors"
+import { rewriteFavorite, setCoin, setDuplicate } from "../../store/reducersSlice"
+import { coinSelector, duplicateSelector } from "../../store/toolkitSelectors"
 
 const CoinList = ({
   data,
@@ -17,6 +17,8 @@ const CoinList = ({
   errorMessage
 }) => {
   const favoriteCoins = useSelector(coinSelector)
+  const doubles = useSelector(duplicateSelector)
+  const [msgDouble, setMsgDouble] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
   const [flag, setFlag] = useState({})
   const dispatch = useDispatch()
@@ -58,35 +60,28 @@ const CoinList = ({
     const isDuplicate = favoriteCoins.some(
       (favoriteCoin) => favoriteCoin.id === coinData.id
     )
-
+    console.log(isDuplicate)
     if (isDuplicate) {
-      console.log("Дубликат найден: " + coinData.name)
+      console.log("Дубликат найден: " + coinData.id)
+      dispatch(setDuplicate(coinData.id))
+      setMsgDouble(true)
+      setTimeout(() => {
+        setMsgDouble(false)
+      }, 1500)
     } else {
-      console.log("all good")
+      console.log("Нет дублей")
+      dispatch(setCoin(coinData))
+      setModalVisible(true)
+
+      setFlag((prevFlag) => ({ ...prevFlag, [coinData.id]: true }))
+      setTimeout(() => {
+        setFlag((prevFlag) => ({ ...prevFlag, [coinData.id]: false })) // Сброс флага через время
+      }, 1800)
+
+      setTimeout(() => {
+        setModalVisible(false)
+      }, 500)
     }
-
-    // coinData.forEach((coin) => {
-    //   const isDouplicate = favoriteCoins.some(
-    //     (favoriteCoin) => favoriteCoin.id === coin.id
-    //   )
-    //   if (isDouplicate) {
-    //     console.log("Dvoinik")
-    //   } else {
-    //     console.log("allClear")
-    //   }
-    // })
-
-    dispatch(setCoin(coinData))
-    setModalVisible(true)
-
-    setFlag((prevFlag) => ({ ...prevFlag, [coinData.id]: true }))
-    setTimeout(() => {
-      setFlag((prevFlag) => ({ ...prevFlag, [coinData.id]: false })) // Сброс флага через время
-    }, 1800)
-
-    setTimeout(() => {
-      setModalVisible(false)
-    }, 500)
   }
 
   return (
@@ -171,6 +166,16 @@ const CoinList = ({
         <View style={styles.modalBox}>
           <View style={styles.modalCont}>
             <Text style={styles.modalT}>Added to favorite!</Text>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal transparent visible={msgDouble} onRequestClose={() => setMsgDouble(false)}>
+        <View style={styles.modalBox}>
+          <View style={styles.modalCont}>
+            <Text style={styles.modalT2}>
+              You already have {doubles} in your favorites!
+            </Text>
           </View>
         </View>
       </Modal>

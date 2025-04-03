@@ -33,6 +33,10 @@ export const styles = StyleSheet.create({
     fontSize: 18,
     color: "#000"
   },
+  modalT2: {
+    fontSize: 18,
+    color: "red"
+  },
   errorMsg: {
     color: "red",
     flex: "1",
