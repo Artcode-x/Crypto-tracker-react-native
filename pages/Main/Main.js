@@ -13,13 +13,11 @@ import prepareChartData from "../../components/PrepareChartData/PrepareChartData
 import { Chart } from "../../components/Chart/Chart"
 import { useSelector } from "react-redux"
 import { daysSelector, viewMarketFlagSelector } from "../../store/toolkitSelectors"
-import { pick } from "lodash"
-import { CandleChart } from "react-native-wagmi-charts"
 import { FetchCoinHistoricalData, GetMarketData } from "../../components/Api/Api"
-
 import Ionicons from "react-native-vector-icons/Ionicons"
 import { ModalView } from "../../components/ModalView/ModalView"
 import CoinList2 from "../../components/CoinList2/Coinlist2"
+
 const Main = () => {
   const [search, setSearch] = useState("")
   const [refreshing, setRefreshing] = useState(false)

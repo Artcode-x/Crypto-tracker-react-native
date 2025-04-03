@@ -55,6 +55,27 @@ const CoinList = ({
   }, [data])
 
   const addToFavorite = (coinData) => {
+    const isDuplicate = favoriteCoins.some(
+      (favoriteCoin) => favoriteCoin.id === coinData.id
+    )
+
+    if (isDuplicate) {
+      console.log("Дубликат найден: " + coinData.name)
+    } else {
+      console.log("all good")
+    }
+
+    // coinData.forEach((coin) => {
+    //   const isDouplicate = favoriteCoins.some(
+    //     (favoriteCoin) => favoriteCoin.id === coin.id
+    //   )
+    //   if (isDouplicate) {
+    //     console.log("Dvoinik")
+    //   } else {
+    //     console.log("allClear")
+    //   }
+    // })
+
     dispatch(setCoin(coinData))
     setModalVisible(true)
 
