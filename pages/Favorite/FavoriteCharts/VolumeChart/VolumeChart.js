@@ -1,5 +1,6 @@
 import { Dimensions, View } from "react-native"
 import { LineChart } from "react-native-chart-kit"
+import { RFValue } from "react-native-responsive-fontsize"
 
 export const VolumeChart = ({ volumeData }) => {
   return (
@@ -25,6 +26,9 @@ export const VolumeChart = ({ volumeData }) => {
             r: "2",
             strokeWidth: "2",
             stroke: "#ffa726"
+          },
+          propsForLabels: {
+            fontSize: RFValue(9)
           }
         }}
         bezier

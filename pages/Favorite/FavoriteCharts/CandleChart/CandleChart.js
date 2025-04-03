@@ -1,5 +1,6 @@
 import { Dimensions, View } from "react-native"
 import { LineChart } from "react-native-chart-kit"
+import { RFValue } from "react-native-responsive-fontsize"
 
 export const CandleChart = ({ chartData }) => {
   return (
@@ -19,8 +20,10 @@ export const CandleChart = ({ chartData }) => {
           backgroundGradientFrom: "#ACE1AF",
           backgroundGradientTo: "#ffffff",
           decimalPlaces: 2,
+
           color: (opacity = 1) => `rgba(0, 0, 0, ${opacity * 0})`, // Цвет линий
           labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Цвет меток
+
           style: {
             borderRadius: 16
           },
@@ -28,6 +31,9 @@ export const CandleChart = ({ chartData }) => {
             r: "1",
             strokeWidth: "2",
             stroke: "#ffa726"
+          },
+          propsForLabels: {
+            fontSize: RFValue(9)
           }
         }}
         style={{

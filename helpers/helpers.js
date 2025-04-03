@@ -33,12 +33,33 @@ export const getTimeLabels = (prices) => {
 }
 
 // для больших ТФ
+
 export const formatTime = (prices) => {
   const timeLabels = prices.map((item) => {
     const time = item.time.split(", ")[0]
     const dateParts = time.split(".")
-    const dayAndMonth = dateParts.slice(0, 2).join(".")
-    return dayAndMonth.split(":").join(":")
+
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ]
+    const day = dateParts[0]
+    const monthIndex = parseInt(dateParts[1], 10) - 1
+    const year = dateParts[2].slice(2, 4)
+
+    const formattedDate = `${day} ${monthNames[monthIndex]} ${year}`
+
+    return formattedDate
   })
 
   const step = Math.ceil(timeLabels.length / 8)
