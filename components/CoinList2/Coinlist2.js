@@ -4,7 +4,7 @@ import { styles } from "./CoinList2.styles"
 import { useDispatch, useSelector } from "react-redux"
 import CoinItem from "../CoinItem/CoinItem"
 import Ionicons from "react-native-vector-icons/Ionicons"
-import { rewriteFavorite, setCoin } from "../../store/reducersSlice"
+import { rewriteFavorite, setCoin, setDuplicate } from "../../store/reducersSlice"
 import { coinSelector, viewMarketFlagSelector } from "../../store/toolkitSelectors"
 
 const CoinList2 = ({
@@ -18,6 +18,7 @@ const CoinList2 = ({
 }) => {
   const favoriteCoins = useSelector(coinSelector)
   const [modalVisible, setModalVisible] = useState(false)
+  const [msgDouble, setMsgDouble] = useState(false)
   const dispatch = useDispatch()
 
   const marketView = useSelector(viewMarketFlagSelector)
@@ -56,12 +57,26 @@ const CoinList2 = ({
   }, [data])
 
   const addToFavorite = (coinData) => {
-    dispatch(setCoin(coinData)) // Диспатчим только необходимые данные из огромного обьекта
-    setModalVisible(true)
+    const isDuplicate = favoriteCoins.some(
+      (favoriteCoin) => favoriteCoin.id === coinData.id
+    )
 
-    setTimeout(() => {
-      setModalVisible(false)
-    }, 500)
+    if (isDuplicate) {
+      console.log("Дубликат найден: " + coinData.id)
+      dispatch(setDuplicate(coinData.id))
+      setMsgDouble(true)
+      setTimeout(() => {
+        setMsgDouble(false)
+      }, 1500)
+    } else {
+      console.log("Нет дублей")
+      dispatch(setCoin(coinData)) // Диспатчим только необходимые данные из огромного обьекта
+      setModalVisible(true)
+
+      setTimeout(() => {
+        setModalVisible(false)
+      }, 1000)
+    }
   }
 
   return (
@@ -147,10 +162,22 @@ const CoinList2 = ({
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalBox}>
-          <View style={styles.modalCont}>
-            <Text style={styles.modalT}>Added to favorite!</Text>
-          </View>
+        <View style={styles.dropdown}>
+          <TouchableOpacity style={styles.dropdownItem}>
+            <Text style={styles.dropdownText}>Added in your favorites!</Text>
+            <Ionicons style={styles.changePoint} name='paper-plane' size={30} />
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
+      <Modal transparent visible={msgDouble} onRequestClose={() => setMsgDouble(false)}>
+        <View style={styles.dropdown}>
+          <TouchableOpacity style={styles.dropdownItem}>
+            <Text style={styles.dropdownText}>
+              You already have this coin in your favorites!
+            </Text>
+            <Ionicons style={styles.changePoint} name='warning' size={30} />
+          </TouchableOpacity>
         </View>
       </Modal>
     </>
