@@ -50,16 +50,12 @@ export const styles = StyleSheet.create({
   },
   chartButtons: {
     flexDirection: "row",
-    gap: "10",
-    // backgroundColor: "whitesmoke",
+    gap: 10,
     backgroundColor: "rgba(75, 73, 74, 0.9)",
     borderWidth: 0.5,
     borderColor: "wheat",
-    // borderRadius: "10%",
-
-    padding: "10",
-    borderRadius: "2%",
-    // add
+    padding: 7,
+    borderRadius: 15,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -73,8 +69,8 @@ export const styles = StyleSheet.create({
     marginTop: 0,
     backgroundColor: "#cccccc",
     borderRadius: 5,
-    paddingVertical: 7,
-    paddingHorizontal: 20,
+    paddingVertical: 3,
+    paddingHorizontal: 15,
     alignItems: "center"
   },
   activeButton: {

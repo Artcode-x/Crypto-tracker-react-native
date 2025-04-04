@@ -1,4 +1,4 @@
-import { View, Dimensions } from "react-native"
+import { View, Dimensions, StyleSheet } from "react-native"
 import { LineChart } from "react-native-chart-kit"
 
 export const ChartBlack = ({ coinHistoryData, chartData, is30DSelected }) => {
@@ -36,7 +36,7 @@ export const ChartBlack = ({ coinHistoryData, chartData, is30DSelected }) => {
                 ]
               }}
               width={Dimensions.get("window").width * 0.9}
-              height={Dimensions.get("window").height * 0.35}
+              height={Dimensions.get("window").height * 0.34}
               chartConfig={{
                 backgroundGradientFrom: "#000000",
                 backgroundGradientTo: "#000000",
@@ -53,13 +53,7 @@ export const ChartBlack = ({ coinHistoryData, chartData, is30DSelected }) => {
                   fontSize: 10
                 }
               }}
-              style={{
-                borderWidth: 1,
-                borderColor: "wheat",
-                marginVertical: 10,
-                elevation: 10,
-                borderRadius: 6
-              }}
+              style={styles.chartStyle}
             />
           </>
         )}
@@ -67,3 +61,13 @@ export const ChartBlack = ({ coinHistoryData, chartData, is30DSelected }) => {
     </>
   )
 }
+
+const styles = StyleSheet.create({
+  chartStyle: {
+    borderWidth: 1,
+    borderColor: "wheat",
+    marginVertical: 10,
+    elevation: 10,
+    borderRadius: 16
+  }
+})

@@ -90,7 +90,8 @@ const Main = () => {
   }
 
   const chartData = prepareChartData(coinHistoryData)
-
+  // console.log("chartData:", chartData.labelDate)
+  // console.log("chartData2:", chartData.prices)
   // Для получения новых исторических данных при изменении chartDays(таймфрейм недельки/дни), чтобы данные на графике менялись не закрывая его.
   // При переключении Таймфрейма график будет перерисован
 
@@ -135,9 +136,7 @@ const Main = () => {
 
         {/* logo-codepen, logo-buffer, tv, pulse, menu, list, analytics , grid, */}
       </View>
-
       <ModalView modal={modal} setModal={setModal} />
-
       {flagForLoader ? (
         <ActivityIndicator size='large' color='red' />
       ) : (
@@ -166,8 +165,8 @@ const Main = () => {
           )}
         </>
       )}
-
       {/* Модальное окно с графиком */}
+      {/* {chartData.prices.length > 0 && chartData.labelDate.length > 0 && ( */}
       <Chart
         selectedCoinData={selectedCoinData}
         chartData={chartData}
@@ -176,6 +175,7 @@ const Main = () => {
         isloading={isloading}
         coinHistoryData={coinHistoryData}
       />
+      {/* )} */}
     </View>
   )
 }
