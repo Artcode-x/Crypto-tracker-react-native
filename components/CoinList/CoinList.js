@@ -98,7 +98,6 @@ const CoinList = ({
           )}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
-            // <View style={[marketView && { flexWrap: "wrap" }, styles.leftBlock]}>
             <View
               style={[
                 flag[item.id] && { borderLeftWidth: 2, borderLeftColor: "orange" },
@@ -163,20 +162,22 @@ const CoinList = ({
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalBox}>
-          <View style={styles.modalCont}>
-            <Text style={styles.modalT}>Added to favorite!</Text>
-          </View>
+        <View style={styles.dropdown}>
+          <TouchableOpacity style={styles.dropdownItem}>
+            <Text style={styles.dropdownText}>Added in your favorites!</Text>
+            <Ionicons style={styles.changePoint} name='paper-plane' size={30} />
+          </TouchableOpacity>
         </View>
       </Modal>
 
       <Modal transparent visible={msgDouble} onRequestClose={() => setMsgDouble(false)}>
-        <View style={styles.modalBox}>
-          <View style={styles.modalCont}>
-            <Text style={styles.modalT2}>
+        <View style={styles.dropdown}>
+          <TouchableOpacity style={styles.dropdownItem}>
+            <Text style={styles.dropdownText}>
               You already have {doubles} in your favorites!
             </Text>
-          </View>
+            <Ionicons style={styles.changePoint} name='warning' size={30} />
+          </TouchableOpacity>
         </View>
       </Modal>
     </>
