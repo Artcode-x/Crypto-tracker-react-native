@@ -7,14 +7,13 @@ import Ionicons from "react-native-vector-icons/Ionicons"
 import { TouchableOpacity } from "react-native"
 import { removeCoin } from "../../store/reducersSlice"
 import { styles } from "./Favorite.styles"
-import { FetchCandleData } from "../../components/FetchCandleData/FetchCandleData"
 import { formatTime, getTimeLabels } from "../../helpers/helpers"
-import { Get24hrMinMaxPrices } from "../../components/Api/Api"
+import { FetchCandleData, Get24hrMinMaxPrices } from "../../components/Api/Api"
 import { CandleChart } from "./FavoriteCharts/CandleChart/CandleChart"
 import { VolumeChart } from "./FavoriteCharts/VolumeChart/VolumeChart"
 import { SwitchTimeframeButtons } from "./SwitchTimeframeButtons/SwitchTimeframeButtons"
 
-export default function Favorite() {
+const Favorite = () => {
   const dispatch = useDispatch()
   const coinData = useSelector(coinSelector)
   const chartDays = useSelector(daysSelector)
@@ -79,7 +78,17 @@ export default function Favorite() {
         : formatTime(prices),
     datasets: [
       {
-        data: prices.map((item) => Number(item.high) || 0), // Приведение к числу
+        data: prices.map((item) => Number(item.high) || 0),
+        color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
+        strokeWidth: 2
+      },
+      {
+        data: prices.map((item) => Number(item.open) || 0),
+        color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
+        strokeWidth: 2
+      },
+      {
+        data: prices.map((item) => Number(item.close) || 0),
         color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
         strokeWidth: 2
       },
@@ -180,3 +189,5 @@ export default function Favorite() {
     </View>
   )
 }
+
+export default Favorite

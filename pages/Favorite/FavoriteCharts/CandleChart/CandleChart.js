@@ -3,6 +3,12 @@ import { LineChart } from "react-native-chart-kit"
 import { RFValue } from "react-native-responsive-fontsize"
 
 export const CandleChart = ({ chartData }) => {
+  console.log(chartData.datasets[0].data) // Данные для high
+  console.log(chartData.datasets[1].data) // Данные для open
+  console.log(chartData.datasets[2].data) // Данные для close
+  console.log(chartData.datasets[3].data) // Данные для low
+  // временные метки
+  console.log(chartData.labels)
   return (
     <View>
       <LineChart
