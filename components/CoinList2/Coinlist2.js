@@ -62,14 +62,12 @@ const CoinList2 = ({
     )
 
     if (isDuplicate) {
-      console.log("Дубликат найден: " + coinData.id)
       dispatch(setDuplicate(coinData.id))
       setMsgDouble(true)
       setTimeout(() => {
         setMsgDouble(false)
       }, 1500)
     } else {
-      console.log("Нет дублей")
       dispatch(setCoin(coinData)) // Диспатчим только необходимые данные из огромного обьекта
       setModalVisible(true)
 

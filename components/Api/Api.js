@@ -62,3 +62,21 @@ export async function FetchCandleData(symbol, days) {
     return []
   }
 }
+
+export async function GetSantiment(coin) {
+  try {
+    const response = await axios.get(
+      `https://min-api.cryptocompare.com/data/tradingsignals/intotheblock/latest?fsym=${coin}`,
+      {
+        headers: {
+          Authorization:
+            "5e4ebfa6af8446ed0cfc6f15d1399827cc201ae9c570976381c13b4d06278080"
+        }
+      }
+    )
+
+    return response.data
+  } catch (error) {
+    console.log(error.message)
+  }
+}

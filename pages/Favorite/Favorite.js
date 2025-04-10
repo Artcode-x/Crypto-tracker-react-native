@@ -8,7 +8,11 @@ import { TouchableOpacity } from "react-native"
 import { removeCoin } from "../../store/reducersSlice"
 import { styles } from "./Favorite.styles"
 import { formatTime, getTimeLabels } from "../../helpers/helpers"
-import { FetchCandleData, Get24hrMinMaxPrices } from "../../components/Api/Api"
+import {
+  FetchCandleData,
+  Get24hrMinMaxPrices,
+  GetSantiment
+} from "../../components/Api/Api"
 import { CandleChart } from "./FavoriteCharts/CandleChart/CandleChart"
 import { VolumeChart } from "./FavoriteCharts/VolumeChart/VolumeChart"
 import { SwitchTimeframeButtons } from "./SwitchTimeframeButtons/SwitchTimeframeButtons"
@@ -22,7 +26,7 @@ const Favorite = () => {
   const [prices, setPrices] = useState([])
   const [isModalVisible, setModalVisible] = useState(false)
   const [minMax, setMinMax] = useState({ minPrice: null, maxPrice: null })
-
+  const [sant, setSant] = useState(null)
   const [selectedCoin, setSelectedCoin] = useState(null)
 
   const removeFromFav = (coin) => {
@@ -51,6 +55,13 @@ const Favorite = () => {
         Get24hrMinMaxPrices(symbol),
         FetchCandleData(symbol, days)
       ])
+
+      if (symbol === "BTC" || symbol === "ETH") {
+        const response = await GetSantiment(symbol)
+        setSant(response.Data.inOutVar.sentiment)
+      } else {
+        setSant(null)
+      }
 
       if (candlePrices && candlePrices.length > 0) {
         setPrices(candlePrices)
@@ -141,14 +152,20 @@ const Favorite = () => {
       <Modal visible={isModalVisible} animationType='slide'>
         <View style={styles.chartContainer}>
           {/* <Text style={styles.modalTitle}>{coinData.name}</Text> */}
-          <View
-            style={{
-              flexDirection: "row",
-              borderRadius: "2%",
-              backgroundColor: "rgba(75, 73, 74, 0.9)",
-              gap: 10
-            }}
-          >
+          {sant && (
+            <View
+              style={{
+                paddingBottom: 2,
+                alignItems: "center"
+              }}
+            >
+              <Text style={styles.text0}>
+                Market Santiment:
+                <Text style={{ color: "wheat" }}> {sant}</Text>
+              </Text>
+            </View>
+          )}
+          <View style={styles.minmaxBlock}>
             <Text style={styles.textUp}>
               Мин. 24 часа:
               <Text style={{ color: "lightblue" }}> {minMax.minPrice}$</Text>
@@ -159,6 +176,7 @@ const Favorite = () => {
               <Text style={{ color: "wheat" }}> {minMax.maxPrice}$</Text>
             </Text>
           </View>
+
           {prices.length === 0 ? (
             <Text style={{ color: "white" }}>Загрузка данных...</Text>
           ) : (

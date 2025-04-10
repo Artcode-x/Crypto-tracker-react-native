@@ -56,9 +56,9 @@ export const styles = StyleSheet.create({
     color: "white",
     paddingBottom: "10"
   },
-
-  text: { color: "white", paddingBottom: 5, fontSize: RFValue(12) },
-  text1: { color: "white", paddingTop: 5, fontSize: RFValue(12) },
+  text0: { color: "white", paddingBottom: 0, paddingTop: 2, fontSize: RFValue(10) },
+  text: { color: "white", paddingBottom: 5, fontSize: RFValue(11) },
+  text1: { color: "white", paddingTop: 2, fontSize: RFValue(10) },
   textZ: {
     color: "wheat",
     fontSize: RFValue(12)
@@ -92,5 +92,12 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 15,
     alignItems: "center"
   },
-  closeb: { color: "black", fontSize: RFValue(14) }
+  closeb: { color: "black", fontSize: RFValue(14) },
+
+  minmaxBlock: {
+    flexDirection: "row",
+    borderRadius: "2%",
+    backgroundColor: "rgba(75, 73, 74, 0.9)",
+    gap: 10
+  }
 })
