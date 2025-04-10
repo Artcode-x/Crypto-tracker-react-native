@@ -96,8 +96,10 @@ export const styles = StyleSheet.create({
 
   minmaxBlock: {
     flexDirection: "row",
-    borderRadius: "2%",
+    borderRadius: 20,
     backgroundColor: "rgba(75, 73, 74, 0.9)",
-    gap: 10
+    gap: 10,
+    paddingLeft: 5,
+    paddingRight: 5
   }
 })

@@ -1,14 +1,15 @@
-import { StyleSheet } from "react-native"
+import { StyleSheet, Platform } from "react-native"
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize"
 
 export const styles = StyleSheet.create({
   chartButtons: {
     flexDirection: "row",
-    gap: 10,
+    gap: Platform.OS === "ios" ? 10 : 7,
     backgroundColor: "rgba(50, 48, 49, 0.8)",
     borderWidth: 0.5,
     borderColor: "wheat",
-    padding: 7,
+    padding: Platform.OS === "ios" ? 7 : 6,
+
     borderRadius: 15,
 
     shadowColor: "#000",
@@ -24,8 +25,8 @@ export const styles = StyleSheet.create({
     marginTop: 0,
     backgroundColor: "darkgray",
     borderRadius: 5,
-    paddingVertical: 7,
-    paddingHorizontal: 20,
+    paddingVertical: Platform.OS === "ios" ? 7 : 5,
+    paddingHorizontal: Platform.OS === "ios" ? 20 : 18,
     alignItems: "center"
   },
   activeButton: {
