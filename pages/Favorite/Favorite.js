@@ -13,7 +13,6 @@ import {
   Get24hrMinMaxPrices,
   GetSantiment
 } from "../../components/Api/Api"
-import { CandleChart } from "./FavoriteCharts/CandleChart/CandleChart"
 import { VolumeChart } from "./FavoriteCharts/VolumeChart/VolumeChart"
 import { SwitchTimeframeButtons } from "./SwitchTimeframeButtons/SwitchTimeframeButtons"
 import { CandlestickChart } from "react-native-wagmi-charts"
@@ -109,7 +108,6 @@ const Favorite = () => {
       }
     ]
   }
-  // console.log("chartData", chartData)
 
   const volumeData = {
     labels:
@@ -124,7 +122,6 @@ const Favorite = () => {
       }
     ]
   }
-  // console.log("Volume!!!!", volumeData)
 
   return (
     <View style={styles.favlist}>
@@ -192,7 +189,6 @@ const Favorite = () => {
                       height={Dimensions.get("window").height * 0.45}
                       style={{
                         backgroundColor: "#1E1E1E",
-                        // backgroundColor: "rgba(50, 48, 49, 0.8)",
                         border: 1,
                         borderWidth: 1,
                         borderColor: "wheat",
@@ -203,48 +199,31 @@ const Favorite = () => {
                       <CandlestickChart.Crosshair />
                     </CandlestickChart>
                     <View style={{ flexDirection: "row", gap: 10 }}>
-                      <CandlestickChart.PriceText
-                        type='open'
-                        style={{ color: "white", color: "wheat" }}
-                      />
-                      <CandlestickChart.PriceText
-                        type='high'
-                        style={{ color: "white", color: "wheat" }}
-                      />
-                      <CandlestickChart.PriceText
-                        type='low'
-                        style={{ color: "white", color: "wheat" }}
-                      />
+                      <CandlestickChart.PriceText type='open' style={styles.priceRange} />
+                      <CandlestickChart.PriceText type='high' style={styles.priceRange} />
+                      <CandlestickChart.PriceText type='low' style={styles.priceRange} />
                       <CandlestickChart.PriceText
                         type='close'
-                        style={{ color: "white", color: "wheat" }}
+                        style={styles.priceRange}
                       />
                     </View>
-                    {/* <CandlestickChart.DatetimeText /> */}
                   </CandlestickChart.Provider>
                 </>
               ) : (
                 <Text style={{ color: "white" }}>Нет данных для отображения</Text>
               )}
               <>
-                {/* <LineChart.Provider data={volumeData}>
-                  <LineChart>
-                    <LineChart.Path />
-                  </LineChart>
-                </LineChart.Provider>{" "} */}
-                {/* <Text style={styles.text1}>Volume range:</Text>{" "}
-                {/* <VolumeChart volumeData={volumeData} />{" "} */}
                 <Text style={styles.text1}>Volume range:</Text>
                 <VolumeChart volumeData={volumeData} />
               </>
             </>
           )}
-          {/* start */}
+
           <Text style={styles.text}>
             Выбранный диапазон дней:<Text style={styles.textZ}> {chartDays}</Text>
           </Text>
           <SwitchTimeframeButtons chartDays={chartDays} />
-          {/* end */}
+
           <View style={styles.chartButtonsClose}>
             <TouchableOpacity
               style={styles.buttonClose}

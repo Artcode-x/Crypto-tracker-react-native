@@ -102,5 +102,9 @@ export const styles = StyleSheet.create({
     gap: 10,
     paddingLeft: 5,
     paddingRight: 5
+  },
+  priceRange: {
+    color: "white",
+    color: "wheat"
   }
 })

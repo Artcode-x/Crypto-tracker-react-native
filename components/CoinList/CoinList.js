@@ -44,12 +44,12 @@ const CoinList = ({
               symbol: coin.symbol,
               id: coin.id
             }
-            console.log(updatedCoin)
+
             updatedCoins.push(updatedCoin)
           }
         }
       })
-      console.log(updatedCoins)
+
       if (updatedCoins.length > 0) {
         dispatch(rewriteFavorite(updatedCoins))
       }

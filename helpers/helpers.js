@@ -34,8 +34,6 @@ export const getTimeLabels = (prices) => {
     // Получаем читаемую дату и время
     const readableDate = date.toLocaleDateString("ru-RU", optionsDate)
     const readableTime = date.toLocaleTimeString("ru-RU", optionsTime)
-    console.log(readableDate)
-    console.log(readableTime)
 
     return `${readableTime}`
   })
