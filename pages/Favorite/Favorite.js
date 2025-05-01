@@ -198,14 +198,42 @@ const Favorite = () => {
                       <CandlestickChart.Candles />
                       <CandlestickChart.Crosshair />
                     </CandlestickChart>
-                    <View style={{ flexDirection: "row", gap: 10 }}>
-                      <CandlestickChart.PriceText type='open' style={styles.priceRange} />
+                    <View style={styles.priceBlock}>
+                      <View style={styles.priceContainer}>
+                        <Text style={styles.label}>Low:</Text>
+                        <CandlestickChart.PriceText
+                          type='low'
+                          style={styles.priceValue}
+                        />
+                      </View>
+                      <View style={styles.priceContainer}>
+                        <Text style={styles.label}>Open:</Text>
+                        <CandlestickChart.PriceText
+                          type='open'
+                          style={styles.priceValue}
+                        />
+                      </View>
+                      <View style={styles.priceContainer}>
+                        <Text style={styles.label}>Close:</Text>
+                        <CandlestickChart.PriceText
+                          type='close'
+                          style={styles.priceValue}
+                        />
+                      </View>
+                      <View style={styles.priceContainer}>
+                        <Text style={styles.label}>High:</Text>
+                        <CandlestickChart.PriceText
+                          type='high'
+                          style={styles.priceValue}
+                        />
+                      </View>
+                      {/* <CandlestickChart.PriceText type='open' style={styles.priceRange} />
                       <CandlestickChart.PriceText type='high' style={styles.priceRange} />
                       <CandlestickChart.PriceText type='low' style={styles.priceRange} />
                       <CandlestickChart.PriceText
                         type='close'
                         style={styles.priceRange}
-                      />
+                      /> */}
                     </View>
                   </CandlestickChart.Provider>
                 </>

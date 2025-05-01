@@ -106,5 +106,21 @@ export const styles = StyleSheet.create({
   priceRange: {
     color: "white",
     color: "wheat"
+  },
+  priceBlock: {
+    flexDirection: "row",
+    gap: 10
+  },
+  priceContainer: {
+    alignItems: "center"
+  },
+  label: {
+    fontWeight: "bold",
+    color: "black",
+    fontSize: RFValue(10)
+  },
+  priceValue: {
+    fontSize: RFValue(12),
+    color: "wheat"
   }
 })
