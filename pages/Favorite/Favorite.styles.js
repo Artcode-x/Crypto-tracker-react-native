@@ -58,7 +58,8 @@ export const styles = StyleSheet.create({
   },
   text0: { color: "white", paddingBottom: 0, paddingTop: 2, fontSize: RFValue(10) },
   text: { color: "white", paddingBottom: 5, fontSize: RFValue(11) },
-  text1: { color: "white", paddingTop: 2, fontSize: RFValue(10), paddingBottom: 10 },
+  text1: { color: "white", fontSize: RFValue(10) },
+  textTit: { color: "white", fontSize: RFValue(10), paddingBottom: 10 },
   textZ: {
     color: "wheat",
     fontSize: RFValue(12)

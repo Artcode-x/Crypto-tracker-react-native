@@ -22,10 +22,26 @@ export const getTimeLabels = (prices) => {
   // Извлекаем время из объектов
   const timeLabels = prices.map((item) => {
     // item.time имеет формат "дата, время"
-    const time = item.time.split(", ")[1]
+    const time = item.time.split(", ")[0]
+    // Преобразуем строку времени в объект Date
+    const date = new Date(time)
+
     // Убираем секунды
-    return time.split(":").slice(0, 2).join(":")
+    const test = time.split(":").slice(0, 2).join(":")
+    // Форматируем дату и время
+    const optionsDate = { day: "numeric", month: "long", year: "numeric" }
+    const optionsTime = { hour: "2-digit", minute: "2-digit" }
+    // Получаем читаемую дату и время
+    const readableDate = date.toLocaleDateString("ru-RU", optionsDate)
+    const readableTime = date.toLocaleTimeString("ru-RU", optionsTime)
+    console.log(readableDate)
+    console.log(readableTime)
+
+    return `${readableTime}`
   })
+
+  // return time.split(":").slice(0, 2).join(":")
+  // })
   // Показываем максимум 10 меток
   const step = Math.ceil(timeLabels.length / 7)
   // Возвращаем только каждую n-ю метку
@@ -33,30 +49,34 @@ export const getTimeLabels = (prices) => {
 }
 
 // для больших ТФ
-
 export const formatTime = (prices) => {
+  const monthNames = [
+    "янв",
+    "фев",
+    "мар",
+    "апр",
+    "май",
+    "июн",
+    "июл",
+    "авг",
+    "сен",
+    "окт",
+    "ноя",
+    "дек"
+  ]
+
   const timeLabels = prices.map((item) => {
-    const time = item.time.split(", ")[0]
-    const dateParts = time.split(".")
+    const time = item.time
 
-    const monthNames = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec"
-    ]
-    const day = dateParts[0]
-    const monthIndex = parseInt(dateParts[1], 10) - 1
-    const year = dateParts[2].slice(2, 4)
+    const date = new Date(time)
 
+    const day = date.getDate()
+
+    const monthIndex = date.getMonth()
+
+    const year = date.getFullYear().toString().slice(-2) // две последние цифры года
+
+    // Форматируем дату как "дд мес год", например "1 мая 25"
     const formattedDate = `${day} ${monthNames[monthIndex]} ${year}`
 
     return formattedDate

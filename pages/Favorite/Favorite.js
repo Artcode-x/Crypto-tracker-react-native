@@ -16,7 +16,7 @@ import {
 import { CandleChart } from "./FavoriteCharts/CandleChart/CandleChart"
 import { VolumeChart } from "./FavoriteCharts/VolumeChart/VolumeChart"
 import { SwitchTimeframeButtons } from "./SwitchTimeframeButtons/SwitchTimeframeButtons"
-import { CandlestickChart, LineChart } from "react-native-wagmi-charts"
+import { CandlestickChart } from "react-native-wagmi-charts"
 
 const Favorite = () => {
   const dispatch = useDispatch()
@@ -112,10 +112,10 @@ const Favorite = () => {
   // console.log("chartData", chartData)
 
   const volumeData = {
-    labels: prices,
-    // chartDays === "1h" || chartDays === "4h"
-    //   ? getTimeLabels(prices)
-    //   : formatTime(prices),
+    labels:
+      chartDays === "1h" || chartDays === "4h"
+        ? getTimeLabels(prices)
+        : formatTime(prices),
     datasets: [
       {
         data: prices.map((item) => Number(item.volume) || 0),
@@ -124,7 +124,8 @@ const Favorite = () => {
       }
     ]
   }
-  console.log("Volume!!!!", volumeData)
+  // console.log("Volume!!!!", volumeData)
+
   return (
     <View style={styles.favlist}>
       <FlatList
@@ -181,14 +182,14 @@ const Favorite = () => {
             <Text style={{ color: "white" }}>Загрузка данных...</Text>
           ) : (
             <>
-              <Text style={styles.text1}>Min and Max trade range:</Text>
+              <Text style={styles.textTit}>Min and Max trade range:</Text>
 
               {Array.isArray(prices) && prices.length > 0 ? (
                 <>
                   <CandlestickChart.Provider data={prices}>
                     <CandlestickChart
                       width={Dimensions.get("window").width * 0.99}
-                      height={Dimensions.get("window").height * 0.5}
+                      height={Dimensions.get("window").height * 0.45}
                       style={{
                         backgroundColor: "#1E1E1E",
                         // backgroundColor: "rgba(50, 48, 49, 0.8)",
@@ -201,7 +202,7 @@ const Favorite = () => {
                       <CandlestickChart.Candles />
                       <CandlestickChart.Crosshair />
                     </CandlestickChart>
-                    <View style={{ flexDirection: "row", gap: 10, padding: 10 }}>
+                    <View style={{ flexDirection: "row", gap: 10 }}>
                       <CandlestickChart.PriceText
                         type='open'
                         style={{ color: "white", color: "wheat" }}
@@ -233,6 +234,8 @@ const Favorite = () => {
                 </LineChart.Provider>{" "} */}
                 {/* <Text style={styles.text1}>Volume range:</Text>{" "}
                 {/* <VolumeChart volumeData={volumeData} />{" "} */}
+                <Text style={styles.text1}>Volume range:</Text>
+                <VolumeChart volumeData={volumeData} />
               </>
             </>
           )}
