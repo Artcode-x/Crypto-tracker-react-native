@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import { View, FlatList, Modal, Text } from "react-native"
+import { View, FlatList, Modal, Text, Dimensions } from "react-native"
 import { useDispatch, useSelector } from "react-redux"
 import { coinSelector, daysSelector } from "../../store/toolkitSelectors"
 import CoinItem from "../../components/CoinItem/CoinItem"
@@ -16,6 +16,7 @@ import {
 import { CandleChart } from "./FavoriteCharts/CandleChart/CandleChart"
 import { VolumeChart } from "./FavoriteCharts/VolumeChart/VolumeChart"
 import { SwitchTimeframeButtons } from "./SwitchTimeframeButtons/SwitchTimeframeButtons"
+import { CandlestickChart, LineChart } from "react-native-wagmi-charts"
 
 const Favorite = () => {
   const dispatch = useDispatch()
@@ -83,10 +84,8 @@ const Favorite = () => {
   }, [isModalVisible, selectedCoin, chartDays])
 
   const chartData = {
-    labels:
-      chartDays === "1h" || chartDays === "4h"
-        ? getTimeLabels(prices)
-        : formatTime(prices),
+    labels: prices,
+
     datasets: [
       {
         data: prices.map((item) => Number(item.high) || 0),
@@ -110,12 +109,13 @@ const Favorite = () => {
       }
     ]
   }
+  // console.log("chartData", chartData)
 
   const volumeData = {
-    labels:
-      chartDays === "1h" || chartDays === "4h"
-        ? getTimeLabels(prices)
-        : formatTime(prices),
+    labels: prices,
+    // chartDays === "1h" || chartDays === "4h"
+    //   ? getTimeLabels(prices)
+    //   : formatTime(prices),
     datasets: [
       {
         data: prices.map((item) => Number(item.volume) || 0),
@@ -124,7 +124,7 @@ const Favorite = () => {
       }
     ]
   }
-
+  console.log("Volume!!!!", volumeData)
   return (
     <View style={styles.favlist}>
       <FlatList
@@ -182,9 +182,58 @@ const Favorite = () => {
           ) : (
             <>
               <Text style={styles.text1}>Min and Max trade range:</Text>
-              <CandleChart chartData={chartData} />
-              <Text style={styles.text1}>Volume range:</Text>
-              <VolumeChart volumeData={volumeData} />
+
+              {Array.isArray(prices) && prices.length > 0 ? (
+                <>
+                  <CandlestickChart.Provider data={prices}>
+                    <CandlestickChart
+                      width={Dimensions.get("window").width * 0.99}
+                      height={Dimensions.get("window").height * 0.5}
+                      style={{
+                        backgroundColor: "#1E1E1E",
+                        // backgroundColor: "rgba(50, 48, 49, 0.8)",
+                        border: 1,
+                        borderWidth: 1,
+                        borderColor: "wheat",
+                        borderRadius: 20
+                      }}
+                    >
+                      <CandlestickChart.Candles />
+                      <CandlestickChart.Crosshair />
+                    </CandlestickChart>
+                    <View style={{ flexDirection: "row", gap: 10, padding: 10 }}>
+                      <CandlestickChart.PriceText
+                        type='open'
+                        style={{ color: "white", color: "wheat" }}
+                      />
+                      <CandlestickChart.PriceText
+                        type='high'
+                        style={{ color: "white", color: "wheat" }}
+                      />
+                      <CandlestickChart.PriceText
+                        type='low'
+                        style={{ color: "white", color: "wheat" }}
+                      />
+                      <CandlestickChart.PriceText
+                        type='close'
+                        style={{ color: "white", color: "wheat" }}
+                      />
+                    </View>
+                    {/* <CandlestickChart.DatetimeText /> */}
+                  </CandlestickChart.Provider>
+                </>
+              ) : (
+                <Text style={{ color: "white" }}>Нет данных для отображения</Text>
+              )}
+              <>
+                {/* <LineChart.Provider data={volumeData}>
+                  <LineChart>
+                    <LineChart.Path />
+                  </LineChart>
+                </LineChart.Provider>{" "} */}
+                {/* <Text style={styles.text1}>Volume range:</Text>{" "}
+                {/* <VolumeChart volumeData={volumeData} />{" "} */}
+              </>
             </>
           )}
           {/* start */}

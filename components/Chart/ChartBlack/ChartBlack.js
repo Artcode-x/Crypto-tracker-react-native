@@ -1,5 +1,5 @@
 import { View, Dimensions, StyleSheet } from "react-native"
-import { LineChart } from "react-native-chart-kit"
+import { LineChart } from "react-native-wagmi-charts"
 
 export const ChartBlack = ({ coinHistoryData, chartData, is30DSelected }) => {
   return (

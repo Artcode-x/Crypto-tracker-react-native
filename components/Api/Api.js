@@ -47,8 +47,18 @@ export async function FetchCandleData(symbol, days) {
     const response = await axios.get(
       `https://api.binance.com/api/v3/klines?symbol=${symbol}USDT&interval=${days}&limit=10`
     )
+    // const prices = response.data.map((item) => ({
+    //   time: new Date(item[0]).toLocaleString(),
+    //   open: parseFloat(item[1]),
+    //   high: parseFloat(item[2]),
+    //   low: parseFloat(item[3]),
+    //   close: parseFloat(item[4]),
+    //   volume: parseFloat(item[5])
+    // }))
+
+    // return prices
     const prices = response.data.map((item) => ({
-      time: new Date(item[0]).toLocaleString(),
+      time: new Date(item[0]).toISOString(),
       open: parseFloat(item[1]),
       high: parseFloat(item[2]),
       low: parseFloat(item[3]),
