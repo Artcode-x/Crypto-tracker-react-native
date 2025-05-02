@@ -57,12 +57,12 @@ export const styles = StyleSheet.create({
     paddingBottom: "10"
   },
   text0: { color: "white", paddingBottom: 0, paddingTop: 2, fontSize: RFValue(10) },
-  text: { color: "white", paddingBottom: 5, fontSize: RFValue(11) },
-  text1: { color: "white", fontSize: RFValue(10) },
-  textTit: { color: "white", fontSize: RFValue(10), paddingBottom: 10 },
+  text: { color: "white", paddingBottom: 5, fontSize: RFValue(10) },
+  text1: { color: "white", paddingTop: 5, fontSize: RFValue(9) },
+  textTit: { color: "white", fontSize: RFValue(10), paddingBottom: 5 },
   textZ: {
     color: "wheat",
-    fontSize: RFValue(12)
+    fontSize: RFValue(10)
   },
   chartButtonsClose: {
     marginTop: 10,
@@ -116,11 +116,17 @@ export const styles = StyleSheet.create({
   },
   label: {
     fontWeight: "bold",
-    color: "black",
-    fontSize: RFValue(10)
+    color: "wheat",
+    fontSize: RFValue(9)
   },
   priceValue: {
-    fontSize: RFValue(12),
+    fontSize: RFValue(9),
     color: "wheat"
+  },
+  limits: {
+    textAlign: "center",
+    fontSize: RFValue(8),
+    color: "wheat",
+    paddingTop: 10
   }
 })

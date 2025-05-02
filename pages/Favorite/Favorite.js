@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { View, FlatList, Modal, Text, Dimensions } from "react-native"
 import { useDispatch, useSelector } from "react-redux"
 import { coinSelector, daysSelector } from "../../store/toolkitSelectors"
@@ -16,6 +16,7 @@ import {
 import { VolumeChart } from "./FavoriteCharts/VolumeChart/VolumeChart"
 import { SwitchTimeframeButtons } from "./SwitchTimeframeButtons/SwitchTimeframeButtons"
 import { CandlestickChart } from "react-native-wagmi-charts"
+import { PinchGestureHandler, TapGestureHandler } from "react-native-gesture-handler"
 
 const Favorite = () => {
   const dispatch = useDispatch()
@@ -28,6 +29,8 @@ const Favorite = () => {
   const [minMax, setMinMax] = useState({ minPrice: null, maxPrice: null })
   const [sant, setSant] = useState(null)
   const [selectedCoin, setSelectedCoin] = useState(null)
+  const [limit, setLimit] = useState(100)
+  const scaleRef = useRef(1) // Для накопления масштаба
 
   const removeFromFav = (coin) => {
     setFlag((prev) => ({ ...prev, [coin.id]: true }))
@@ -53,7 +56,7 @@ const Favorite = () => {
     try {
       const [minMaxPrice, candlePrices] = await Promise.all([
         Get24hrMinMaxPrices(symbol),
-        FetchCandleData(symbol, days)
+        FetchCandleData(symbol, days, limit)
       ])
 
       if (symbol === "BTC" || symbol === "ETH") {
@@ -76,39 +79,6 @@ const Favorite = () => {
     }
   }
 
-  useEffect(() => {
-    if (isModalVisible) {
-      fetchData()
-    }
-  }, [isModalVisible, selectedCoin, chartDays])
-
-  const chartData = {
-    labels: prices,
-
-    datasets: [
-      {
-        data: prices.map((item) => Number(item.high) || 0),
-        color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
-        strokeWidth: 2
-      },
-      {
-        data: prices.map((item) => Number(item.open) || 0),
-        color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
-        strokeWidth: 2
-      },
-      {
-        data: prices.map((item) => Number(item.close) || 0),
-        color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
-        strokeWidth: 2
-      },
-      {
-        data: prices.map((item) => Number(item.low) || 0),
-        color: (opacity = 1) => `rgba(0, 0, 255, ${opacity})`,
-        strokeWidth: 2
-      }
-    ]
-  }
-
   const volumeData = {
     labels:
       chartDays === "1h" || chartDays === "4h"
@@ -122,6 +92,56 @@ const Favorite = () => {
       }
     ]
   }
+
+  // Приведет к частым изменениям лимита при небольших колебаниях масштаба.
+  // const onPinchEvent = (event) => {
+  //   const scale = event.nativeEvent.scale
+  //   if (scale > 1) {
+  //     setLimit((prevLimit) => Math.min(prevLimit + 10, 200)) // Увеличиваем лимит
+  //   } else if (scale < 1) {
+  //     setLimit((prevLimit) => Math.max(prevLimit - 10, 10)) // Уменьшаем лимит
+  //   }
+  // }
+
+  // Масштабирование (Pinch gesture)
+  //  - Вычисляем изменение масштаба.
+  // - Если уменьшился больше 10%, уменьшаем цену.
+  // - Если масштаб вырос больше 10%, увеличиваем цену.
+  // - Ограничиваем значения от 10 до 200.
+
+  // Функция onPinchEvent:  обрабатывает изменение масштаба.
+  // ScaleChange: ожидает, насколько изменился масштаб относительно предыдущего.
+  // Если больше 1.1, значит произошло увеличение. Если меньше 0.9, значит уменьшение.
+  // В зависимости от изменения масштаба, изменяем limit на 10, ограничивая его значение от 10 до 200.
+  const onPinchEvent = (event) => {
+    // scaleRef для хранения предыдущего значения масштаба, что позволяет более точно отслеживать изменения.
+    const scaleChange = event.nativeEvent.scale / scaleRef.current
+    if (scaleChange > 1.1) {
+      // Изменяем limit при уменьшении масштаба на 10%
+      setLimit((prev) => Math.max(prev - 10, 10))
+
+      scaleRef.current = event.nativeEvent.scale
+    } else if (scaleChange < 0.9) {
+      // Изменяем limit при увеличении масштаба на 10%
+      setLimit((prev) => Math.min(prev + 10, 200))
+      scaleRef.current = event.nativeEvent.scale
+    }
+  }
+  // Сброс масштаба
+  // - При завершении жеста масштаб сбрасывается для корректной работы в следующем цикле.
+  // Этот обработчик реагирует на завершение жеста. Когда жест завершен, сбрасывается scaleRef.current обратно к 1, чтобы начать новый процесс масштабирования.
+  const onPinchStateChange = (event) => {
+    if (event.nativeEvent.state === 5) {
+      // STATE_END
+      scaleRef.current = 1
+    }
+  }
+
+  useEffect(() => {
+    if (isModalVisible) {
+      fetchData()
+    }
+  }, [isModalVisible, selectedCoin, chartDays, limit])
 
   return (
     <View style={styles.favlist}>
@@ -183,59 +203,63 @@ const Favorite = () => {
 
               {Array.isArray(prices) && prices.length > 0 ? (
                 <>
-                  <CandlestickChart.Provider data={prices}>
-                    <CandlestickChart
-                      width={Dimensions.get("window").width * 0.99}
-                      height={Dimensions.get("window").height * 0.45}
-                      style={{
-                        backgroundColor: "#1E1E1E",
-                        border: 1,
-                        borderWidth: 1,
-                        borderColor: "wheat",
-                        borderRadius: 20
-                      }}
+                  <TapGestureHandler>
+                    <PinchGestureHandler
+                      onGestureEvent={onPinchEvent}
+                      onHandlerStateChange={onPinchStateChange}
                     >
-                      <CandlestickChart.Candles />
-                      <CandlestickChart.Crosshair />
-                    </CandlestickChart>
-                    <View style={styles.priceBlock}>
-                      <View style={styles.priceContainer}>
-                        <Text style={styles.label}>Low:</Text>
-                        <CandlestickChart.PriceText
-                          type='low'
-                          style={styles.priceValue}
-                        />
+                      <View style={{ alignItems: "center" }}>
+                        <CandlestickChart.Provider data={prices}>
+                          <CandlestickChart
+                            width={Dimensions.get("window").width * 0.99}
+                            height={Dimensions.get("window").height * 0.45}
+                            style={{
+                              backgroundColor: "#1E1E1E",
+                              border: 1,
+                              borderWidth: 1,
+                              borderColor: "wheat",
+                              borderRadius: 20,
+                              alignItems: "center"
+                            }}
+                          >
+                            <Text style={styles.limits}>Limit: {limit}</Text>
+                            <View style={styles.priceBlock}>
+                              <View style={styles.priceContainer}>
+                                <Text style={styles.label}>Low:</Text>
+                                <CandlestickChart.PriceText
+                                  type='low'
+                                  style={styles.priceValue}
+                                />
+                              </View>
+                              <View style={styles.priceContainer}>
+                                <Text style={styles.label}>Open:</Text>
+                                <CandlestickChart.PriceText
+                                  type='open'
+                                  style={styles.priceValue}
+                                />
+                              </View>
+                              <View style={styles.priceContainer}>
+                                <Text style={styles.label}>Close:</Text>
+                                <CandlestickChart.PriceText
+                                  type='close'
+                                  style={styles.priceValue}
+                                />
+                              </View>
+                              <View style={styles.priceContainer}>
+                                <Text style={styles.label}>High:</Text>
+                                <CandlestickChart.PriceText
+                                  type='high'
+                                  style={styles.priceValue}
+                                />
+                              </View>
+                            </View>
+                            <CandlestickChart.Candles />
+                            <CandlestickChart.Crosshair />
+                          </CandlestickChart>
+                        </CandlestickChart.Provider>
                       </View>
-                      <View style={styles.priceContainer}>
-                        <Text style={styles.label}>Open:</Text>
-                        <CandlestickChart.PriceText
-                          type='open'
-                          style={styles.priceValue}
-                        />
-                      </View>
-                      <View style={styles.priceContainer}>
-                        <Text style={styles.label}>Close:</Text>
-                        <CandlestickChart.PriceText
-                          type='close'
-                          style={styles.priceValue}
-                        />
-                      </View>
-                      <View style={styles.priceContainer}>
-                        <Text style={styles.label}>High:</Text>
-                        <CandlestickChart.PriceText
-                          type='high'
-                          style={styles.priceValue}
-                        />
-                      </View>
-                      {/* <CandlestickChart.PriceText type='open' style={styles.priceRange} />
-                      <CandlestickChart.PriceText type='high' style={styles.priceRange} />
-                      <CandlestickChart.PriceText type='low' style={styles.priceRange} />
-                      <CandlestickChart.PriceText
-                        type='close'
-                        style={styles.priceRange}
-                      /> */}
-                    </View>
-                  </CandlestickChart.Provider>
+                    </PinchGestureHandler>
+                  </TapGestureHandler>
                 </>
               ) : (
                 <Text style={{ color: "white" }}>Нет данных для отображения</Text>
@@ -248,7 +272,7 @@ const Favorite = () => {
           )}
 
           <Text style={styles.text}>
-            Выбранный диапазон дней:<Text style={styles.textZ}> {chartDays}</Text>
+            Selected range<Text style={styles.textZ}> {chartDays}</Text>
           </Text>
           <SwitchTimeframeButtons chartDays={chartDays} />
 

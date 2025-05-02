@@ -35,28 +35,17 @@ export async function Get24hrMinMaxPrices(symbol) {
     const minPrice = parseFloat(data.lowPrice) // Минимальная цена за 24 часа
     const maxPrice = parseFloat(data.highPrice) // Максимальная цена за 24 часа
     return { minPrice, maxPrice }
-    // console.log(`Минимальная цена за 24 часа: ${minPrice}`)
-    // console.log(`Максимальная цена за 24 часа: ${maxPrice}`)
   } catch (error) {
     console.error("Ошибка при получении данных:", error)
   }
 }
 
-export async function FetchCandleData(symbol, days) {
+export async function FetchCandleData(symbol, days, limit) {
   try {
     const response = await axios.get(
-      `https://api.binance.com/api/v3/klines?symbol=${symbol}USDT&interval=${days}&limit=10`
+      `https://api.binance.com/api/v3/klines?symbol=${symbol}USDT&interval=${days}&limit=${limit}`
     )
-    // const prices = response.data.map((item) => ({
     //   time: new Date(item[0]).toLocaleString(),
-    //   open: parseFloat(item[1]),
-    //   high: parseFloat(item[2]),
-    //   low: parseFloat(item[3]),
-    //   close: parseFloat(item[4]),
-    //   volume: parseFloat(item[5])
-    // }))
-
-    // return prices
     const prices = response.data.map((item) => ({
       time: new Date(item[0]).toISOString(),
       open: parseFloat(item[1]),
