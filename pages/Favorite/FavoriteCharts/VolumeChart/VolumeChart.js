@@ -14,19 +14,19 @@ export const VolumeChart = ({ volumeData }) => {
           backgroundGradientFrom: "#3a3a3a",
           backgroundGradientTo: "#1e1e1e",
           decimalPlaces: 0,
-          color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+          color: (opacity = 1) => `rgba(211, 211, 211, ${opacity * 0})`,
           labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
 
           style: {
             borderRadius: 16
           },
           propsForDots: {
-            r: "1",
+            r: "0",
             strokeWidth: "2",
             stroke: "#ffa726"
           },
           propsForLabels: {
-            fontSize: RFValue(9)
+            fontSize: RFValue(7)
           }
         }}
         bezier

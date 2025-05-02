@@ -49,38 +49,27 @@ export const getTimeLabels = (prices) => {
 // для больших ТФ
 export const formatTime = (prices) => {
   const monthNames = [
-    "янв",
-    "фев",
-    "мар",
-    "апр",
-    "май",
-    "июн",
-    "июл",
-    "авг",
-    "сен",
-    "окт",
-    "ноя",
-    "дек"
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
   ]
 
-  const timeLabels = prices.map((item) => {
-    const time = item.time
-
-    const date = new Date(time)
-
-    const day = date.getDate()
-
-    const monthIndex = date.getMonth()
-
-    const year = date.getFullYear().toString().slice(-2) // две последние цифры года
-
-    // Форматируем дату как "дд мес год", например "1 мая 25"
-    const formattedDate = `${day} ${monthNames[monthIndex]} ${year}`
-
-    return formattedDate
-  })
-
-  const step = Math.ceil(timeLabels.length / 8)
-
-  return timeLabels.filter((_, index) => index % step === 0)
+  return prices
+    .map((item) => {
+      const date = new Date(item.time)
+      const formattedDate = `${date.getDate()} ${monthNames[date.getMonth()]} ${String(
+        date.getFullYear()
+      ).slice(-2)}`
+      return formattedDate
+    })
+    .filter((_, index, array) => index % Math.ceil(array.length / 7) === 0)
 }
