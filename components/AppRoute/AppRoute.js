@@ -5,6 +5,7 @@ import Main from "../../pages/Main/Main"
 import Favorite from "../../pages/Favorite/Favorite"
 import { Ionicons } from "react-native-vector-icons"
 import { StyleSheet } from "react-native"
+import News from "../News/News"
 
 const Tab = createBottomTabNavigator()
 
@@ -12,26 +13,53 @@ export const AppRoute = () => {
   return (
     <NavigationContainer>
       <Tab.Navigator
-        style={styles.tabBarStyle}
+        // style={styles.tabBarStyle}
         screenOptions={{
           tabBarActiveTintColor: "#FF6347", // Цвет активного элемента
           tabBarInactiveTintColor: "#aaa", // Цвет неактивного элемента
+          tabBarStyle: styles.tabBarStyle,
+          headerTintColor: "#fff",
+          headerStyle: {
+            backgroundColor: "rgba(50, 48, 49, 0.8)",
+            // borderBottomColor: "#e4e4e4",
+            borderBottomColor: "wheat",
+            borderBottomWidth: 1
+            // height: "auto"
+          }
         }}
       >
         <Tab.Screen
-          name="Home"
+          name='Home'
           component={Main}
           options={{
-            title: "CryptoTracker",
-            tabBarIcon: ({ color }) => <Ionicons name="home-outline" size={24} color={color} />,
+            title: "Watchlists",
+            // CryptoTracker
+            tabBarIcon: ({ color }) => (
+              <Ionicons name='pulse' size={24} color={color} />
+              // home-outline
+            )
           }}
         />
         <Tab.Screen
-          name="Favorite"
+          name='Favorite'
           component={Favorite}
           options={{
-            title: "Избранное",
-            tabBarIcon: ({ color }) => <Ionicons name="star-outline" size={24} color={color} />,
+            title: "Favorites",
+            tabBarIcon: ({ color }) => (
+              <Ionicons name='logo-bitcoin' size={24} color={color} />
+              //   star-outline
+            )
+          }}
+        />
+        <Tab.Screen
+          name='News'
+          component={News}
+          options={{
+            title: "News",
+            tabBarIcon: ({ color }) => (
+              <Ionicons name='today' size={24} color={color} />
+              //   star-outline
+            )
           }}
         />
       </Tab.Navigator>
@@ -46,9 +74,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     elevation: 0,
-    backgroundColor: "#fff",
-    borderTopColor: "#e4e4e4",
+    //  backgroundColor: "#fff",
+    backgroundColor: "rgba(50, 48, 49, 0.8)",
+    // borderTopColor: "#e4e4e4",
+    borderTopColor: "wheat",
     borderTopWidth: 1,
-    height: 60,
-  },
+    height: "8%"
+    // paddingBottom: "2%"
+  }
 })

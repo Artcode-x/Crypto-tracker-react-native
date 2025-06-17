@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react"
 import { FlatList, Modal, Text, TouchableOpacity, View } from "react-native"
-import { styles } from "./CoinList.styles"
+import { styles } from "./CoinList2.styles"
 import { useDispatch, useSelector } from "react-redux"
 import CoinItem from "../CoinItem/CoinItem"
 import Ionicons from "react-native-vector-icons/Ionicons"
 import { rewriteFavorite, setCoin, setDuplicate } from "../../store/reducersSlice"
-import { coinSelector, duplicateSelector } from "../../store/toolkitSelectors"
+import { coinSelector, viewMarketFlagSelector } from "../../store/toolkitSelectors"
 
-const CoinList = ({
+const CoinList2 = ({
   data,
   openModal,
   search,
@@ -17,11 +17,11 @@ const CoinList = ({
   errorMessage
 }) => {
   const favoriteCoins = useSelector(coinSelector)
-  const doubles = useSelector(duplicateSelector)
-  const [msgDouble, setMsgDouble] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
-  const [flag, setFlag] = useState({})
+  const [msgDouble, setMsgDouble] = useState(false)
   const dispatch = useDispatch()
+
+  const marketView = useSelector(viewMarketFlagSelector)
 
   useEffect(() => {
     if (data) {
@@ -44,12 +44,12 @@ const CoinList = ({
               symbol: coin.symbol,
               id: coin.id
             }
-
+           
             updatedCoins.push(updatedCoin)
           }
         }
       })
-
+     
       if (updatedCoins.length > 0) {
         dispatch(rewriteFavorite(updatedCoins))
       }
@@ -60,7 +60,7 @@ const CoinList = ({
     const isDuplicate = favoriteCoins.some(
       (favoriteCoin) => favoriteCoin.id === coinData.id
     )
-    console.log(isDuplicate)
+
     if (isDuplicate) {
       dispatch(setDuplicate(coinData.id))
       setMsgDouble(true)
@@ -68,17 +68,12 @@ const CoinList = ({
         setMsgDouble(false)
       }, 1500)
     } else {
-      dispatch(setCoin(coinData))
+      dispatch(setCoin(coinData)) // Диспатчим только необходимые данные из огромного обьекта
       setModalVisible(true)
-
-      setFlag((prevFlag) => ({ ...prevFlag, [coinData.id]: true }))
-      setTimeout(() => {
-        setFlag((prevFlag) => ({ ...prevFlag, [coinData.id]: false })) // Сброс флага через время
-      }, 1800)
 
       setTimeout(() => {
         setModalVisible(false)
-      }, 500)
+      }, 1000)
     }
   }
 
@@ -96,13 +91,12 @@ const CoinList = ({
           )}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
-            <View
-              style={[
-                flag[item.id] && { borderLeftWidth: 2, borderLeftColor: "orange" },
-                styles.itemContainer
-              ]}
-            >
-              <CoinItem coin={item} onPress={() => openModal(item)} />
+            <View style={styles.itemContainer}>
+              <CoinItem
+                coin={item}
+                marketView={marketView}
+                onPress={() => openModal(item)}
+              />
               {/* Иконка добавления в избранное+ */}
               <TouchableOpacity
                 onPress={() => {
@@ -114,8 +108,16 @@ const CoinList = ({
                     otherInfo,
                     market_cap_rank,
                     symbol,
-                    id
+                    id,
+                    low_24h,
+                    atl_date,
+                    circulating_supply,
+                    high_24h,
+                    price_change_percentage_7d_in_currency,
+                    total_volume,
+                    total_supply
                   } = item // Деструктурирую нужные поля
+
                   const coinData = {
                     name,
                     current_price,
@@ -125,26 +127,24 @@ const CoinList = ({
                     market_cap_rank,
                     symbol,
                     id
+                    // low_24,
+                    // atl_date,
+                    // circulating_supply,
+                    // high_24h,
+                    // price_change_percentage_7d_in_currency,
+                    // total_volume,
+                    // total_supply
                   }
 
-                  //  dispatch(setCoin(coinData)); // Диспатчим только необходимые данные из огромного обьекта
                   addToFavorite(coinData)
                 }}
                 style={styles.addButton}
               >
-                {flag[item.id] ? (
-                  <Ionicons
-                    name='checkmark-circle-outline'
-                    size={24}
-                    color='green'
-                  ></Ionicons>
-                ) : (
-                  <Ionicons name='add-circle-outline' size={24} color='gray' />
-                )}
+                <Ionicons name='add-circle' size={24} color='#000' />
               </TouchableOpacity>
             </View>
           )}
-          numColumns={2}
+          numColumns={1}
           keyExtractor={(item) => item.id}
           refreshing={refreshing}
           onRefresh={async () => {
@@ -172,7 +172,7 @@ const CoinList = ({
         <View style={styles.dropdown}>
           <TouchableOpacity style={styles.dropdownItem}>
             <Text style={styles.dropdownText}>
-              You already have {doubles} in your favorites!
+              You already have this coin in your favorites!
             </Text>
             <Ionicons style={styles.changePoint} name='warning' size={30} />
           </TouchableOpacity>
@@ -182,4 +182,4 @@ const CoinList = ({
   )
 }
 
-export default CoinList
+export default CoinList2

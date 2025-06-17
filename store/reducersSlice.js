@@ -5,7 +5,9 @@ const initialState = {
   coinItem: [],
   //   previousState: null,
   flag: false,
-  chartDays: '1',
+  chartDays: "1h",
+  flagForView: false,
+  duplicate: false
 }
 
 const reducersSlice = createSlice({
@@ -22,23 +24,37 @@ const reducersSlice = createSlice({
       state.flag = action.payload
     },
     removeCoin: (state, action) => {
-    //  const idToRemove = action.payload; // Получаем ID объекта для удаления
+      //  const idToRemove = action.payload; // Получаем ID объекта для удаления
       // console.log(idToRemove.id);
       // state.coinItem = state.coinItem.filter(coin => coin.id !== idToRemove);
-      const nameCoinForRemove = action.payload;
-      state.coinItem = state.coinItem.filter(coin => coin.name !== nameCoinForRemove.name);
+      const nameCoinForRemove = action.payload
+      state.coinItem = state.coinItem.filter(
+        (coin) => coin.name !== nameCoinForRemove.name
+      )
       // Метод filter() создает новый массив, который включает все элементы, кроме того, у которого coin.name совпадает с nameCoinForRemove.
-    
     },
     setChartDays: (state, action) => {
-    state.chartDays = action.payload
+      state.chartDays = action.payload
     },
     rewriteFavorite: (state, action) => {
       state.coinItem = action.payload
+    },
+    setFlagForView: (state, action) => {
+      state.flagForView = action.payload
+    },
+    setDuplicate: (state, action) => {
+      state.duplicate = action.payload
     }
-
-  },
+  }
 })
 
-export const { setCoin, setFlag,removeCoin, setChartDays, rewriteFavorite } = reducersSlice.actions
+export const {
+  setCoin,
+  setFlag,
+  removeCoin,
+  setChartDays,
+  rewriteFavorite,
+  setFlagForView,
+  setDuplicate
+} = reducersSlice.actions
 export default reducersSlice.reducer

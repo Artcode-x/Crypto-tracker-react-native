@@ -1,0 +1,81 @@
+import axios from "axios"
+
+export async function GetMarketData() {
+  const response = await axios.get(
+    //  "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=true&price_change_percentage=7d"
+    "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=true&price_change_percentage=7d"
+  )
+  const data = response.data
+  return data
+}
+
+export async function FetchCoinHistoricalData(coinId, switchChartDays) {
+  const response = await fetch(
+    `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${switchChartDays}`
+  ) // Получаем данные для графика за разные таймфреймы/дни
+  if (!response.ok) {
+    throw new Error("Ошибка при получении данных")
+  }
+  const result = await response.json()
+  return result.prices
+}
+
+export async function Get24hrMinMaxPrices(symbol) {
+  try {
+    const response = await fetch(
+      `https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}USDT`
+    )
+    const data = await response.json()
+
+    if (!data || Object.keys(data).length === 0) {
+      console.log("Нет данных для данного символа.")
+      return
+    }
+
+    const minPrice = parseFloat(data.lowPrice) // Минимальная цена за 24 часа
+    const maxPrice = parseFloat(data.highPrice) // Максимальная цена за 24 часа
+    return { minPrice, maxPrice }
+  } catch (error) {
+    console.error("Ошибка при получении данных:", error)
+  }
+}
+
+export async function FetchCandleData(symbol, days, limit) {
+  try {
+    const response = await axios.get(
+      `https://api.binance.com/api/v3/klines?symbol=${symbol}USDT&interval=${days}&limit=${limit}`
+    )
+    //   time: new Date(item[0]).toLocaleString(),
+    const prices = response.data.map((item) => ({
+      time: new Date(item[0]).toISOString(),
+      open: parseFloat(item[1]),
+      high: parseFloat(item[2]),
+      low: parseFloat(item[3]),
+      close: parseFloat(item[4]),
+      volume: parseFloat(item[5])
+    }))
+
+    return prices
+  } catch (error) {
+    console.log(error.message)
+    return []
+  }
+}
+
+export async function GetSantiment(coin) {
+  try {
+    const response = await axios.get(
+      `https://min-api.cryptocompare.com/data/tradingsignals/intotheblock/latest?fsym=${coin}`,
+      {
+        headers: {
+          Authorization:
+            "5e4ebfa6af8446ed0cfc6f15d1399827cc201ae9c570976381c13b4d06278080"
+        }
+      }
+    )
+
+    return response.data
+  } catch (error) {
+    console.log(error.message)
+  }
+}
