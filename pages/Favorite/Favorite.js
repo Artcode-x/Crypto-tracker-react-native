@@ -3,7 +3,7 @@ import { View, FlatList, Modal, Text, Dimensions } from "react-native"
 import { useDispatch, useSelector } from "react-redux"
 import { coinSelector, daysSelector } from "../../store/toolkitSelectors"
 import CoinItem from "../../components/CoinItem/CoinItem"
-import Ionicons from "react-native-vector-icons/Ionicons"
+import { Ionicons } from '@expo/vector-icons'
 import { TouchableOpacity } from "react-native"
 import { removeCoin } from "../../store/reducersSlice"
 import { styles } from "./Favorite.styles"
