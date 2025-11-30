@@ -14,7 +14,7 @@ import { Chart } from "../../components/Chart/Chart"
 import { useSelector } from "react-redux"
 import { daysSelector, viewMarketFlagSelector } from "../../store/toolkitSelectors"
 import { FetchCoinHistoricalData, GetMarketData } from "../../components/Api/Api"
-import Ionicons from "react-native-vector-icons/Ionicons"
+import { Ionicons } from "@expo/vector-icons"
 import { ModalView } from "../../components/ModalView/ModalView"
 import CoinList2 from "../../components/CoinList2/Coinlist2"
 

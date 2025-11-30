@@ -1,5 +1,5 @@
 import { Modal, Text, TouchableOpacity, View } from "react-native"
-import Ionicons from "react-native-vector-icons/Ionicons"
+import { Ionicons } from "@expo/vector-icons"
 import { styles } from "./ModalView.styles"
 import { useDispatch } from "react-redux"
 import { setFlagForView } from "../../store/reducersSlice"
