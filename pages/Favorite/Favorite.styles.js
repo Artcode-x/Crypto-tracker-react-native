@@ -130,3 +130,12 @@ export const styles = StyleSheet.create({
     paddingTop: 10
   }
 })
+
+export const chartContainerStyle = {
+  backgroundColor: "#1E1E1E",
+  borderWidth: 1,
+  borderColor: "wheat",
+  borderRadius: 20,
+  alignItems: "center",
+  padding: 10
+}
