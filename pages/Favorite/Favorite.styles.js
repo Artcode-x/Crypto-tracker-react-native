@@ -138,5 +138,19 @@ export const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center"
     // padding: 10
+  },
+  box: {
+    // flexDirection: "row",
+    // position: "relative"
+  },
+  yAxisLabelsContainer: {
+    width: 45,
+    position: "relative"
+  },
+  yAxisLabel: {
+    color: "#888",
+    fontSize: 10,
+    textAlign: "right",
+    paddingRight: 5
   }
 })

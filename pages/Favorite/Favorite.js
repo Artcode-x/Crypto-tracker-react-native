@@ -84,7 +84,7 @@ const Favorite = () => {
 
     const chartWidth = width * 1
     const chartHeight = height * 0.8
-    const margin = { top: 20, right: 20, bottom: 30, left: 40 }
+    const margin = { top: 20, right: 20, bottom: 10, left: 45 }
     const innerWidth = chartWidth - margin.left - margin.right
     const innerHeight = chartHeight - margin.top - margin.bottom
 
@@ -98,6 +98,35 @@ const Favorite = () => {
     const yScale = (price) =>
       margin.top + innerHeight - ((price - minPrice) / priceRange) * innerHeight
 
+    // Функция для генерации меток на оси Y
+    const generateYAxisLabels = () => {
+      const numberOfLabels = 5
+      const labels = []
+
+      for (let i = 0; i <= numberOfLabels; i++) {
+        const price = minPrice + (priceRange * i) / numberOfLabels
+        const yPosition = yScale(price)
+
+        // Форматируем цену для отображения
+        let formattedPrice
+        if (price >= 1000) {
+          formattedPrice = `$${(price / 1000).toFixed(1)}k`
+        } else if (price >= 1) {
+          formattedPrice = `$${price.toFixed(2)}`
+        } else {
+          formattedPrice = `$${price.toFixed(6)}`
+        }
+
+        labels.push({
+          price: formattedPrice,
+          y: yPosition,
+          value: price
+        })
+      }
+
+      return labels
+    }
+    const yAxisLabels = generateYAxisLabels()
     // Текущие цены для отображения (последней свечи - актуальной)
     const currentCandle = data[data.length - 1] || {}
     const candleWidth = Math.max(3, (innerWidth / data.length) * 0.6)
@@ -106,50 +135,106 @@ const Favorite = () => {
       <View style={[styles.chartContainerStyle]}>
         <Text style={styles.limits}>Limit: {limit}</Text>
 
-        <Svg width={chartWidth} height={chartHeight}>
-          {/* Свечи */}
-          {data.map((candle, index) => {
-            const x = xScale(index) - candleWidth / 2
-            const openY = yScale(candle.open)
-            const closeY = yScale(candle.close)
-            const highY = yScale(candle.high)
-            const lowY = yScale(candle.low)
+        <View style={styles.box}>
+          {/* Контейнер для меток оси Y */}
+          <View style={styles.yAxisLabelsContainer}>
+            {yAxisLabels.map((label, index) => (
+              <Text
+                key={index}
+                style={[
+                  styles.yAxisLabel,
+                  {
+                    position: "absolute",
+                    top: label.y - 8,
+                    left: 0,
+                    right: 0
+                  }
+                ]}
+              >
+                {label.price}
+              </Text>
+            ))}
+          </View>
 
-            const isBullish = candle.close >= candle.open
-            const color = isBullish ? "#4CAF50" : "#F44336"
-            // const candleHeight = Math.abs(closeY - openY) || 1
+          {/* SVG график */}
+          <Svg width={chartWidth} height={chartHeight}>
+            {/* Горизонтальные линии сетки */}
+            {yAxisLabels.map((label, index) => (
+              <Line
+                key={`grid-${index}`}
+                x1={margin.left}
+                y1={label.y}
+                x2={chartWidth - margin.right}
+                y2={label.y}
+                stroke='#555'
+                strokeWidth='1'
+                strokeDasharray='4,2'
+              />
+            ))}
 
-            const candleTopY = isBullish ? closeY : openY // ВЕРХ тела свечи
-            const candleBottomY = isBullish ? openY : closeY // НИЗ тела свечи
-            const candleHeight = Math.abs(candleBottomY - candleTopY) || 1 // Разница, для построения тела свечи
+            {/* Ось X */}
+            <Line
+              x1={margin.left}
+              y1={chartHeight - margin.bottom}
+              x2={chartWidth - margin.right}
+              y2={chartHeight - margin.bottom}
+              stroke='#888'
+              strokeWidth='0.5'
+            />
 
-            return (
-              <G key={index}>
-                {/* Тень (high-low line) */}
-                <Line
-                  x1={x + candleWidth / 2}
-                  y1={highY}
-                  x2={x + candleWidth / 2}
-                  y2={lowY}
-                  stroke={color}
-                  strokeWidth='1'
-                />
-                {/* Тело свечи */}
-                <Rect
-                  x={x}
-                  // y={isBullish ? openY : closeY}
-                  y={candleTopY}
-                  width={candleWidth}
-                  height={candleHeight}
-                  fill={color}
-                  stroke={color}
-                  strokeWidth='1'
-                />
-              </G>
-            )
-          })}
-        </Svg>
+            {/* Ось Y */}
+            <Line
+              x1={margin.left}
+              y1={margin.top}
+              x2={margin.left}
+              y2={chartHeight - margin.bottom}
+              stroke='#888'
+              strokeWidth='0.5'
+            />
 
+            {/* Свечи */}
+            {data.map((candle, index) => {
+              const x = xScale(index) - candleWidth / 2
+              const openY = yScale(candle.open)
+              const closeY = yScale(candle.close)
+              const highY = yScale(candle.high)
+              const lowY = yScale(candle.low)
+
+              const isBullish = candle.close >= candle.open
+              const color = isBullish ? "#4CAF50" : "#F44336"
+              // const candleHeight = Math.abs(closeY - openY) || 1
+
+              const candleTopY = isBullish ? closeY : openY // ВЕРХ тела свечи
+              const candleBottomY = isBullish ? openY : closeY // НИЗ тела свечи
+              const candleHeight = Math.abs(candleBottomY - candleTopY) || 1 // Разница, для построения тела свечи
+
+              return (
+                <G key={index}>
+                  {/* Тень (high-low line) */}
+                  <Line
+                    x1={x + candleWidth / 2}
+                    y1={highY}
+                    x2={x + candleWidth / 2}
+                    y2={lowY}
+                    stroke={color}
+                    strokeWidth='1'
+                  />
+                  {/* Тело свечи */}
+                  <Rect
+                    x={x}
+                    // y={isBullish ? openY : closeY}
+                    y={candleTopY}
+                    width={candleWidth}
+                    height={candleHeight}
+                    fill={color}
+                    stroke={color}
+                    strokeWidth='1'
+                  />
+                </G>
+              )
+            })}
+          </Svg>
+        </View>
         {/* Блок с ценами */}
         <View style={styles.priceBlock}>
           <View style={styles.priceContainer}>
