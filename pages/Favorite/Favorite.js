@@ -82,7 +82,7 @@ const Favorite = () => {
   const CandlestickChart = ({ data, width, height }) => {
     if (!data || data.length === 0) return null
 
-    const chartWidth = width * 0.95
+    const chartWidth = width * 1
     const chartHeight = height * 0.8
     const margin = { top: 20, right: 20, bottom: 30, left: 40 }
     const innerWidth = chartWidth - margin.left - margin.right
@@ -93,17 +93,17 @@ const Favorite = () => {
     const maxPrice = Math.max(...data.map((d) => Math.max(d.high, d.open, d.close)))
     const priceRange = maxPrice - minPrice
 
-    // Масштабирующие функции
+    // Масштабирующие функции по оси х/у
     const xScale = (index) => margin.left + (index / (data.length - 1)) * innerWidth
     const yScale = (price) =>
       margin.top + innerHeight - ((price - minPrice) / priceRange) * innerHeight
 
-    // Текущие цены для отображения
+    // Текущие цены для отображения (последней свечи - актуальной)
     const currentCandle = data[data.length - 1] || {}
     const candleWidth = Math.max(3, (innerWidth / data.length) * 0.6)
 
     return (
-      <View style={{ alignItems: "center" }}>
+      <View style={[styles.chartContainerStyle]}>
         <Text style={styles.limits}>Limit: {limit}</Text>
 
         <Svg width={chartWidth} height={chartHeight}>
@@ -117,7 +117,11 @@ const Favorite = () => {
 
             const isBullish = candle.close >= candle.open
             const color = isBullish ? "#4CAF50" : "#F44336"
-            const candleHeight = Math.abs(closeY - openY) || 1
+            // const candleHeight = Math.abs(closeY - openY) || 1
+
+            const candleTopY = isBullish ? closeY : openY // ВЕРХ тела свечи
+            const candleBottomY = isBullish ? openY : closeY // НИЗ тела свечи
+            const candleHeight = Math.abs(candleBottomY - candleTopY) || 1 // Разница, для построения тела свечи
 
             return (
               <G key={index}>
@@ -133,7 +137,8 @@ const Favorite = () => {
                 {/* Тело свечи */}
                 <Rect
                   x={x}
-                  y={isBullish ? openY : closeY}
+                  // y={isBullish ? openY : closeY}
+                  y={candleTopY}
                   width={candleWidth}
                   height={candleHeight}
                   fill={color}
@@ -149,25 +154,25 @@ const Favorite = () => {
         <View style={styles.priceBlock}>
           <View style={styles.priceContainer}>
             <Text style={styles.label}>Low:</Text>
-            <Text style={styles.priceValue}>
+            <Text style={[styles.priceValue, { color: "#F44336" }]}>
               ${currentCandle.low?.toFixed(2) || "0.00"}
             </Text>
           </View>
           <View style={styles.priceContainer}>
             <Text style={styles.label}>Open:</Text>
-            <Text style={styles.priceValue}>
+            <Text style={[styles.priceValue, { color: "#FFFFFF" }]}>
               ${currentCandle.open?.toFixed(2) || "0.00"}
             </Text>
           </View>
           <View style={styles.priceContainer}>
             <Text style={styles.label}>Close:</Text>
-            <Text style={styles.priceValue}>
+            <Text style={[styles.priceValue, { color: "#FFFFFF" }]}>
               ${currentCandle.close?.toFixed(2) || "0.00"}
             </Text>
           </View>
           <View style={styles.priceContainer}>
             <Text style={styles.label}>High:</Text>
-            <Text style={styles.priceValue}>
+            <Text style={[styles.priceValue, { color: "#4CAF50" }]}>
               ${currentCandle.high?.toFixed(2) || "0.00"}
             </Text>
           </View>
@@ -190,7 +195,6 @@ const Favorite = () => {
     ]
   }
 
-  // Жесты масштабирования (оставляем без изменений)
   const onPinchEvent = (event) => {
     const scaleChange = event.nativeEvent.scale / scaleRef.current
     if (scaleChange > 1.1) {

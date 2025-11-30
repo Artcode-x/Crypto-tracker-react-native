@@ -109,7 +109,8 @@ export const styles = StyleSheet.create({
   },
   priceBlock: {
     flexDirection: "row",
-    gap: 10
+    gap: 10,
+    paddingBottom: 3
   },
   priceContainer: {
     alignItems: "center"
@@ -120,22 +121,22 @@ export const styles = StyleSheet.create({
     fontSize: RFValue(9)
   },
   priceValue: {
-    fontSize: RFValue(9),
+    fontSize: RFValue(11),
     color: "wheat"
   },
   limits: {
     textAlign: "center",
-    fontSize: RFValue(8),
+    fontSize: RFValue(9),
     color: "wheat",
     paddingTop: 10
+  },
+  chartContainerStyle: {
+    alignItems: "center",
+    backgroundColor: "#3a3a3a",
+    borderWidth: 1,
+    borderColor: "wheat",
+    borderRadius: 20,
+    alignItems: "center"
+    // padding: 10
   }
 })
-
-export const chartContainerStyle = {
-  backgroundColor: "#1E1E1E",
-  borderWidth: 1,
-  borderColor: "wheat",
-  borderRadius: 20,
-  alignItems: "center",
-  padding: 10
-}
