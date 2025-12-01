@@ -1,23 +1,42 @@
-import { StyleSheet } from "react-native"
+import { StyleSheet, Dimensions } from "react-native"
 import { RFValue } from "react-native-responsive-fontsize"
+
+const { width } = Dimensions.get("window")
+const isSmallScreen = width < 375
+const isTablet = width > 768
 
 export const styles = StyleSheet.create({
   list: {
-    width: "95%"
+    width: "100%",
+    paddingHorizontal: isSmallScreen ? 8 : 12
+  },
+  contentContainer: {
+    alignItems: "center",
+    paddingBottom: 20
   },
   itemContainer: {
-    flex: 1,
-    margin: 5,
-    // backgroundColor: "#696969",
+    margin: 4,
     alignItems: "center",
     justifyContent: "center",
-    padding: 5,
-    borderRadius: 5,
-    // test color
-    backgroundColor: "rgba(50, 48, 49, 0.8)"
-    // borderLeftColor: "orange",
-    // borderLeftWidth: 2
-    //
+    padding: isSmallScreen ? 6 : 8,
+    borderRadius: 8,
+    backgroundColor: "rgba(50, 48, 49, 0.8)",
+    position: "relative"
+  },
+  addButton: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    padding: 2,
+    zIndex: 10
+  },
+  tabletAddButton: {
+    top: 6,
+    right: 6
+  },
+  smallAddButton: {
+    top: 3,
+    right: 3
   },
   modalBox: {
     flex: 1,
@@ -40,11 +59,11 @@ export const styles = StyleSheet.create({
   },
   errorMsg: {
     color: "red",
-    flex: "1",
+    flex: 1,
     textAlign: "center",
-    padding: "20"
+    padding: 20,
+    fontSize: RFValue(14)
   },
-
   dropdown: {
     flex: 1,
     justifyContent: "center",
@@ -60,10 +79,6 @@ export const styles = StyleSheet.create({
     padding: 10,
     elevation: 5,
     backgroundColor: "rgba(50, 48, 49, 0.8)"
-  },
-
-  dropdownItem: {
-    justifyContent: "center"
   },
   dropdownItem: {
     paddingVertical: 14,

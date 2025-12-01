@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react"
-import { FlatList, Modal, Text, TouchableOpacity, View } from "react-native"
+import {
+  FlatList,
+  Modal,
+  Text,
+  TouchableOpacity,
+  View,
+  Dimensions,
+  Animated
+} from "react-native"
 import { styles } from "./CoinList2.styles"
 import { useDispatch, useSelector } from "react-redux"
 import CoinItem from "../CoinItem/CoinItem"
@@ -19,21 +27,34 @@ const CoinList2 = ({
   const favoriteCoins = useSelector(coinSelector)
   const [modalVisible, setModalVisible] = useState(false)
   const [msgDouble, setMsgDouble] = useState(false)
+  const [animatedIcons, setAnimatedIcons] = useState({})
   const dispatch = useDispatch()
 
+  const { width } = Dimensions.get("window")
+  const isSmallScreen = width < 375
+  const isTablet = width > 768
   const marketView = useSelector(viewMarketFlagSelector)
+
+  // Инициализация анимаций для всех иконок
+  useEffect(() => {
+    if (data) {
+      const initialAnimations = {}
+      data.forEach((coin) => {
+        initialAnimations[coin.id] = new Animated.Value(0)
+      })
+      setAnimatedIcons(initialAnimations)
+    }
+  }, [data])
 
   useEffect(() => {
     if (data) {
-      const updatedCoins = [] // Массив для хранения обновленных коинов
+      const updatedCoins = []
 
       data.forEach((coin) => {
         const existingCoin = favoriteCoins.find((favCoin) => favCoin.id === coin.id)
 
         if (existingCoin) {
-          // Если монета уже в избранных, проверяю, изменились ли данные
           if (existingCoin.current_price !== coin.current_price) {
-            // достаем из data только нужные ключи/значения
             const updatedCoin = {
               name: coin.name,
               current_price: coin.current_price,
@@ -44,7 +65,6 @@ const CoinList2 = ({
               symbol: coin.symbol,
               id: coin.id
             }
-
             updatedCoins.push(updatedCoin)
           }
         }
@@ -56,10 +76,43 @@ const CoinList2 = ({
     }
   }, [data])
 
+  // Функция анимации при нажатии
+  const animateIcon = (coinId) => {
+    if (animatedIcons[coinId]) {
+      // Сброс анимации
+      animatedIcons[coinId].setValue(0)
+
+      // Последовательная анимация
+      Animated.sequence([
+        // Увеличение
+        Animated.timing(animatedIcons[coinId], {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true
+        }),
+        // Уменьшение
+        Animated.timing(animatedIcons[coinId], {
+          toValue: 0.8,
+          duration: 100,
+          useNativeDriver: true
+        }),
+        // Возврат к нормальному размеру
+        Animated.timing(animatedIcons[coinId], {
+          toValue: 1,
+          duration: 50,
+          useNativeDriver: true
+        })
+      ]).start()
+    }
+  }
+
   const addToFavorite = (coinData) => {
     const isDuplicate = favoriteCoins.some(
       (favoriteCoin) => favoriteCoin.id === coinData.id
     )
+
+    // Запуск анимации
+    animateIcon(coinData.id)
 
     if (isDuplicate) {
       dispatch(setDuplicate(coinData.id))
@@ -68,13 +121,24 @@ const CoinList2 = ({
         setMsgDouble(false)
       }, 1500)
     } else {
-      dispatch(setCoin(coinData)) // Диспатчим только необходимые данные из огромного обьекта
+      dispatch(setCoin(coinData))
       setModalVisible(true)
-
       setTimeout(() => {
         setModalVisible(false)
       }, 1000)
     }
+  }
+
+  // Проверка, добавлена ли монета в избранное
+  const isFavorite = (coinId) => {
+    return favoriteCoins.some((coin) => coin.id === coinId)
+  }
+
+  // Адаптивный размер иконки
+  const getIconSize = () => {
+    if (isTablet) return 26
+    if (isSmallScreen) return 18
+    return 22
   }
 
   return (
@@ -90,60 +154,80 @@ const CoinList2 = ({
               coin.symbol.toLowerCase().includes(search.toLowerCase())
           )}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <View style={styles.itemContainer}>
-              <CoinItem
-                coin={item}
-                marketView={marketView}
-                onPress={() => openModal(item)}
-              />
-              {/* Иконка добавления в избранное+ */}
-              <TouchableOpacity
-                onPress={() => {
-                  const {
-                    name,
-                    current_price,
-                    price_change_percentage_24h,
-                    image,
-                    otherInfo,
-                    market_cap_rank,
-                    symbol,
-                    id,
-                    low_24h,
-                    atl_date,
-                    circulating_supply,
-                    high_24h,
-                    price_change_percentage_7d_in_currency,
-                    total_volume,
-                    total_supply
-                  } = item // Деструктурирую нужные поля
+          renderItem={({ item }) => {
+            const isCoinFavorite = isFavorite(item.id)
+            const scaleAnim = animatedIcons[item.id] || new Animated.Value(1)
 
-                  const coinData = {
-                    name,
-                    current_price,
-                    price_change_percentage_24h,
-                    image,
-                    otherInfo,
-                    market_cap_rank,
-                    symbol,
-                    id
-                    // low_24,
-                    // atl_date,
-                    // circulating_supply,
-                    // high_24h,
-                    // price_change_percentage_7d_in_currency,
-                    // total_volume,
-                    // total_supply
-                  }
+            const animatedStyle = {
+              transform: [
+                {
+                  scale: scaleAnim.interpolate({
+                    inputRange: [0, 0.8, 1],
+                    outputRange: [1, 1.3, 1.1]
+                  })
+                }
+              ]
+            }
 
-                  addToFavorite(coinData)
-                }}
-                style={styles.addButton}
-              >
-                <Ionicons name='add-circle' size={24} color='#000' />
-              </TouchableOpacity>
-            </View>
-          )}
+            return (
+              <View style={styles.itemContainer}>
+                <CoinItem
+                  coin={item}
+                  marketView={marketView}
+                  onPress={() => openModal(item)}
+                />
+
+                {/* Адаптивная + аним-ая иконка добавления */}
+                <TouchableOpacity
+                  onPress={() => {
+                    const coinData = {
+                      name: item.name,
+                      current_price: item.current_price,
+                      price_change_percentage_24h: item.price_change_percentage_24h,
+                      image: item.image,
+                      otherInfo: item.otherInfo,
+                      market_cap_rank: item.market_cap_rank,
+                      symbol: item.symbol,
+                      id: item.id
+                    }
+                    addToFavorite(coinData)
+                  }}
+                  style={[
+                    styles.addButton,
+                    isTablet && styles.tabletAddButton,
+                    isSmallScreen && styles.smallAddButton,
+                    isCoinFavorite && styles.favoriteActive
+                  ]}
+                  activeOpacity={0.7}
+                >
+                  <Animated.View style={[styles.iconContainer, animatedStyle]}>
+                    <Ionicons
+                      name={isCoinFavorite ? "bookmark" : "bookmark-outline"}
+                      size={getIconSize()}
+                      color={
+                        isCoinFavorite ? "#00D8A3" : marketView ? "#FFD700" : "#8B93A5"
+                      }
+                    />
+
+                    {/* Эффект пульсации для активного состояния */}
+                    {isCoinFavorite && (
+                      <Animated.View
+                        style={[
+                          styles.pulseEffect,
+                          {
+                            opacity: scaleAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0.3, 0]
+                            })
+                          }
+                        ]}
+                      />
+                    )}
+                  </Animated.View>
+                </TouchableOpacity>
+              </View>
+            )
+          }}
           numColumns={1}
           keyExtractor={(item) => item.id}
           refreshing={refreshing}

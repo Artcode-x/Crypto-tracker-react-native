@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { FlatList, Modal, Text, TouchableOpacity, View } from "react-native"
+import { FlatList, Modal, Text, TouchableOpacity, View, Dimensions } from "react-native"
 import { styles } from "./CoinList.styles"
 import { useDispatch, useSelector } from "react-redux"
 import CoinItem from "../CoinItem/CoinItem"
@@ -23,17 +23,34 @@ const CoinList = ({
   const [flag, setFlag] = useState({})
   const dispatch = useDispatch()
 
+  const { width } = Dimensions.get("window")
+  const isSmallScreen = width < 375
+  const isTablet = width > 768
+
+  // ФИКСИРОВАННАЯ ВЫСОТА КАРТОЧКИ
+  const getCardHeight = () => {
+    if (isTablet) return 120
+    if (isSmallScreen) return 90
+    return 100
+  }
+
+  // РАСЧЕТ ШИРИНЫ КАРТОЧКИ
+  const getCardWidth = () => {
+    const numColumns = 2
+    const containerPadding = isSmallScreen ? 16 : 24
+    const totalMargin = (numColumns + 1) * 8
+    return (width - containerPadding - totalMargin) / numColumns
+  }
+
   useEffect(() => {
     if (data) {
-      const updatedCoins = [] // Массив для хранения обновленных коинов
+      const updatedCoins = []
 
       data.forEach((coin) => {
         const existingCoin = favoriteCoins.find((favCoin) => favCoin.id === coin.id)
 
         if (existingCoin) {
-          // Если монета уже в избранных, проверяю, изменились ли данные
           if (existingCoin.current_price !== coin.current_price) {
-            // достаем из data только нужные ключи/значения
             const updatedCoin = {
               name: coin.name,
               current_price: coin.current_price,
@@ -44,7 +61,6 @@ const CoinList = ({
               symbol: coin.symbol,
               id: coin.id
             }
-
             updatedCoins.push(updatedCoin)
           }
         }
@@ -73,7 +89,7 @@ const CoinList = ({
 
       setFlag((prevFlag) => ({ ...prevFlag, [coinData.id]: true }))
       setTimeout(() => {
-        setFlag((prevFlag) => ({ ...prevFlag, [coinData.id]: false })) // Сброс флага через время
+        setFlag((prevFlag) => ({ ...prevFlag, [coinData.id]: false }))
       }, 1800)
 
       setTimeout(() => {
@@ -81,6 +97,62 @@ const CoinList = ({
       }, 500)
     }
   }
+
+  const renderItem = ({ item }) => (
+    <View
+      style={[
+        flag[item.id] && { borderLeftWidth: 2, borderLeftColor: "orange" },
+        styles.itemContainer,
+        {
+          height: getCardHeight(),
+          width: getCardWidth()
+        }
+      ]}
+    >
+      <CoinItem
+        coin={item}
+        onPress={() => openModal(item)}
+        cardHeight={getCardHeight()}
+        cardWidth={getCardWidth()}
+        isSmallScreen={isSmallScreen}
+        isTablet={isTablet}
+      />
+      <TouchableOpacity
+        onPress={() => {
+          const coinData = {
+            name: item.name,
+            current_price: item.current_price,
+            price_change_percentage_24h: item.price_change_percentage_24h,
+            image: item.image,
+            otherInfo: item.otherInfo,
+            market_cap_rank: item.market_cap_rank,
+            symbol: item.symbol,
+            id: item.id
+          }
+          addToFavorite(coinData)
+        }}
+        style={[
+          styles.addButton,
+          isTablet && styles.tabletAddButton,
+          isSmallScreen && styles.smallAddButton
+        ]}
+      >
+        {flag[item.id] ? (
+          <Ionicons
+            name='checkmark-circle-outline'
+            size={isTablet ? 22 : isSmallScreen ? 16 : 20}
+            color='green'
+          />
+        ) : (
+          <Ionicons
+            name='add-circle-outline'
+            size={isTablet ? 22 : isSmallScreen ? 16 : 20}
+            color='gray'
+          />
+        )}
+      </TouchableOpacity>
+    </View>
+  )
 
   return (
     <>
@@ -91,59 +163,11 @@ const CoinList = ({
           style={styles.list}
           data={data?.filter(
             (coin) =>
-              coin.name.toLowerCase().includes(search.toLowerCase()) ||
-              coin.symbol.toLowerCase().includes(search.toLowerCase())
+              coin.name.toLowerCase().includes(search?.toLowerCase() || "") ||
+              coin.symbol.toLowerCase().includes(search?.toLowerCase() || "")
           )}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <View
-              style={[
-                flag[item.id] && { borderLeftWidth: 2, borderLeftColor: "orange" },
-                styles.itemContainer
-              ]}
-            >
-              <CoinItem coin={item} onPress={() => openModal(item)} />
-              {/* Иконка добавления в избранное+ */}
-              <TouchableOpacity
-                onPress={() => {
-                  const {
-                    name,
-                    current_price,
-                    price_change_percentage_24h,
-                    image,
-                    otherInfo,
-                    market_cap_rank,
-                    symbol,
-                    id
-                  } = item // Деструктурирую нужные поля
-                  const coinData = {
-                    name,
-                    current_price,
-                    price_change_percentage_24h,
-                    image,
-                    otherInfo,
-                    market_cap_rank,
-                    symbol,
-                    id
-                  }
-
-                  //  dispatch(setCoin(coinData)); // Диспатчим только необходимые данные из огромного обьекта
-                  addToFavorite(coinData)
-                }}
-                style={styles.addButton}
-              >
-                {flag[item.id] ? (
-                  <Ionicons
-                    name='checkmark-circle-outline'
-                    size={24}
-                    color='green'
-                  ></Ionicons>
-                ) : (
-                  <Ionicons name='add-circle-outline' size={24} color='gray' />
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
+          renderItem={renderItem}
           numColumns={2}
           keyExtractor={(item) => item.id}
           refreshing={refreshing}
@@ -152,6 +176,7 @@ const CoinList = ({
             await fetchMarketData()
             setRefreshing(false)
           }}
+          contentContainerStyle={styles.contentContainer}
         />
       )}
 
