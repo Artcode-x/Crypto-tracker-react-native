@@ -136,9 +136,9 @@ const CoinList2 = ({
 
   // Адаптивный размер иконки
   const getIconSize = () => {
-    if (isTablet) return 26
-    if (isSmallScreen) return 18
-    return 22
+    if (isTablet) return 20
+    if (isSmallScreen) return 14
+    return 18
   }
 
   return (

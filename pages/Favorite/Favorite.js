@@ -17,7 +17,6 @@ import { VolumeChart } from "./FavoriteCharts/VolumeChart/VolumeChart"
 import { SwitchTimeframeButtons } from "./SwitchTimeframeButtons/SwitchTimeframeButtons"
 import { PinchGestureHandler, TapGestureHandler } from "react-native-gesture-handler"
 import Svg, { Rect, Line, G } from "react-native-svg"
-import * as shape from "d3-shape"
 
 const Favorite = () => {
   const dispatch = useDispatch()
