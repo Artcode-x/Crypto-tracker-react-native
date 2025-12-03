@@ -73,3 +73,26 @@ export const formatTime = (prices) => {
     })
     .filter((_, index, array) => index % Math.ceil(array.length / 7) === 0)
 }
+
+export const formatCryptoAmount = (amount) => {
+  console.log(amount)
+  if (amount === 0) return "0"
+
+  let result = amount.toString()
+
+  if (result.includes(".")) {
+    while (result.endsWith("0")) {
+      result = result.slice(0, -1)
+    }
+
+    if (result.endsWith(".")) {
+      result = result.slice(0, -1)
+    }
+  }
+
+  if (!result.includes(".") && result.length > 3) {
+    result = parseInt(result).toLocaleString("en-US")
+  }
+
+  return result
+}

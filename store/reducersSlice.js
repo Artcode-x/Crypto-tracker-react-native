@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit"
 
 const initialState = {
   coinItem: [],
-  //   previousState: null,
+  userAssets: {},
   flag: false,
   chartDays: "1h",
   flagForView: false,
@@ -15,23 +15,16 @@ const reducersSlice = createSlice({
   initialState,
   reducers: {
     setCoin: (state, action) => {
-      //   state.coinItem = action.payload
-      //   state.previousState = { ...state }
-      //   state.coinItem.push(action.payload)
       state.coinItem = [...state.coinItem, action.payload]
     },
     setFlag: (state, action) => {
       state.flag = action.payload
     },
     removeCoin: (state, action) => {
-      //  const idToRemove = action.payload; // Получаем ID объекта для удаления
-      // console.log(idToRemove.id);
-      // state.coinItem = state.coinItem.filter(coin => coin.id !== idToRemove);
       const nameCoinForRemove = action.payload
       state.coinItem = state.coinItem.filter(
         (coin) => coin.name !== nameCoinForRemove.name
       )
-      // Метод filter() создает новый массив, который включает все элементы, кроме того, у которого coin.name совпадает с nameCoinForRemove.
     },
     setChartDays: (state, action) => {
       state.chartDays = action.payload
@@ -44,6 +37,13 @@ const reducersSlice = createSlice({
     },
     setDuplicate: (state, action) => {
       state.duplicate = action.payload
+    },
+    updateUserAsset: (state, action) => {
+      const { coinId, amount } = action.payload
+      state.userAssets = {
+        ...state.userAssets,
+        [coinId]: amount
+      }
     }
   }
 })
@@ -55,6 +55,7 @@ export const {
   setChartDays,
   rewriteFavorite,
   setFlagForView,
-  setDuplicate
+  setDuplicate,
+  updateUserAsset
 } = reducersSlice.actions
 export default reducersSlice.reducer
