@@ -75,7 +75,6 @@ export const formatTime = (prices) => {
 }
 
 export const formatCryptoAmount = (amount) => {
-  console.log(amount)
   if (amount === 0) return "0"
 
   let result = amount.toString()

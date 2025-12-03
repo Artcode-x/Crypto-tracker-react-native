@@ -23,8 +23,9 @@ import ModalFavorite from "./FavoriteCharts/ModalFavorite/ModalFavorite"
 import { formatCryptoAmount } from "../../helpers/helpers"
 
 const { width } = Dimensions.get("window")
-const CARD_WIDTH = (width - 24) / 2
+const CARD_PADDING = 8
 const CARD_MARGIN = 4
+const CARD_WIDTH = (width - CARD_PADDING * 2 - CARD_MARGIN * 4) / 2
 
 const Favorite = () => {
   const dispatch = useDispatch()
@@ -98,7 +99,6 @@ const Favorite = () => {
       )
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     }
-    // Закр модалку
     setInputModalVisible(false)
     setSelectedCoinForInput(null)
     amountInputRef.current = ""
@@ -117,7 +117,10 @@ const Favorite = () => {
       <TouchableOpacity
         activeOpacity={0.9}
         onPress={() => openChartModal(item)}
-        style={{ width: CARD_WIDTH, margin: CARD_MARGIN }}
+        style={{
+          width: CARD_WIDTH,
+          margin: CARD_MARGIN
+        }}
       >
         <View style={styles.premiumCoinCard}>
           <LinearGradient
@@ -377,7 +380,7 @@ const Favorite = () => {
         >
           <MaterialCommunityIcons name='crown' size={22} color='#D4AF37' />
           <View style={styles.headerLeftContainer}>
-            <Text style={styles.headerTitle}>Freedom Finance</Text>
+            <Text style={styles.headerTitle}>Watchlist</Text>
             <Text style={styles.headerSubtitle}>
               Total: {stats.total} asset{stats.total !== 1 ? "s" : ""}
             </Text>

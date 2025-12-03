@@ -9,15 +9,13 @@ export const styles = StyleSheet.create({
     backgroundColor: "#0A0A0F"
   },
   premiumHeader: {
-    // paddingTop: Platform.OS === "ios" ? 50 : 30,
-    paddingTop: Platform.OS === "ios" ? 50 : 25,
+    paddingTop: Platform.OS === "ios" ? 20 : 15,
     paddingHorizontal: 16,
     paddingBottom: 12
   },
   headerGradient: {
     flexDirection: "row",
     alignItems: "center",
-    // padding: 12,
     padding: 10,
     borderRadius: 16,
     borderWidth: 1,
@@ -29,14 +27,12 @@ export const styles = StyleSheet.create({
     marginLeft: 10
   },
   headerTitle: {
-    //  fontSize: 20,
-    fontSize: 15,
+    fontSize: Platform.OS === "ios" ? 15 : 14,
     fontWeight: "700",
     color: "#D4AF37"
   },
   headerSubtitle: {
-    // fontSize: 11,
-    fontSize: 9.5,
+    fontSize: Platform.OS === "ios" ? 9.5 : 9,
     color: "rgba(255, 255, 255, 0.6)",
     marginTop: 2
   },
@@ -46,7 +42,6 @@ export const styles = StyleSheet.create({
   },
   statsGradient: {
     borderRadius: 12,
-    // padding: 12,
     padding: 9,
     borderWidth: 1,
     borderColor: "rgba(212, 175, 55, 0.15)",
@@ -73,14 +68,12 @@ export const styles = StyleSheet.create({
     flex: 1
   },
   statNumberCompact: {
-    // fontSize: 16,
     fontSize: 13,
     fontWeight: "700",
     color: "#FFF",
     marginTop: 4
   },
   statLabelCompact: {
-    // fontSize: 10,
     fontSize: 9,
     color: "rgba(255, 255, 255, 0.6)",
     marginTop: 2
@@ -97,8 +90,8 @@ export const styles = StyleSheet.create({
   premiumCoinCard: {
     borderRadius: 14,
     overflow: "hidden",
-    // фикс высота
-    height: 165,
+    height: Platform.OS === "ios" ? 165 : 170,
+    width: CARD_WIDTH,
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -120,7 +113,6 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    // marginBottom: 12
     marginBottom: 8
   },
   rankContainer: {
@@ -142,28 +134,23 @@ export const styles = StyleSheet.create({
     marginLeft: 4
   },
   coinContent: {
-    // marginBottom: 12
     marginBottom: 7
   },
   coinHeader: {
-    // marginBottom: 8
     marginBottom: 2
   },
   coinName: {
-    // fontSize: 15,
     fontSize: 13,
     fontWeight: "600",
     color: "#FFF",
     marginBottom: 2
   },
   coinSymbol: {
-    // fontSize: 11,
     fontSize: 10,
     color: "rgba(255, 255, 255, 0.5)",
     fontWeight: "500"
   },
   coinPrice: {
-    // fontSize: 18,
     fontSize: 14,
     fontWeight: "500",
     marginBottom: 8
@@ -183,31 +170,42 @@ export const styles = StyleSheet.create({
     fontWeight: "700",
     marginLeft: 4
   },
+
   deleteButton: {
-    marginTop: "auto"
+    flex: 1,
+    marginLeft: 4,
+    height: 25
   },
+
   deleteButtonGradient: {
-    paddingHorizontal: 12,
-    // paddingVertical: 6,
-    paddingVertical: 5,
+    paddingHorizontal: Platform.OS === "ios" ? 10 : 8,
+    paddingVertical: 0,
     borderRadius: 10,
     alignItems: "center",
     flexDirection: "row",
-    justifyContent: "center"
+    justifyContent: "center",
+    height: "100%"
+    // flex: 1
   },
+
   deleteButtonText: {
-    // fontSize: 11,
-    fontSize: 9,
+    fontSize: Platform.OS === "ios" ? 9 : 8,
     color: "#FFF",
-    marginLeft: 6,
-    fontWeight: "600"
+    marginLeft: 0,
+    fontWeight: "600",
+    includeFontPadding: false,
+    textAlignVertical: "center",
+    paddingVertical: 0,
+    lineHeight: Platform.OS === "ios" ? 12 : 14
   },
+
   emptyState: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 40
   },
+
   emptyStateGradient: {
     padding: 24,
     borderRadius: 20,
@@ -217,6 +215,7 @@ export const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "rgba(26, 26, 26, 0.8)"
   },
+
   emptyTitle: {
     fontSize: 18,
     color: "#D4AF37",
@@ -224,6 +223,7 @@ export const styles = StyleSheet.create({
     marginTop: 16,
     textAlign: "center"
   },
+
   emptySubtitle: {
     fontSize: 13,
     color: "rgba(255, 255, 255, 0.5)",
@@ -233,7 +233,8 @@ export const styles = StyleSheet.create({
   },
 
   userAmountContainer: {
-    alignItems: "flex-end"
+    alignItems: "flex-end",
+    minHeight: 32
   },
 
   userAmountText: {
@@ -243,7 +244,6 @@ export const styles = StyleSheet.create({
     textAlign: "right"
   },
 
-  // стиль для стоимости под количеством
   userAmountValue: {
     fontSize: 8,
     color: "rgba(255, 255, 255, 0.7)",
@@ -255,29 +255,40 @@ export const styles = StyleSheet.create({
   bottomButtonsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 8
+    marginTop: 8,
+    minHeight: 28,
+    alignItems: "stretch"
   },
 
   // Кнопка для ввода количества
   amountButton: {
     flex: 1,
-    marginRight: 4
+    marginRight: 4,
+    height: 25
   },
+
   amountButtonGradient: {
-    paddingHorizontal: 8,
-    paddingVertical: 5,
+    paddingHorizontal: Platform.OS === "ios" ? 10 : 8,
+    paddingVertical: 0,
     borderRadius: 10,
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(212, 175, 55, 0.3)"
+    borderColor: "rgba(212, 175, 55, 0.3)",
+    height: "100%"
+    // flex: 1
   },
+
   amountButtonText: {
-    fontSize: 9,
+    fontSize: Platform.OS === "ios" ? 9 : 10,
     color: "#FFD700",
     marginLeft: 4,
-    fontWeight: "600"
+    fontWeight: "600",
+    includeFontPadding: false,
+    textAlignVertical: "center",
+    paddingVertical: 0,
+    lineHeight: Platform.OS === "ios" ? 12 : 14
   },
 
   // Модалка для ввода количества
@@ -287,29 +298,35 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center"
   },
+
   modalContainer: {
     width: width * 0.8,
     borderRadius: 16,
     overflow: "hidden"
   },
+
   modalGradient: {
     padding: 20
   },
+
   modalHeader: {
     marginBottom: 16
   },
+
   modalTitle: {
     fontSize: 16,
     color: "#FFF",
     fontWeight: "600",
     textAlign: "center"
   },
+
   modalSubtitle: {
     fontSize: 12,
     color: "rgba(255, 255, 255, 0.5)",
     textAlign: "center",
     marginTop: 4
   },
+
   amountInput: {
     backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderRadius: 10,
@@ -322,10 +339,12 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(212, 175, 55, 0.3)"
   },
+
   modalButtonsRow: {
     flexDirection: "row",
     justifyContent: "space-between"
   },
+
   modalButtonCancel: {
     flex: 1,
     marginRight: 8,
@@ -334,28 +353,27 @@ export const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.1)",
     alignItems: "center"
   },
+
   modalButtonSave: {
     flex: 1,
     marginLeft: 8,
     borderRadius: 10,
     overflow: "hidden"
   },
+
   saveButtonGradient: {
     paddingVertical: 12,
     alignItems: "center"
   },
+
   modalButtonTextCancel: {
     color: "rgba(255, 255, 255, 0.7)",
     fontWeight: "600"
   },
+
   modalButtonTextSave: {
     color: "#000",
     fontWeight: "600"
-  },
-
-  deleteButton: {
-    flex: 1,
-    marginLeft: 4
   },
 
   // Левая часть шапки
@@ -382,26 +400,15 @@ export const styles = StyleSheet.create({
     color: "#D4AF37"
   },
 
-  headerTitle: {
-    fontSize: 14, // было 15
-    fontWeight: "700",
-    color: "#D4AF37"
-  },
-
-  headerSubtitle: {
-    fontSize: 9, // было 9.5
-    color: "rgba(255, 255, 255, 0.6)",
-    marginTop: 2
-  },
   userAmountPlaceholder: {
     fontSize: 9,
     color: "rgba(255, 255, 255, 0.2)",
     fontStyle: "italic",
     textAlign: "right"
-  },
-
-  userAmountContainer: {
-    alignItems: "flex-end",
-    minHeight: 32
   }
+
+  // buttonIcon: {
+  //   textAlign: "center",
+  //   textAlignVertical: "center"
+  // }
 })
