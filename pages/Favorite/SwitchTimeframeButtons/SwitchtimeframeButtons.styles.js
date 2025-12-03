@@ -1,43 +1,98 @@
-import { StyleSheet, Platform } from "react-native"
-import { RFPercentage, RFValue } from "react-native-responsive-fontsize"
+import { StyleSheet, Platform, Dimensions } from "react-native"
+
+const { width } = Dimensions.get("window")
 
 export const styles = StyleSheet.create({
   chartButtons: {
     flexDirection: "row",
-    gap: Platform.OS === "ios" ? 10 : 7,
-    backgroundColor: "rgba(50, 48, 49, 0.8)",
-    borderWidth: 0.5,
-    borderColor: "wheat",
-    padding: Platform.OS === "ios" ? 7 : 6,
-
-    borderRadius: 15,
-
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 2,
-      height: 4
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 5 // Для Android
+    justifyContent: "space-between",
+    backgroundColor: "rgba(26, 26, 32, 0.95)",
+    borderRadius: 10,
+    padding: 6,
+    borderWidth: 1.5,
+    borderColor: "rgba(212, 175, 55, 0.15)",
+    height: 44, // Компактная высота
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 6
+      },
+      android: {
+        elevation: 4
+      }
+    })
   },
-  chartButton: {
-    marginTop: 0,
-    backgroundColor: "darkgray",
-    borderRadius: 5,
-    paddingVertical: Platform.OS === "ios" ? 7 : 5,
-    paddingHorizontal: Platform.OS === "ios" ? 20 : 18,
-    alignItems: "center"
+  chartButtonsCompact: {
+    padding: 4,
+    borderRadius: 8,
+    height: 40
   },
-  activeButton: {
-    backgroundColor: "#000"
+  buttonContainer: {
+    flex: 1,
+    marginHorizontal: 3,
+    borderRadius: 8,
+    overflow: "hidden",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2
+      },
+      android: {
+        elevation: 2
+      }
+    })
   },
-  activeButtonText: {
-    color: "#fff"
+  buttonContainerCompact: {
+    marginHorizontal: 2,
+    borderRadius: 6
+  },
+  activeButtonContainer: {
+    ...Platform.select({
+      ios: {
+        shadowColor: "#D4AF37",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4
+      },
+      android: {
+        elevation: 6
+      }
+    })
+  },
+  buttonGradient: {
+    height: 32, // Уменьшенная высота (было 48+)
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)"
+  },
+  activeButtonGradient: {
+    borderColor: "rgba(212, 175, 55, 0.35)"
   },
   buttonText: {
-    color: "#000",
-    fontSize: RFValue(10),
-    fontWeight: "bold"
+    fontSize: 11,
+    fontWeight: "700",
+    color: "rgba(255, 255, 255, 0.8)",
+    letterSpacing: 0.3
+  },
+  buttonTextCompact: {
+    fontSize: 10
+  },
+  activeButtonText: {
+    color: "#0A0A0F",
+    fontWeight: "800"
+  },
+  buttonGlow: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8
   }
 })

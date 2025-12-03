@@ -1,156 +1,233 @@
-import { StyleSheet } from "react-native"
-import { RFPercentage, RFValue } from "react-native-responsive-fontsize"
+import { StyleSheet, Dimensions, Platform } from "react-native"
+
+const { width } = Dimensions.get("window")
+const CARD_WIDTH = (width - 32) / 2
 
 export const styles = StyleSheet.create({
-  favlist: {
-    backgroundColor: "#141414",
+  premiumContainer: {
     flex: 1,
-    alignItems: "center"
+    backgroundColor: "#0A0A0F"
   },
-  favCoins: {
-    marginTop: "2%",
-    width: "90%"
+  premiumHeader: {
+    // paddingTop: Platform.OS === "ios" ? 50 : 30,
+    paddingTop: Platform.OS === "ios" ? 50 : 25,
+    paddingHorizontal: 16,
+    paddingBottom: 12
   },
-
-  itemContainer: {
-    flex: 1,
-    margin: 5,
-    // backgroundColor: "#696969",
-    backgroundColor: "rgba(50, 48, 49, 0.8)",
+  headerGradient: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    padding: 5,
-    borderRadius: 5
-  },
-  list: {},
-  cont: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 20
-  },
-  chartContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    // paddingTop: "15%",
-    // backgroundColor: "white",
-    // backgroundColor: "rgba(50, 48, 49, 0.8)",
-    backgroundColor: "rgba(75, 73, 74, 0.9)",
-    elevation: 5,
-    padding: 20,
-    justifyContent: "center",
-    alignItems: "center"
-  },
-  textUp: {
-    fontWeight: "300",
-    color: "white",
-    fontSize: RFValue(11)
-  },
-  modalTitle: {
-    // fontSize: 24,
-    fontSize: RFValue(23),
-    fontWeight: "bold",
-    // color: "#333",
-    color: "white",
-    paddingBottom: "10"
-  },
-  text0: { color: "white", paddingBottom: 0, paddingTop: 2, fontSize: RFValue(10) },
-  text: { color: "white", paddingBottom: 5, fontSize: RFValue(10) },
-  text1: { color: "white", paddingTop: 5, fontSize: RFValue(9) },
-  textTit: { color: "white", fontSize: RFValue(10), paddingBottom: 5 },
-  textZ: {
-    color: "wheat",
-    fontSize: RFValue(10)
-  },
-  chartButtonsClose: {
-    marginTop: 10,
-    flexDirection: "row",
-    gap: 10,
-    backgroundColor: "rgba(50, 48, 49, 0.8)",
-    // borderWidth: 0.5,
-    // borderColor: "wheat",
-    // padding: 3,
-    // borderRadius: 15,
-
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 2,
-      height: 4
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 5 // Для Android
-  },
-  buttonClose: {
-    marginTop: 0,
-    backgroundColor: "lightgray",
-    borderRadius: 5,
-    borderColor: "wheat",
-    borderWidth: 0.5,
-    paddingVertical: 5,
-    paddingHorizontal: 15,
-    alignItems: "center"
-  },
-  closeb: { color: "black", fontSize: RFValue(14) },
-
-  minmaxBlock: {
-    flexDirection: "row",
-    borderRadius: 20,
-    backgroundColor: "rgba(75, 73, 74, 0.9)",
-    gap: 10,
-    paddingLeft: 5,
-    paddingRight: 5
-  },
-  priceRange: {
-    color: "white",
-    color: "wheat"
-  },
-  priceBlock: {
-    flexDirection: "row",
-    gap: 10,
-    paddingBottom: 3
-  },
-  priceContainer: {
-    alignItems: "center"
-  },
-  label: {
-    fontWeight: "bold",
-    color: "wheat",
-    fontSize: RFValue(9)
-  },
-  priceValue: {
-    fontSize: RFValue(11),
-    color: "wheat"
-  },
-  limits: {
-    textAlign: "center",
-    fontSize: RFValue(9),
-    color: "wheat",
-    paddingTop: 10
-  },
-  chartContainerStyle: {
-    alignItems: "center",
-    backgroundColor: "#3a3a3a",
+    // padding: 12,
+    padding: 10,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "wheat",
-    borderRadius: 20,
+    borderColor: "rgba(212, 175, 55, 0.2)",
+    backgroundColor: "rgba(26, 26, 26, 0.8)"
+  },
+  headerTextContainer: {
+    flex: 1,
+    marginLeft: 10
+  },
+  headerTitle: {
+    //  fontSize: 20,
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#D4AF37"
+  },
+  headerSubtitle: {
+    // fontSize: 11,
+    fontSize: 9.5,
+    color: "rgba(255, 255, 255, 0.6)",
+    marginTop: 2
+  },
+  statsPanel: {
+    paddingHorizontal: 16,
+    marginBottom: 12
+  },
+  statsGradient: {
+    borderRadius: 12,
+    // padding: 12,
+    padding: 9,
+    borderWidth: 1,
+    borderColor: "rgba(212, 175, 55, 0.15)",
+    backgroundColor: "rgba(26, 26, 26, 0.8)",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#D4AF37",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4
+      },
+      android: {
+        elevation: 3
+      }
+    })
+  },
+  compactStats: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center"
-    // padding: 10
   },
-  box: {
-    // flexDirection: "row",
-    // position: "relative"
+  statItemCompact: {
+    alignItems: "center",
+    flex: 1
   },
-  yAxisLabelsContainer: {
-    width: 45,
-    position: "relative"
+  statNumberCompact: {
+    // fontSize: 16,
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#FFF",
+    marginTop: 4
   },
-  yAxisLabel: {
-    color: "#888",
+  statLabelCompact: {
+    // fontSize: 10,
+    fontSize: 9,
+    color: "rgba(255, 255, 255, 0.6)",
+    marginTop: 2
+  },
+  statDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: "rgba(212, 175, 55, 0.2)"
+  },
+  premiumList: {
+    paddingHorizontal: 8,
+    paddingBottom: 80
+  },
+  premiumCoinCard: {
+    borderRadius: 14,
+    overflow: "hidden",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.15,
+        shadowRadius: 5
+      },
+      android: {
+        elevation: 2
+      }
+    })
+  },
+  cardGradient: {
+    // padding: 14,
+    padding: 10,
+    position: "relative",
+    minHeight: 140
+  },
+  topRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    // marginBottom: 12
+    marginBottom: 8
+  },
+  rankContainer: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  rankText: {
+    fontSize: 11,
+    color: "#D4AF37",
+    fontWeight: "700",
+    backgroundColor: "rgba(212, 175, 55, 0.15)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "rgba(212, 175, 55, 0.3)"
+  },
+  crownIcon: {
+    marginLeft: 4
+  },
+  coinContent: {
+    // marginBottom: 12
+    marginBottom: 7
+  },
+  coinHeader: {
+    // marginBottom: 8
+    marginBottom: 2
+  },
+  coinName: {
+    // fontSize: 15,
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#FFF",
+    marginBottom: 2
+  },
+  coinSymbol: {
+    // fontSize: 11,
     fontSize: 10,
-    textAlign: "right",
-    paddingRight: 5
+    color: "rgba(255, 255, 255, 0.5)",
+    fontWeight: "500"
+  },
+  coinPrice: {
+    // fontSize: 18,
+    fontSize: 14,
+    fontWeight: "500",
+    marginBottom: 8
+  },
+  changeRow: {
+    alignItems: "flex-start"
+  },
+  changeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8
+  },
+  changeText: {
+    fontSize: 9,
+    fontWeight: "700",
+    marginLeft: 4
+  },
+  deleteButton: {
+    marginTop: "auto"
+  },
+  deleteButtonGradient: {
+    paddingHorizontal: 12,
+    // paddingVertical: 6,
+    paddingVertical: 5,
+    borderRadius: 10,
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center"
+  },
+  deleteButtonText: {
+    // fontSize: 11,
+    fontSize: 9,
+    color: "#FFF",
+    marginLeft: 6,
+    fontWeight: "600"
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40
+  },
+  emptyStateGradient: {
+    padding: 24,
+    borderRadius: 20,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(212, 175, 55, 0.2)",
+    width: "100%",
+    backgroundColor: "rgba(26, 26, 26, 0.8)"
+  },
+  emptyTitle: {
+    fontSize: 18,
+    color: "#D4AF37",
+    fontWeight: "600",
+    marginTop: 16,
+    textAlign: "center"
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: "rgba(255, 255, 255, 0.5)",
+    textAlign: "center",
+    marginTop: 6,
+    lineHeight: 18
   }
 })

@@ -1,402 +1,261 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react"
-import { View, FlatList, Modal, Text, Dimensions } from "react-native"
+import React, { useState, useCallback } from "react"
+import { View, FlatList, Text, Dimensions, TouchableOpacity } from "react-native"
+import { LinearGradient } from "expo-linear-gradient"
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
+import * as Haptics from "expo-haptics"
 import { useDispatch, useSelector } from "react-redux"
 import { coinSelector, daysSelector } from "../../store/toolkitSelectors"
-import CoinItem from "../../components/CoinItem/CoinItem"
-import { Ionicons } from "@expo/vector-icons"
-import { TouchableOpacity } from "react-native"
 import { removeCoin } from "../../store/reducersSlice"
+import ModalFavorite from "./FavoriteCharts/ModalFavorite/ModalFavorite"
 import { styles } from "./Favorite.styles"
-import { formatTime, getTimeLabels } from "../../helpers/helpers"
-import {
-  FetchCandleData,
-  Get24hrMinMaxPrices,
-  GetSantiment
-} from "../../components/Api/Api"
-import { VolumeChart } from "./FavoriteCharts/VolumeChart/VolumeChart"
-import { SwitchTimeframeButtons } from "./SwitchTimeframeButtons/SwitchTimeframeButtons"
-import { PinchGestureHandler, TapGestureHandler } from "react-native-gesture-handler"
-import Svg, { Rect, Line, G } from "react-native-svg"
+
+const { width } = Dimensions.get("window")
+// const CARD_WIDTH = (width - 32) / 2
+
+const CARD_WIDTH = (width - 24) / 2 // Уменьшил отступы (было 32)
+const CARD_MARGIN = 4 // Уменьшил маржин (было 8)
 
 const Favorite = () => {
   const dispatch = useDispatch()
   const coinData = useSelector(coinSelector)
-  const chartDays = useSelector(daysSelector)
+  const chartDays = useSelector(daysSelector) // Получаем timeframe из Redux
 
-  const [flag, setFlag] = useState({})
-  const [prices, setPrices] = useState([])
+  const [removingCoinId, setRemovingCoinId] = useState(null)
   const [isModalVisible, setModalVisible] = useState(false)
-  const [minMax, setMinMax] = useState({ minPrice: null, maxPrice: null })
-  const [sant, setSant] = useState(null)
   const [selectedCoin, setSelectedCoin] = useState(null)
-  const [limit, setLimit] = useState(100)
-  const scaleRef = useRef(1)
+
+  // Статистика
+  const stats = {
+    total: coinData.length,
+    bullish: coinData.filter((c) => c.price_change_percentage_24h >= 0).length,
+    bearish: coinData.filter((c) => c.price_change_percentage_24h < 0).length,
+    top10: coinData.filter((c) => c.market_cap_rank <= 10).length
+  }
 
   // Удаляем из избранного
-  const removeFromFav = (coin) => {
-    setFlag((prev) => ({ ...prev, [coin.id]: true }))
-    setTimeout(() => {
-      setFlag({})
-      dispatch(removeCoin(coin))
-    }, 1500)
-  }
+  const removeFromFav = useCallback(
+    (coin) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+      setRemovingCoinId(coin.id)
 
-  const openModal = (coin) => {
+      setTimeout(() => {
+        setRemovingCoinId(null)
+        dispatch(removeCoin(coin))
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      }, 1500)
+    },
+    [dispatch]
+  )
+
+  // Открываем модалку с графиком
+  const openChartModal = useCallback((coin) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     setSelectedCoin(coin)
     setModalVisible(true)
-  }
+  }, [])
 
-  const fetchData = async () => {
-    if (!selectedCoin) return
-    const symbol = selectedCoin.symbol.toUpperCase()
-    const days = chartDays
+  // Закрываем модалку
+  const closeChartModal = useCallback(() => {
+    setModalVisible(false)
+    setSelectedCoin(null)
+  }, [])
 
-    try {
-      const [minMaxPrice, candlePrices] = await Promise.all([
-        Get24hrMinMaxPrices(symbol),
-        FetchCandleData(symbol, days, limit)
-      ])
-
-      if (symbol === "BTC" || symbol === "ETH") {
-        const response = await GetSantiment(symbol)
-        setSant(response.Data.inOutVar.sentiment)
-      } else {
-        setSant(null)
-      }
-
-      if (candlePrices && candlePrices.length > 0) {
-        setPrices(candlePrices)
-      }
-
-      setMinMax({
-        minPrice: minMaxPrice.minPrice,
-        maxPrice: minMaxPrice.maxPrice
-      })
-    } catch (error) {
-      console.log(error.message)
-    }
-  }
-
-  // Компонент свечного графика
-  const CandlestickChart = ({ data, width, height }) => {
-    if (!data || data.length === 0) return null
-
-    const chartWidth = width * 1
-    const chartHeight = height * 0.8
-    const margin = { top: 20, right: 20, bottom: 10, left: 45 }
-    const innerWidth = chartWidth - margin.left - margin.right
-    const innerHeight = chartHeight - margin.top - margin.bottom
-
-    // Находим min/max для масштабирования
-    const minPrice = Math.min(...data.map((d) => Math.min(d.low, d.open, d.close)))
-    const maxPrice = Math.max(...data.map((d) => Math.max(d.high, d.open, d.close)))
-    const priceRange = maxPrice - minPrice
-
-    // Масштабирующие функции по оси х/у
-    const xScale = (index) => margin.left + (index / (data.length - 1)) * innerWidth
-    const yScale = (price) =>
-      margin.top + innerHeight - ((price - minPrice) / priceRange) * innerHeight
-
-    // Функция для генерации меток на оси Y
-    const generateYAxisLabels = () => {
-      const numberOfLabels = 5
-      const labels = []
-
-      for (let i = 0; i <= numberOfLabels; i++) {
-        const price = minPrice + (priceRange * i) / numberOfLabels
-        const yPosition = yScale(price)
-
-        // Форматируем цену для отображения
-        let formattedPrice
-        if (price >= 1000) {
-          formattedPrice = `$${(price / 1000).toFixed(1)}k`
-        } else if (price >= 1) {
-          formattedPrice = `$${price.toFixed(2)}`
-        } else {
-          formattedPrice = `$${price.toFixed(6)}`
-        }
-
-        labels.push({
-          price: formattedPrice,
-          y: yPosition,
-          value: price
-        })
-      }
-
-      return labels
-    }
-    const yAxisLabels = generateYAxisLabels()
-    // Текущие цены для отображения (последней свечи - актуальной)
-    const currentCandle = data[data.length - 1] || {}
-    const candleWidth = Math.max(3, (innerWidth / data.length) * 0.6)
+  // Премиум карточка монеты (остается в Favorite)
+  const PremiumCoinCard = ({ item, index }) => {
+    const isRemoving = removingCoinId === item.id
+    const priceChangeColor = item.price_change_percentage_24h >= 0 ? "#00C853" : "#FF3B30"
+    const priceChangeIcon =
+      item.price_change_percentage_24h >= 0 ? "trending-up" : "trending-down"
 
     return (
-      <View style={[styles.chartContainerStyle]}>
-        <Text style={styles.limits}>Limit: {limit}</Text>
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={() => openChartModal(item)}
+        // style={{ width: CARD_WIDTH, margin: 8 }}
+        style={{ width: CARD_WIDTH, margin: CARD_MARGIN }}
+      >
+        <View style={styles.premiumCoinCard}>
+          <LinearGradient
+            colors={
+              isRemoving
+                ? ["rgba(244, 67, 54, 0.3)", "rgba(183, 28, 28, 0.2)"]
+                : ["rgba(26, 26, 26, 0.95)", "rgba(40, 40, 40, 0.9)"]
+            }
+            style={styles.cardGradient}
+          >
+            {/* Верхняя строка */}
+            <View style={styles.topRow}>
+              <View style={styles.rankContainer}>
+                <Text style={styles.rankText}>#{item.market_cap_rank || "?"}</Text>
+                {item.market_cap_rank <= 10 && (
+                  <MaterialCommunityIcons
+                    name='crown'
+                    size={10}
+                    color='#FFD700'
+                    style={styles.crownIcon}
+                  />
+                )}
+              </View>
+            </View>
 
-        <View style={styles.box}>
-          {/* Контейнер для меток оси Y */}
-          <View style={styles.yAxisLabelsContainer}>
-            {yAxisLabels.map((label, index) => (
-              <Text
-                key={index}
-                style={[
-                  styles.yAxisLabel,
-                  {
-                    position: "absolute",
-                    top: label.y - 8,
-                    left: 0,
-                    right: 0
-                  }
-                ]}
-              >
-                {label.price}
+            {/* Основной контент */}
+            <View style={styles.coinContent}>
+              <View style={styles.coinHeader}>
+                <Text style={styles.coinName} numberOfLines={1}>
+                  {item.name}
+                </Text>
+                <Text style={styles.coinSymbol}>{item.symbol?.toUpperCase()}</Text>
+              </View>
+
+              <Text style={[styles.coinPrice, { color: priceChangeColor }]}>
+                $
+                {item.current_price?.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                }) || "0.00"}
               </Text>
-            ))}
-          </View>
 
-          {/* SVG график */}
-          <Svg width={chartWidth} height={chartHeight}>
-            {/* Горизонтальные линии сетки */}
-            {yAxisLabels.map((label, index) => (
-              <Line
-                key={`grid-${index}`}
-                x1={margin.left}
-                y1={label.y}
-                x2={chartWidth - margin.right}
-                y2={label.y}
-                stroke='#555'
-                strokeWidth='1'
-                strokeDasharray='4,2'
-              />
-            ))}
+              <View style={styles.changeRow}>
+                <View
+                  style={[
+                    styles.changeBadge,
+                    { backgroundColor: `${priceChangeColor}26` }
+                  ]}
+                >
+                  <Ionicons name={priceChangeIcon} size={12} color={priceChangeColor} />
+                  <Text style={[styles.changeText, { color: priceChangeColor }]}>
+                    {Math.abs(item.price_change_percentage_24h?.toFixed(2) || 0)}%
+                  </Text>
+                </View>
+              </View>
+            </View>
 
-            {/* Ось X */}
-            <Line
-              x1={margin.left}
-              y1={chartHeight - margin.bottom}
-              x2={chartWidth - margin.right}
-              y2={chartHeight - margin.bottom}
-              stroke='#888'
-              strokeWidth='0.5'
-            />
-
-            {/* Ось Y */}
-            <Line
-              x1={margin.left}
-              y1={margin.top}
-              x2={margin.left}
-              y2={chartHeight - margin.bottom}
-              stroke='#888'
-              strokeWidth='0.5'
-            />
-
-            {/* Свечи */}
-            {data.map((candle, index) => {
-              const x = xScale(index) - candleWidth / 2
-              const openY = yScale(candle.open)
-              const closeY = yScale(candle.close)
-              const highY = yScale(candle.high)
-              const lowY = yScale(candle.low)
-
-              const isBullish = candle.close >= candle.open
-              const color = isBullish ? "#4CAF50" : "#F44336"
-              // const candleHeight = Math.abs(closeY - openY) || 1
-
-              const candleTopY = isBullish ? closeY : openY // ВЕРХ тела свечи
-              const candleBottomY = isBullish ? openY : closeY // НИЗ тела свечи
-              const candleHeight = Math.abs(candleBottomY - candleTopY) || 1 // Разница, для построения тела свечи
-
-              return (
-                <G key={index}>
-                  {/* Тень (high-low line) */}
-                  <Line
-                    x1={x + candleWidth / 2}
-                    y1={highY}
-                    x2={x + candleWidth / 2}
-                    y2={lowY}
-                    stroke={color}
-                    strokeWidth='1'
-                  />
-                  {/* Тело свечи */}
-                  <Rect
-                    x={x}
-                    // y={isBullish ? openY : closeY}
-                    y={candleTopY}
-                    width={candleWidth}
-                    height={candleHeight}
-                    fill={color}
-                    stroke={color}
-                    strokeWidth='1'
-                  />
-                </G>
-              )
-            })}
-          </Svg>
+            {/* Кнопка удаления */}
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation()
+                removeFromFav(item)
+              }}
+              style={styles.deleteButton}
+              activeOpacity={0.7}
+            >
+              <LinearGradient
+                colors={
+                  isRemoving
+                    ? ["#F44336", "#C62828"]
+                    : ["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"]
+                }
+                style={styles.deleteButtonGradient}
+              >
+                <Ionicons
+                  name={isRemoving ? "checkmark" : "close"}
+                  size={14}
+                  color={isRemoving ? "#FFF" : "#FF6B6B"}
+                />
+                <Text style={styles.deleteButtonText}>
+                  {isRemoving ? "Removing" : "Remove"}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </LinearGradient>
         </View>
-        {/* Блок с ценами */}
-        <View style={styles.priceBlock}>
-          <View style={styles.priceContainer}>
-            <Text style={styles.label}>Low:</Text>
-            <Text style={[styles.priceValue, { color: "#F44336" }]}>
-              ${currentCandle.low?.toFixed(2) || "0.00"}
-            </Text>
-          </View>
-          <View style={styles.priceContainer}>
-            <Text style={styles.label}>Open:</Text>
-            <Text style={[styles.priceValue, { color: "#FFFFFF" }]}>
-              ${currentCandle.open?.toFixed(2) || "0.00"}
-            </Text>
-          </View>
-          <View style={styles.priceContainer}>
-            <Text style={styles.label}>Close:</Text>
-            <Text style={[styles.priceValue, { color: "#FFFFFF" }]}>
-              ${currentCandle.close?.toFixed(2) || "0.00"}
-            </Text>
-          </View>
-          <View style={styles.priceContainer}>
-            <Text style={styles.label}>High:</Text>
-            <Text style={[styles.priceValue, { color: "#4CAF50" }]}>
-              ${currentCandle.high?.toFixed(2) || "0.00"}
-            </Text>
-          </View>
-        </View>
-      </View>
+      </TouchableOpacity>
     )
   }
 
-  const volumeData = {
-    labels:
-      chartDays === "1h" || chartDays === "4h"
-        ? getTimeLabels(prices)
-        : formatTime(prices),
-    datasets: [
-      {
-        data: prices.map((item) => Number(item.volume) || 0),
-        color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
-        strokeWidth: 2
-      }
-    ]
-  }
-
-  const onPinchEvent = (event) => {
-    const scaleChange = event.nativeEvent.scale / scaleRef.current
-    if (scaleChange > 1.1) {
-      setLimit((prev) => Math.max(prev - 10, 10))
-      scaleRef.current = event.nativeEvent.scale
-    } else if (scaleChange < 0.9) {
-      setLimit((prev) => Math.min(prev + 10, 200))
-      scaleRef.current = event.nativeEvent.scale
-    }
-  }
-
-  const onPinchStateChange = (event) => {
-    if (event.nativeEvent.state === 5) {
-      scaleRef.current = 1
-    }
-  }
-
-  useEffect(() => {
-    if (isModalVisible) {
-      fetchData()
-    }
-  }, [isModalVisible, selectedCoin, chartDays, limit])
-
-  return (
-    <View style={styles.favlist}>
-      <FlatList
-        style={styles.favCoins}
-        data={coinData.filter(
-          (coin) => coin.name.toLowerCase() || coin.symbol.toLowerCase()
-        )}
-        renderItem={({ item }) => (
-          <View style={styles.itemContainer}>
-            <CoinItem coin={item} onPress={() => openModal(item)} />
-
-            <TouchableOpacity onPress={() => removeFromFav(item)}>
-              {flag[item.id] ? (
-                <Ionicons name='close-circle-outline' size={24} color='red'></Ionicons>
-              ) : (
-                <Ionicons name='remove-circle-outline' size={24} color='gray' />
-              )}
-            </TouchableOpacity>
+  // Статистическая панель (остается в Favorite)
+  const StatsPanel = () => (
+    <View style={styles.statsPanel}>
+      <LinearGradient
+        colors={["rgba(212, 175, 55, 0.15)", "rgba(183, 121, 31, 0.08)"]}
+        style={styles.statsGradient}
+      >
+        <View style={styles.compactStats}>
+          <View style={styles.statItemCompact}>
+            <Ionicons name='trending-up' size={14} color='#00C853' />
+            <Text style={styles.statNumberCompact}>{stats.bullish}</Text>
+            <Text style={styles.statLabelCompact}>Growing</Text>
           </View>
-        )}
-        numColumns={2}
-        keyExtractor={(item) => item.id}
-      />
-
-      <Modal visible={isModalVisible} animationType='slide'>
-        <View style={styles.chartContainer}>
-          {sant && (
-            <View style={{ paddingBottom: 2, alignItems: "center" }}>
-              <Text style={styles.text0}>
-                Market Santiment:
-                <Text style={{ color: "wheat" }}> {sant}</Text>
-              </Text>
-            </View>
-          )}
-
-          <View style={styles.minmaxBlock}>
-            <Text style={styles.textUp}>
-              Мин. 24 часа:
-              <Text style={{ color: "lightblue" }}> {minMax.minPrice}$</Text>
-            </Text>
-            <Text style={styles.textUp}>
-              Макс. 24 часа:
-              <Text style={{ color: "wheat" }}> {minMax.maxPrice}$</Text>
-            </Text>
+          <View style={styles.statDivider} />
+          <View style={styles.statItemCompact}>
+            <Ionicons name='trending-down' size={14} color='#FF3B30' />
+            <Text style={styles.statNumberCompact}>{stats.bearish}</Text>
+            <Text style={styles.statLabelCompact}>Declining</Text>
           </View>
-
-          {prices.length === 0 ? (
-            <Text style={{ color: "white" }}>Загрузка данных...</Text>
-          ) : (
-            <>
-              <Text style={styles.textTit}>Min and Max trade range:</Text>
-
-              {Array.isArray(prices) && prices.length > 0 ? (
-                <TapGestureHandler>
-                  <PinchGestureHandler
-                    onGestureEvent={onPinchEvent}
-                    onHandlerStateChange={onPinchStateChange}
-                  >
-                    <View style={{ alignItems: "center" }}>
-                      <CandlestickChart
-                        data={prices}
-                        width={Dimensions.get("window").width * 0.99}
-                        height={Dimensions.get("window").height * 0.45}
-                      />
-                    </View>
-                  </PinchGestureHandler>
-                </TapGestureHandler>
-              ) : (
-                <Text style={{ color: "white" }}>Нет данных для отображения</Text>
-              )}
-
-              <>
-                <Text style={styles.text1}>Volume range:</Text>
-                <VolumeChart volumeData={volumeData} />
-              </>
-            </>
-          )}
-
-          <Text style={styles.text}>
-            Selected range<Text style={styles.textZ}> {chartDays}</Text>
-          </Text>
-          <SwitchTimeframeButtons chartDays={chartDays} />
-
-          <View style={styles.chartButtonsClose}>
-            <TouchableOpacity
-              style={styles.buttonClose}
-              title='Закрыть'
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.closeb}>Close</Text>
-            </TouchableOpacity>
+          <View style={styles.statDivider} />
+          <View style={styles.statItemCompact}>
+            <MaterialCommunityIcons name='diamond-stone' size={14} color='#FFD700' />
+            <Text style={styles.statNumberCompact}>{stats.top10}</Text>
+            <Text style={styles.statLabelCompact}>Top-10</Text>
           </View>
         </View>
-      </Modal>
+      </LinearGradient>
     </View>
+  )
+
+  // Пустое состояние (остается в Favorite)
+  const EmptyState = () => (
+    <View style={styles.emptyState}>
+      <LinearGradient
+        colors={["rgba(212, 175, 55, 0.1)", "rgba(183, 121, 31, 0.05)"]}
+        style={styles.emptyStateGradient}
+      >
+        <MaterialCommunityIcons
+          name='treasure-chest'
+          size={60}
+          color='rgba(212, 175, 55, 0.3)'
+        />
+        <Text style={styles.emptyTitle}>Your Vault is Empty</Text>
+        <Text style={styles.emptySubtitle}>
+          Add coins to start building your portfolio
+        </Text>
+      </LinearGradient>
+    </View>
+  )
+
+  return (
+    <LinearGradient
+      colors={["#0A0A0F", "#121218", "#0A0A0F"]}
+      style={styles.premiumContainer}
+    >
+      <View style={styles.premiumHeader}>
+        <LinearGradient
+          colors={["rgba(212, 175, 55, 0.2)", "rgba(183, 121, 31, 0.1)"]}
+          style={styles.headerGradient}
+        >
+          <MaterialCommunityIcons name='crown' size={22} color='#D4AF37' />
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle}>Golden Vault</Text>
+            <Text style={styles.headerSubtitle}>
+              {stats.total} asset{stats.total !== 1 ? "s" : ""}
+            </Text>
+          </View>
+        </LinearGradient>
+      </View>
+
+      {coinData.length > 0 && <StatsPanel />}
+
+      {coinData.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <FlatList
+          data={coinData}
+          renderItem={({ item, index }) => <PremiumCoinCard item={item} index={index} />}
+          numColumns={2}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.premiumList}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+
+      {/* Используем вынесенную модалку */}
+      <ModalFavorite
+        visible={isModalVisible}
+        onClose={closeChartModal}
+        selectedCoin={selectedCoin}
+        chartDays={chartDays} // Передаем timeframe из Redux
+      />
+    </LinearGradient>
   )
 }
 

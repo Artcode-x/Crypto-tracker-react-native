@@ -1,5 +1,6 @@
 import { View, Dimensions, Text } from "react-native"
 import { LineChart } from "react-native-chart-kit"
+import { styles } from "./ChartWhite.styles"
 
 export const ChartWhite = ({ coinHistoryData, chartData, is30DSelected }) => {
   const { width } = Dimensions.get("window")
