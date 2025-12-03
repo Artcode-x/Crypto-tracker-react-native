@@ -355,5 +355,51 @@ export const styles = StyleSheet.create({
   deleteButton: {
     flex: 1,
     marginLeft: 4
+  },
+  headerGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between", // ← добавляем
+    padding: 10,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(212, 175, 55, 0.2)",
+    backgroundColor: "rgba(26, 26, 26, 0.8)"
+  },
+
+  // Левая часть шапки
+  headerLeftContainer: {
+    flex: 1,
+    marginLeft: 10
+  },
+
+  // Правая часть с Portfolio
+  headerRightContainer: {
+    alignItems: "flex-end",
+    marginLeft: 10
+  },
+
+  portfolioLabel: {
+    fontSize: 8,
+    color: "rgba(255, 255, 255, 0.5)",
+    marginBottom: 2
+  },
+
+  portfolioValue: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#D4AF37"
+  },
+
+  headerTitle: {
+    fontSize: 14, // было 15
+    fontWeight: "700",
+    color: "#D4AF37"
+  },
+
+  headerSubtitle: {
+    fontSize: 9, // было 9.5
+    color: "rgba(255, 255, 255, 0.6)",
+    marginTop: 2
   }
 })

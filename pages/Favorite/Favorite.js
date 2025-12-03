@@ -370,20 +370,25 @@ const Favorite = () => {
       colors={["#0A0A0F", "#121218", "#0A0A0F"]}
       style={styles.premiumContainer}
     >
-      {/* Обновленный заголовок с общей суммой портфеля */}
+      {/* Заголовок с Portfolio справа */}
       <View style={styles.premiumHeader}>
         <LinearGradient
           colors={["rgba(212, 175, 55, 0.2)", "rgba(183, 121, 31, 0.1)"]}
           style={styles.headerGradient}
         >
           <MaterialCommunityIcons name='crown' size={22} color='#D4AF37' />
-          <View style={styles.headerTextContainer}>
-            <Text style={styles.headerTitle}>Your Freedom Finance</Text>
+          <View style={styles.headerLeftContainer}>
+            <Text style={styles.headerTitle}>Freedom Finance</Text>
             <Text style={styles.headerSubtitle}>
               Total: {stats.total} asset{stats.total !== 1 ? "s" : ""}
             </Text>
-            <Text style={styles.headerSubtitle}>
-              Portfolio: $
+          </View>
+
+          {/* Portfolio справа */}
+          <View style={styles.headerRightContainer}>
+            <Text style={styles.portfolioLabel}>Portfolio</Text>
+            <Text style={styles.portfolioValue}>
+              $
               {totalPortfolioValue.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
