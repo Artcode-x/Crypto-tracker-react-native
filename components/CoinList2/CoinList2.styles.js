@@ -1,4 +1,4 @@
-import { Dimensions, StyleSheet } from "react-native"
+import { Dimensions, Platform, StyleSheet } from "react-native"
 import { RFValue } from "react-native-responsive-fontsize"
 
 const { width } = Dimensions.get("window")
@@ -15,7 +15,7 @@ export const styles = StyleSheet.create({
     backgroundColor: "rgba(50, 48, 49, 0.8)",
     alignItems: "center",
     justifyContent: "center",
-    padding: 5,
+    padding: Platform.OS === "ios" ? 5 : 2,
     borderRadius: 5,
     position: "relative"
   },

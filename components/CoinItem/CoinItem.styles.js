@@ -13,13 +13,14 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between"
   },
 
-  // СТИЛИ ДЛЯ ПРОСТОГО ВИДА (marketView = false)
+  // Стили для простого вида (marketView = false)
   simpleView: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 4
+    paddingVertical: 4,
+    width: "100%"
   },
   leftSection: {
     flex: 1,
@@ -27,7 +28,8 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     flexShrink: 1,
     marginRight: 6,
-    maxWidth: "70%"
+    maxWidth: "60%", // Уменьшено с 70%
+    minWidth: "50%"
   },
   coinImage: {
     width: 25,
@@ -49,7 +51,8 @@ export const styles = StyleSheet.create({
   nameSection: {
     flex: 1,
     justifyContent: "center",
-    marginRight: 1
+    marginRight: 1,
+    flexShrink: 1
     // 4
   },
   coinName: {
@@ -60,7 +63,9 @@ export const styles = StyleSheet.create({
     flexWrap: "nowrap",
     maxWidth: "100%",
     textAlignVertical: "center",
-    includeFontPadding: false
+    includeFontPadding: false,
+    paddingRight: 2,
+    overflow: "hidden"
   },
   tabletCoinName: {
     fontSize: RFValue(13)

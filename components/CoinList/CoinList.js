@@ -30,7 +30,7 @@ const CoinList = ({
   // ФИКСИРОВАННАЯ ВЫСОТА КАРТОЧКИ
   const getCardHeight = () => {
     if (isTablet) return 120
-    if (isSmallScreen) return 90
+    if (isSmallScreen) return 80
     return 100
   }
 

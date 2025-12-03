@@ -1,4 +1,4 @@
-import { Dimensions, StyleSheet } from "react-native"
+import { Dimensions, Platform, StyleSheet } from "react-native"
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize"
 
 const { width, height } = Dimensions.get("window")
@@ -248,7 +248,7 @@ export const styles = StyleSheet.create({
   chartWrapper: {
     backgroundColor: "rgba(255, 255, 255, 0.03)",
     borderRadius: 16,
-    padding: 12,
+    padding: Platform.OS === "android" ? 2 : 5,
     borderWidth: 1,
     borderColor: "rgba(212, 175, 55, 0.1)",
     minHeight: 220,

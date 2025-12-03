@@ -1,5 +1,5 @@
 import React from "react"
-import { View, Text, Image, TouchableOpacity } from "react-native"
+import { View, Text, Image, TouchableOpacity, Platform } from "react-native"
 import { styles } from "./CoinItem.styles"
 import { format } from "date-fns"
 import { ru } from "date-fns/locale"
@@ -31,7 +31,17 @@ const CoinItem = ({
   }
 
   const formatCoinName = (name) => {
-    const maxLength = isSmallScreen ? 12 : isTablet ? 18 : 15
+    let maxLength
+
+    if (isTablet) {
+      maxLength = 18
+    } else if (isSmallScreen) {
+      // Для маленьких экранов Android
+      maxLength = Platform.OS === "android" ? 10 : 12
+    } else {
+      maxLength = Platform.OS === "android" ? 12 : 15
+    }
+
     return name.length > maxLength ? `${name.substring(0, maxLength)}...` : name
   }
 
