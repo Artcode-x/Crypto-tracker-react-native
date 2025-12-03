@@ -97,6 +97,8 @@ export const styles = StyleSheet.create({
   premiumCoinCard: {
     borderRadius: 14,
     overflow: "hidden",
+    // фикс высота
+    height: 165,
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -110,10 +112,9 @@ export const styles = StyleSheet.create({
     })
   },
   cardGradient: {
-    // padding: 14,
     padding: 10,
     position: "relative",
-    minHeight: 140
+    flex: 1
   },
   topRow: {
     flexDirection: "row",
@@ -230,24 +231,24 @@ export const styles = StyleSheet.create({
     marginTop: 6,
     lineHeight: 18
   },
+
   userAmountContainer: {
-    position: "absolute",
-    right: 0,
-    top: 0
+    alignItems: "flex-end"
   },
+
   userAmountText: {
     fontSize: 10,
     color: "#D4AF37",
-    fontWeight: "600"
+    fontWeight: "600",
+    textAlign: "right"
   },
 
-  // Стили для стоимости портфеля пользователя
-  userValueContainer: {
-    marginTop: 4
-  },
-  userValueText: {
-    fontSize: 9,
-    color: "rgba(255, 255, 255, 0.7)"
+  // стиль для стоимости под количеством
+  userAmountValue: {
+    fontSize: 8,
+    color: "rgba(255, 255, 255, 0.7)",
+    marginTop: 2,
+    textAlign: "right"
   },
 
   // Строка с кнопками внизу
@@ -356,16 +357,6 @@ export const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 4
   },
-  headerGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between", // ← добавляем
-    padding: 10,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "rgba(212, 175, 55, 0.2)",
-    backgroundColor: "rgba(26, 26, 26, 0.8)"
-  },
 
   // Левая часть шапки
   headerLeftContainer: {
@@ -401,5 +392,16 @@ export const styles = StyleSheet.create({
     fontSize: 9, // было 9.5
     color: "rgba(255, 255, 255, 0.6)",
     marginTop: 2
+  },
+  userAmountPlaceholder: {
+    fontSize: 9,
+    color: "rgba(255, 255, 255, 0.2)",
+    fontStyle: "italic",
+    textAlign: "right"
+  },
+
+  userAmountContainer: {
+    alignItems: "flex-end",
+    minHeight: 32
   }
 })

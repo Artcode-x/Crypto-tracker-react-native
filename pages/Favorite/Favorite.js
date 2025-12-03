@@ -1,4 +1,3 @@
-// Favorite.js
 import React, { useState, useCallback, useRef } from "react"
 import {
   View,
@@ -129,7 +128,7 @@ const Favorite = () => {
             }
             style={styles.cardGradient}
           >
-            {/* Верхняя строка с рангом и количеством пользователя */}
+            {/* Верхняя строка */}
             <View style={styles.topRow}>
               <View style={styles.rankContainer}>
                 <Text style={styles.rankText}>#{item.market_cap_rank || "?"}</Text>
@@ -143,17 +142,30 @@ const Favorite = () => {
                 )}
               </View>
 
-              {/* Отображение количества пользователя */}
-              {userAmount > 0 && (
-                <View style={styles.userAmountContainer}>
+              {/* отображение кол-ва и стоимости справа */}
+              {userAmount > 0 ? (
+                <>
                   <Text style={styles.userAmountText}>
                     {formatCryptoAmount(userAmount)}
                   </Text>
-                </View>
+                  <Text style={styles.userAmountValue}>
+                    $
+                    {userValue.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2
+                    })}
+                  </Text>
+                </>
+              ) : (
+                // Пустое состояние - отображаем плейсхолдер
+                <>
+                  <Text style={styles.userAmountPlaceholder}>Add amount</Text>
+                  <Text style={styles.userAmountPlaceholder}>$0.00</Text>
+                </>
               )}
             </View>
 
-            {/* Основной контент */}
+            {/* Основной контент -  */}
             <View style={styles.coinContent}>
               <View style={styles.coinHeader}>
                 <Text style={styles.coinName} numberOfLines={1}>
@@ -183,22 +195,9 @@ const Favorite = () => {
                   </Text>
                 </View>
               </View>
-
-              {/* Отображение стоимости портфеля пользователя */}
-              {userValue > 0 && (
-                <View style={styles.userValueContainer}>
-                  <Text style={styles.userValueText}>
-                    $
-                    {userValue.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })}
-                  </Text>
-                </View>
-              )}
             </View>
 
-            {/* Нижняя строка с кнопками */}
+            {/* ... нижние кнопки ... */}
             <View style={styles.bottomButtonsRow}>
               <TouchableOpacity
                 onPress={(e) => {
