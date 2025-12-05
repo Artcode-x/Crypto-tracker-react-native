@@ -296,7 +296,7 @@ const Favorite = () => {
           size={60}
           color='rgba(212, 175, 55, 0.3)'
         />
-        <Text style={styles.emptyTitle}>Your Vault is Empty</Text>
+        <Text style={styles.emptyTitle}>Your Watchlist is Empty</Text>
         <Text style={styles.emptySubtitle}>
           Add coins to start building your portfolio
         </Text>

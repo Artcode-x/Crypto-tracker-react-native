@@ -5,7 +5,7 @@ import Main from "../../pages/Main/Main"
 import Favorite from "../../pages/Favorite/Favorite"
 import { Ionicons } from "@expo/vector-icons"
 import { StyleSheet } from "react-native"
-import News from "../News/News"
+import Analytics from "../Analytics/Analytics"
 
 const Tab = createBottomTabNavigator()
 
@@ -52,12 +52,12 @@ export const AppRoute = () => {
           }}
         />
         <Tab.Screen
-          name='News'
-          component={News}
+          name='Analytics'
+          component={Analytics}
           options={{
-            title: "News",
+            title: "Analytics",
             tabBarIcon: ({ color }) => (
-              <Ionicons name='today' size={24} color={color} />
+              <Ionicons name='bar-chart' size={24} color={color} />
               //   star-outline
             )
           }}
