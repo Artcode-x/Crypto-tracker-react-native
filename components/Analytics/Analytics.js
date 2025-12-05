@@ -4,6 +4,7 @@ import { useSelector } from "react-redux"
 import { styles } from "./Analytics.styles"
 import { LinearGradient } from "expo-linear-gradient"
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons"
+import { formatNumber } from "../../helpers/helpers"
 
 const coinSelector = (store) => store.store.coinItem
 const userAssetsSelector = (store) => store.store.userAssets || {}
@@ -15,72 +16,91 @@ const Analytics = () => {
   const [timeframe, setTimeframe] = useState("24h")
   const [expandedSection, setExpandedSection] = useState("overview")
 
-  // Рассчет метрики портфеля
   const portfolioMetrics = useMemo(() => {
     if (!coinData.length) return null
 
-    let totalValue = 0
-    let totalInvested = 0
-    let dailyProfit = 0
-    let assets = []
+    // Шаг 1: Подготовка данных (иммутабельно)
+    const assetsWithValues = coinData.reduce(
+      (acc, coin) => {
+        // кол-во актива в избранном
+        const amount = userAssets[coin.id] || 0
 
-    coinData.forEach((coin) => {
-      const amount = userAssets[coin.id] || 0
-      const currentValue = amount * (coin.current_price || 0)
-      const priceChange = coin.price_change_percentage_24h || 0
-      const profit = currentValue * (priceChange / 100)
+        if (amount <= 0) return acc
 
-      totalValue += currentValue
-      dailyProfit += profit
+        const currentValue = amount * (coin.current_price || 0)
 
-      if (amount > 0) {
-        assets.push({
-          id: coin.id,
-          name: coin.name,
-          symbol: coin.symbol,
-          amount,
-          value: currentValue,
-          priceChange,
-          allocation: 0 // для заполнения позже
-        })
-      }
-    })
+        const priceChange = coin.price_change_percentage_24h || 0
 
-    // аллокация
-    assets = assets.map((asset) => ({
+        return {
+          ...acc,
+          totalValue: acc.totalValue + currentValue,
+          dailyProfit: acc.dailyProfit + currentValue * (priceChange / 100),
+          assets: [
+            ...acc.assets,
+            {
+              id: coin.id,
+              name: coin.name,
+              symbol: coin.symbol,
+              amount,
+              value: currentValue,
+              priceChange,
+              allocation: 0
+            }
+          ]
+        }
+      },
+
+      { totalValue: 0, dailyProfit: 0, assets: [] }
+    )
+
+    const { totalValue, dailyProfit, assets } = assetsWithValues
+
+    // Если нет активов - возвращаем null
+    if (assets.length === 0) return null
+
+    // Шаг 2: Расчет аллокации (иммутабельно)
+    const assetsWithAllocation = assets.map((asset) => ({
       ...asset,
       allocation: totalValue > 0 ? (asset.value / totalValue) * 100 : 0
     }))
 
-    // Сортировка по стоимости
-    assets.sort((a, b) => b.value - a.value)
+    // Шаг 3: Сортировка (создание нового отсортированного массива)
+    const sortedAssets = [...assetsWithAllocation].sort((a, b) => b.value - a.value)
 
-    // Поиск лучших и худших активов
-    const bestPerformer = [...assets].sort((a, b) => b.priceChange - a.priceChange)[0]
-    const worstPerformer = [...assets].sort((a, b) => a.priceChange - b.priceChange)[0]
+    // Шаг 4: Находим лучший и худший актив
+    const bestPerformer = [...sortedAssets].sort(
+      (a, b) => b.priceChange - a.priceChange
+    )[0]
+    const worstPerformer = [...sortedAssets].sort(
+      (a, b) => a.priceChange - b.priceChange
+    )[0]
 
-    // Анализ распределения
+    // Шаг 5: Анализ распределения
     const allocationAnalysis = {
-      top3: assets.slice(0, 3).reduce((sum, asset) => sum + asset.allocation, 0),
-      concentration: assets.length > 0 ? assets[0].allocation : 0 // Концентрация в топ-1 активе
+      top3: sortedAssets.slice(0, 3).reduce((sum, asset) => sum + asset.allocation, 0),
+      concentration: sortedAssets.length > 0 ? sortedAssets[0].allocation : 0
     }
 
-    // Риск-метрики
+    // Шаг 6: Рассчитываем риск-метрики
     const riskMetrics = {
-      volatility: calculatePortfolioVolatility(assets),
-      diversificationScore: calculateDiversificationScore(assets)
+      volatility: calculatePortfolioVolatility(sortedAssets),
+      diversificationScore: calculateDiversificationScore(sortedAssets)
     }
 
+    // Шаг 7: Рассчитываем изменение портфеля в %
+    const dailyChange = totalValue > 0 ? (dailyProfit / totalValue) * 100 : 0
+
+    // Шаг 8: Возвращаем ВСЕ метрики
     return {
       totalValue,
       dailyProfit,
-      dailyChange: totalValue > 0 ? (dailyProfit / totalValue) * 100 : 0,
-      assets,
+      dailyChange,
+      assets: sortedAssets, // Отсортированные активы
+      totalAssets: sortedAssets.length,
       bestPerformer,
       worstPerformer,
       allocationAnalysis,
-      riskMetrics,
-      totalAssets: assets.length
+      riskMetrics
     }
   }, [coinData, userAssets])
 
@@ -127,17 +147,6 @@ const Analytics = () => {
     if (value < -5) return "crash"
     if (value < -2) return "trending-down"
     return "pulse"
-  }
-
-  // Формат чисел
-  const formatNumber = (num, decimals = 2) => {
-    if (num >= 1000000) {
-      return `$${(num / 1000000).toFixed(decimals)}M`
-    }
-    if (num >= 1000) {
-      return `$${(num / 1000).toFixed(decimals)}K`
-    }
-    return `$${num.toFixed(decimals)}`
   }
 
   // Эмуляция загрузки данных
@@ -335,7 +344,7 @@ const Analytics = () => {
         style={styles.sectionCard}
       >
         <View style={styles.sectionHeader}>
-          <MaterialCommunityIcons name='pie-chart' size={20} color='#FFD700' />
+          <MaterialCommunityIcons name='chart-pie' size={20} color='#FFD700' />
           <Text style={styles.sectionTitle}>Asset Allocation</Text>
           <Ionicons
             name={expandedSection === "allocation" ? "chevron-up" : "chevron-down"}
