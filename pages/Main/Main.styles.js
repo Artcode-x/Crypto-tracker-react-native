@@ -80,14 +80,14 @@ export const styles = StyleSheet.create({
   },
 
   retryButton: {
-    backgroundColor: "#0e0275",
+    backgroundColor: "gray",
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 5
   },
 
   retryButtonText: {
-    color: "#fff",
+    color: "wheat",
     fontSize: 14,
     fontWeight: "600"
   },
@@ -180,7 +180,8 @@ export const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20
+    padding: 20,
+    marginBottom: 150 // ???
   },
 
   emptyText: {

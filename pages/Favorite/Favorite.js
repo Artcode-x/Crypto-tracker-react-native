@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react"
+import React, { useState, useCallback, useRef, useEffect } from "react"
 import {
   View,
   FlatList,
@@ -21,6 +21,8 @@ import { removeCoin, updateUserAsset } from "../../store/reducersSlice"
 import { styles } from "./Favorite.styles"
 import ModalFavorite from "./FavoriteCharts/ModalFavorite/ModalFavorite"
 import { formatCryptoAmount } from "../../helpers/helpers"
+import { useFavoriteUpdate } from "../../hooks/useFavoriteUpdate"
+import { useAppState } from "../../hooks/useAppState"
 
 const { width } = Dimensions.get("window")
 const CARD_PADDING = 8
@@ -37,8 +39,61 @@ const Favorite = () => {
   const [selectedCoin, setSelectedCoin] = useState(null)
   const [inputModalVisible, setInputModalVisible] = useState(false)
   const [selectedCoinForInput, setSelectedCoinForInput] = useState(null)
+  const [lastUpdateTime, setLastUpdateTime] = useState(null)
+  const [isUpdating, setIsUpdating] = useState(false)
 
   const amountInputRef = useRef("")
+
+  // Используем хук обновления
+  const { updateFavoritePrices } = useFavoriteUpdate(1)
+
+  // Логирование при изменении избранного
+  useEffect(() => {
+    console.log(`\n ==== FAVORITE: ОБНОВЛЕНИЕ ДАННЫХ ====`)
+    console.log(`Количество монет: ${coinData.length}`)
+    if (coinData.length > 0) {
+      console.log(`Монеты в избранном:`)
+      coinData.forEach((coin, index) => {
+        console.log(
+          `   ${index + 1}. ${coin.name} (${coin.symbol.toUpperCase()}): $${
+            coin.current_price || 0
+          }`
+        )
+      })
+    }
+    console.log(`Пользовательские активы:`, userAssets)
+    console.log(`==== КОНЕЦ ОБНОВЛЕНИЯ ДАННЫХ ====\n`)
+  }, [coinData, userAssets])
+
+  // Обновляем при возвращении в приложение
+  useAppState(() => {
+    if (coinData.length > 0) {
+      console.log("FAVORITE: Приложение стало активным, запускаем обновление цен")
+      handleManualUpdate()
+    }
+  })
+
+  // Обработчик ручного обновления
+  const handleManualUpdate = useCallback(async () => {
+    if (isUpdating) {
+      console.log("FAVORITE: Уже идет обновление, пропускаем")
+      return
+    }
+
+    console.log("FAVORITE: Ручное обновление избранного")
+    setIsUpdating(true)
+    setLastUpdateTime(new Date().toLocaleTimeString())
+
+    try {
+      await updateFavoritePrices()
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+      console.log("FAVORITE: Ручное обновление завершено успешно")
+    } catch (error) {
+      console.error("FAVORITE: Ошибка ручного обновления:", error)
+    } finally {
+      setIsUpdating(false)
+    }
+  }, [updateFavoritePrices, isUpdating])
 
   const totalPortfolioValue = coinData.reduce((total, coin) => {
     const amount = (userAssets && userAssets[coin.id]) || 0
@@ -54,12 +109,19 @@ const Favorite = () => {
 
   const removeFromFav = useCallback(
     (coin) => {
+      console.log(`\n ==== УДАЛЕНИЕ МОНЕТЫ ====`)
+      console.log(`Монета: ${coin.name} (${coin.symbol.toUpperCase()})`)
+      console.log(`Цена: $${coin.current_price || 0}`)
+      console.log(`Ранг: #${coin.market_cap_rank || "?"}`)
+      console.log(` ==== НАЧАЛО УДАЛЕНИЯ ====\n`)
+
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
       setRemovingCoinId(coin.id)
 
       setTimeout(() => {
         setRemovingCoinId(null)
         dispatch(removeCoin(coin))
+        console.log(`Монета успешно удалена из избранного: ${coin.name}`)
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       }, 1500)
     },
@@ -67,17 +129,21 @@ const Favorite = () => {
   )
 
   const openChartModal = useCallback((coin) => {
+    console.log(`Открытие графика для: ${coin.name} (${coin.symbol.toUpperCase()})`)
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     setSelectedCoin(coin)
     setModalVisible(true)
   }, [])
 
   const closeChartModal = useCallback(() => {
+    console.log(`Закрытие графика`)
     setModalVisible(false)
     setSelectedCoin(null)
   }, [])
 
   const openAmountInput = (coin) => {
+    console.log(`Открытие формы ввода количества: ${coin.name}`)
+    console.log(`Текущее количество: ${userAssets[coin.id] || 0}`)
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     setSelectedCoinForInput(coin)
     setInputModalVisible(true)
@@ -87,16 +153,24 @@ const Favorite = () => {
     if (selectedCoinForInput && amountInputRef.current) {
       let text = amountInputRef.current.replace(/,/g, ".")
 
-      if (text.startsWith("0") && text.length > 1 && text[1] !== ".") {
-      }
+      console.log(`\n ==== СОХРАНЕНИЕ КОЛИЧЕСТВА ====`)
+      console.log(`Монета: ${selectedCoinForInput.name}`)
+      console.log(`Введенное значение: ${amountInputRef.current}`)
+      console.log(`Обработанное значение: ${text}`)
 
       const amount = parseFloat(text) || 0
+      console.log(`Сохраняемое количество: ${amount}`)
+
       dispatch(
         updateUserAsset({
           coinId: selectedCoinForInput.id,
           amount: amount
         })
       )
+
+      console.log(`Количество сохранено в Redux`)
+      console.log(` ==== КОНЕЦ СОХРАНЕНИЯ ====\n`)
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     }
     setInputModalVisible(false)
@@ -327,6 +401,10 @@ const Favorite = () => {
                   <Text style={styles.modalSubtitle}>
                     ({selectedCoinForInput.symbol?.toUpperCase()})
                   </Text>
+                  <Text style={styles.modalPrice}>
+                    Current price: $
+                    {selectedCoinForInput.current_price?.toLocaleString() || "0.00"}
+                  </Text>
                 </View>
 
                 <TextInput
@@ -344,7 +422,10 @@ const Favorite = () => {
 
                 <View style={styles.modalButtonsRow}>
                   <TouchableOpacity
-                    onPress={() => setInputModalVisible(false)}
+                    onPress={() => {
+                      console.log("❌ Отмена ввода количества")
+                      setInputModalVisible(false)
+                    }}
                     style={styles.modalButtonCancel}
                   >
                     <Text style={styles.modalButtonTextCancel}>Cancel</Text>
@@ -383,6 +464,7 @@ const Favorite = () => {
             <Text style={styles.headerTitle}>Watchlist</Text>
             <Text style={styles.headerSubtitle}>
               Total: {stats.total} asset{stats.total !== 1 ? "s" : ""}
+              {lastUpdateTime && ` | Last: ${lastUpdateTime}`}
             </Text>
           </View>
 
@@ -396,11 +478,31 @@ const Favorite = () => {
                 maximumFractionDigits: 2
               })}
             </Text>
+
+            {/* Кнопка ручного обновления */}
+            <TouchableOpacity
+              onPress={handleManualUpdate}
+              disabled={isUpdating}
+              style={[styles.refreshButton, isUpdating && styles.refreshButtonDisabled]}
+            >
+              {isUpdating ? (
+                <Ionicons name='time-outline' size={16} color='#D4AF37' />
+              ) : (
+                <Ionicons name='refresh' size={16} color='#D4AF37' />
+              )}
+            </TouchableOpacity>
           </View>
         </LinearGradient>
       </View>
 
       {coinData.length > 0 && <StatsPanel />}
+
+      {/* Информация о статусе обновления */}
+      {isUpdating && (
+        <View style={styles.updateStatus}>
+          <Text style={styles.updateStatusText}>Обновление цен...</Text>
+        </View>
+      )}
 
       {coinData.length === 0 ? (
         <EmptyState />

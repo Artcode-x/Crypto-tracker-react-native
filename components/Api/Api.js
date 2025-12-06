@@ -144,3 +144,30 @@ export async function FetchCoinPriceChange(coinId, days) {
     return 0 // Возвращаем 0 при ошибке
   }
 }
+
+export async function UpdateFavoriteCoins(coinIds) {
+  if (!coinIds || coinIds.length === 0) {
+    return []
+  }
+
+  try {
+    const idsParam = coinIds.slice(0, 50).join(",") // Берем максимум 50 монет
+
+    const response = await axios.get(
+      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${idsParam}&sparkline=false&price_change_percentage=24h,7d`
+    )
+
+    return response.data
+  } catch (error) {
+    console.error("❌ Ошибка обновления:", error.message)
+
+    // Возвращаем пустой массив при ошибке 429
+    if (error.response?.status === 429) {
+      console.log("⏰ Лимит запросов, ждем следующего интервала")
+      return []
+    }
+
+    // При других ошибках тоже возвращаем пустой массив
+    return []
+  }
+}

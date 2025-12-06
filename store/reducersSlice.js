@@ -38,7 +38,27 @@ const reducersSlice = createSlice({
       state.chartDays = action.payload
     },
     rewriteFavorite: (state, action) => {
-      state.coinItem = action.payload
+      const updatedCoins = action.payload
+
+      // Обновление только тех монет, которые уже есть в избранном
+      updatedCoins.forEach((updatedCoin) => {
+        const index = state.coinItem.findIndex((coin) => coin.id === updatedCoin.id)
+        if (index !== -1) {
+          // Обновление только ценовых данных, сохраняя пользовательские
+          state.coinItem[index] = {
+            ...state.coinItem[index], // Сохранение старых данных
+            current_price: updatedCoin.current_price,
+            price_change_percentage_24h: updatedCoin.price_change_percentage_24h,
+            market_cap: updatedCoin.market_cap,
+            market_cap_rank: updatedCoin.market_cap_rank,
+            sparkline_in_7d: updatedCoin.sparkline_in_7d
+          }
+        }
+      })
+
+      console.log(
+        `Redux: Обновлено ${updatedCoins.length} из ${state.coinItem.length} избранных монет`
+      )
     },
     setFlagForView: (state, action) => {
       state.flagForView = action.payload

@@ -84,17 +84,31 @@ const Main = () => {
     }
   }, [])
 
+  //  Для скрытия баннера при окончании отсчета
+  useEffect(() => {
+    if (retryCountdown === 0 && is429Error) {
+      console.log("Отсчет закончился, скрываем баннер через 2 секунды")
+
+      const timeout = setTimeout(() => {
+        if (isMountedRef.current) {
+          setIs429Error(false)
+        }
+      }, 1000)
+
+      return () => clearTimeout(timeout)
+    }
+  }, [retryCountdown, is429Error])
+
   // Функция запуска обратного отсчета
   const startCountdown = useCallback(
     (seconds, retryCallback) => {
       console.log(`Запуск отсчета: ${seconds} секунд`)
       clearAllTimers()
-      setRetryCountdown(seconds)
       setIs429Error(true)
+      setRetryCountdown(seconds)
 
       // Отсчет каждую секунду для UI
       let currentCount = seconds
-      setRetryCountdown(currentCount)
 
       countdownIntervalRef.current = setInterval(() => {
         if (!isMountedRef.current) return
@@ -166,12 +180,10 @@ const Main = () => {
       initialLoadDoneRef.current = true
 
       // При успешной загрузке - сбрасываем баннер 429
-      if (is429Error) {
-        console.log("Загрузка успешна, скрываем баннер 429")
-        clearAllTimers()
-        setIs429Error(false)
-        setRetryCountdown(0)
-      }
+      console.log("Загрузка успешна, скрываем баннер 429")
+      setIs429Error(false)
+      setRetryCountdown(0)
+      clearAllTimers()
 
       consecutiveErrorsRef.current = 0
       console.log(`Успешно загружено ${firstPageData.length} монет`)
@@ -212,14 +224,7 @@ const Main = () => {
         setFlagForLoader(false)
       }
     }
-  }, [
-    dispatch,
-    flagForLoader,
-    marketData.length,
-    is429Error,
-    clearAllTimers,
-    startCountdown
-  ])
+  }, [dispatch, flagForLoader, marketData.length, clearAllTimers, startCountdown])
 
   // Функция подгрузки следующей страницы
   const loadMoreData = useCallback(async () => {
@@ -264,9 +269,9 @@ const Main = () => {
       // Успешная загрузка - сбрасываем баннер 429
       if (is429Error) {
         console.log("Подгрузка успешна, скрываем баннер 429")
-        clearAllTimers()
         setIs429Error(false)
         setRetryCountdown(0)
+        clearAllTimers()
         dispatch(setMarketError(null))
       }
 
@@ -466,10 +471,10 @@ const Main = () => {
           <View style={styles.errorBannerContent}>
             <Ionicons name='time-outline' size={22} color='#D4AF37' />
             <View style={styles.errorTextContainer}>
-              <Text style={styles.errorBannerTitle}>Превышен лимит запросов</Text>
+              <Text style={styles.errorBannerTitle}> Request limit exceeded</Text>
               <View style={styles.countdownContainer}>
-                <Text style={styles.countdownText}>Автоматический повтор через</Text>
-                <Text style={styles.countdownNumber}>{retryCountdown} сек</Text>
+                <Text style={styles.countdownText}> Automatic retry after</Text>
+                <Text style={styles.countdownNumber}> {retryCountdown} sec</Text>
               </View>
             </View>
           </View>
@@ -479,7 +484,7 @@ const Main = () => {
             onPress={handleManualRetry}
             activeOpacity={0.7}
           >
-            <Text style={styles.retryButtonTextSmall}>Повторить сейчас</Text>
+            <Text style={styles.retryButtonTextSmall}>Retry now</Text>
           </TouchableOpacity>
 
           {/* Прогресс-бар обратного отсчета */}
@@ -499,15 +504,13 @@ const Main = () => {
       {/* Информация о состоянии */}
       <View style={styles.infoContainer}>
         <Text style={styles.infoText}>
-          Монет: {marketData.length} | Страница:{" "}
+          Coins: {marketData.length} | Page:{" "}
           {marketCurrentPage === 1
-            ? "1 (загружена)"
-            : `${
-                marketCurrentPage - 1
-              } (загружена), следующая: ${marketCurrentPage}`}{" "}
-          | Загрузка: {marketIsLoadingMore ? "Да" : "Нет"} | Еще есть:{" "}
-          {marketHasMore ? "Да" : "Нет"}
-          {is429Error && ` | Повтор через: ${retryCountdown}сек`}
+            ? "1 (loaded)"
+            : `${marketCurrentPage - 1} (loaded), next: ${marketCurrentPage}`}{" "}
+          | Loading: {marketIsLoadingMore ? "Yes" : "No"} | More pages:{" "}
+          {marketHasMore ? "Yes" : "No"}
+          {is429Error && ` | Retry in: ${retryCountdown} sec`}
         </Text>
       </View>
 
@@ -536,18 +539,18 @@ const Main = () => {
       {flagForLoader && marketData.length === 0 ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size='large' color='#FFD700' />
-          <Text style={styles.loadingText}>Загрузка данных...</Text>
+          <Text style={styles.loadingText}>Loading data...</Text>
         </View>
       ) : (
         <>
           {marketData.length === 0 && !flagForLoader && !marketError && !is429Error && (
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Нет данных</Text>
+              <Text style={styles.emptyText}>No data</Text>
               <TouchableOpacity
                 style={styles.retryButton}
                 onPress={fetchInitialMarketData}
               >
-                <Text style={styles.retryButtonText}>Загрузить данные</Text>
+                <Text style={styles.retryButtonText}>Load data</Text>
               </TouchableOpacity>
             </View>
           )}
