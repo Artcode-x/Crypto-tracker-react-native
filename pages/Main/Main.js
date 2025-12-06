@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useCallback, useRef } from "react"
 import { styles } from "./Main.styles"
 import {
   View,
@@ -11,162 +11,582 @@ import {
 import CoinList from "../../components/CoinList/CoinList"
 import prepareChartData from "../../components/PrepareChartData/PrepareChartData"
 import { Chart } from "../../components/Chart/Chart"
-import { useSelector } from "react-redux"
-import { daysSelector, viewMarketFlagSelector } from "../../store/toolkitSelectors"
+import { useSelector, useDispatch } from "react-redux"
+import {
+  daysSelector,
+  marketCurrentPageSelector,
+  marketDataSelector,
+  marketErrorSelector,
+  marketHasMoreSelector,
+  marketIsLoadingMoreSelector,
+  viewMarketFlagSelector
+} from "../../store/toolkitSelectors"
+import {
+  setMarketData,
+  addMoreMarketData,
+  setMarketCurrentPage,
+  setMarketIsLoadingMore,
+  setMarketHasMore,
+  setMarketLastUpdated,
+  setMarketError,
+  resetMarketData
+} from "../../store/reducersSlice"
 import { FetchCoinHistoricalData, GetMarketData } from "../../components/Api/Api"
 import { Ionicons } from "@expo/vector-icons"
 import { ModalView } from "../../components/ModalView/ModalView"
 import CoinList2 from "../../components/CoinList2/Coinlist2"
 
 const Main = () => {
+  const dispatch = useDispatch()
+
+  // Стейты компонента
   const [search, setSearch] = useState("")
   const [refreshing, setRefreshing] = useState(false)
-  const [data, setData] = useState([])
   const [selectedCoinData, setSelectedCoinData] = useState(null)
-  const [coinHistoryData, setCoinHistoryData] = useState([]) // Добавлено для хранения исторических данных
+  const [coinHistoryData, setCoinHistoryData] = useState([])
   const [modalVisible, setModalVisible] = useState(false)
   const [isloading, setIsLoading] = useState(false)
   const [flagForLoader, setFlagForLoader] = useState(false)
-  const [errorMessage, setErrorMessage] = useState(null)
-  const switchChartDays = useSelector(daysSelector)
-
-  const marketViewFlag = useSelector(viewMarketFlagSelector)
   const [modal, setModal] = useState(false)
-  const toggleModal = () => {
-    setModal(!modal)
-  }
 
-  const fetchMarketData = async () => {
-    try {
-      setFlagForLoader(true)
-      const marketData = await GetMarketData()
-      setData(marketData)
-    } catch (error) {
-      console.log(error.message)
-      if (error.message === "Request failed with status code 429") {
-        setErrorMessage(
-          "Ошибка, слишком много запросов к серверу, соединение будет восстановлено автоматически"
-        )
-      } else {
-        setErrorMessage(
-          "Произошла ошибка при загрузке данных. Пожалуйста, попробуйте снова."
-        )
-      }
-    } finally {
-      setFlagForLoader(false)
+  // Стейты для обработки ошибки 429
+  const [is429Error, setIs429Error] = useState(false)
+  const [retryCountdown, setRetryCountdown] = useState(0)
+  const [initialLoadAttempted, setInitialLoadAttempted] = useState(false)
+
+  // Refs для управления загрузкой
+  const isLoadingMoreRef = useRef(false)
+  const retryTimeoutRef = useRef(null)
+  const consecutiveErrorsRef = useRef(0)
+  const initialLoadDoneRef = useRef(false)
+  const countdownIntervalRef = useRef(null)
+  const isMountedRef = useRef(true)
+
+  // Данные из Redux
+  const marketData = useSelector(marketDataSelector)
+  const marketCurrentPage = useSelector(marketCurrentPageSelector)
+  const marketIsLoadingMore = useSelector(marketIsLoadingMoreSelector)
+  const marketHasMore = useSelector(marketHasMoreSelector)
+  const marketError = useSelector(marketErrorSelector)
+  const switchChartDays = useSelector(daysSelector)
+  const marketViewFlag = useSelector(viewMarketFlagSelector)
+
+  // Функция очистки таймеров
+  const clearAllTimers = useCallback(() => {
+    console.log("Очистка всех таймеров")
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current)
+      retryTimeoutRef.current = null
     }
-  }
-
-  //  Авто-обновления котировок на главной
-  useEffect(() => {
-    fetchMarketData() // Получаем данные при первом монтировании компонента
-    const interval = setInterval(() => {
-      fetchMarketData()
-      console.log("data update")
-      setErrorMessage(null)
-    }, 60000)
-    // Очистка интервала при размонтировании компонента
-    return () => clearInterval(interval)
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current)
+      countdownIntervalRef.current = null
+    }
   }, [])
 
+  // Функция запуска обратного отсчета
+  const startCountdown = useCallback(
+    (seconds, retryCallback) => {
+      console.log(`Запуск отсчета: ${seconds} секунд`)
+      clearAllTimers()
+      setRetryCountdown(seconds)
+      setIs429Error(true)
+
+      // Отсчет каждую секунду для UI
+      let currentCount = seconds
+      setRetryCountdown(currentCount)
+
+      countdownIntervalRef.current = setInterval(() => {
+        if (!isMountedRef.current) return
+
+        currentCount -= 1
+        setRetryCountdown(currentCount)
+
+        if (currentCount <= 0) {
+          clearInterval(countdownIntervalRef.current)
+          countdownIntervalRef.current = null
+          console.log("Отсчет закончился")
+
+          // Запуск повтора через 1 секунду после окончания
+          if (retryCallback) {
+            setTimeout(() => {
+              if (isMountedRef.current) {
+                retryCallback()
+              }
+            }, 1000)
+          }
+        }
+      }, 1000)
+
+      // Дублирующий таймаут на случай проблем с интервалом
+      retryTimeoutRef.current = setTimeout(() => {
+        if (!isMountedRef.current) return
+
+        clearInterval(countdownIntervalRef.current)
+        countdownIntervalRef.current = null
+        setRetryCountdown(0)
+
+        if (retryCallback) {
+          retryCallback()
+        }
+      }, seconds * 1000)
+    },
+    [clearAllTimers]
+  )
+
+  // Функция загрузки первой страницы
+  const fetchInitialMarketData = useCallback(async () => {
+    if (flagForLoader || !isMountedRef.current) {
+      console.log("Загрузка уже идет или компонент размонтирован")
+      return
+    }
+
+    if (initialLoadDoneRef.current && marketData.length > 0) {
+      console.log("Данные уже загружены")
+      return
+    }
+
+    console.log("Начало загрузки первой страницы")
+    setFlagForLoader(true)
+    setInitialLoadAttempted(true)
+    dispatch(setMarketError(null))
+
+    try {
+      const firstPageData = await GetMarketData(1)
+
+      if (!firstPageData || !Array.isArray(firstPageData)) {
+        throw new Error("Некорректные данные от сервера")
+      }
+
+      dispatch(setMarketData(firstPageData))
+      dispatch(setMarketCurrentPage(2))
+      dispatch(setMarketLastUpdated(Date.now()))
+      dispatch(setMarketHasMore(firstPageData.length > 0))
+
+      initialLoadDoneRef.current = true
+
+      // При успешной загрузке - сбрасываем баннер 429
+      if (is429Error) {
+        console.log("Загрузка успешна, скрываем баннер 429")
+        clearAllTimers()
+        setIs429Error(false)
+        setRetryCountdown(0)
+      }
+
+      consecutiveErrorsRef.current = 0
+      console.log(`Успешно загружено ${firstPageData.length} монет`)
+    } catch (error) {
+      console.error("Ошибка загрузки:", error.message)
+
+      if (error.message === "Request failed with status code 429") {
+        consecutiveErrorsRef.current += 1
+
+        // Минимальная задержка 1 минута (60000 мс)
+        const delay = Math.max(
+          60000, // 1 минута минимум
+          2000 * Math.pow(2, Math.min(consecutiveErrorsRef.current - 1, 5))
+        )
+
+        const delayInSeconds = Math.ceil(delay / 1000)
+
+        console.log(`Ошибка 429. Устанавливаем отсчет ${delayInSeconds} секунд`)
+
+        // Запуск обратного отсчета с функцией повтора
+        startCountdown(delayInSeconds, () => {
+          console.log("Автоматический повтор после отсчета")
+          fetchInitialMarketData()
+        })
+
+        // Сообщение для пользователя
+        dispatch(
+          setMarketError(
+            `Слишком много запросов. Автоматический повтор через ${delayInSeconds}сек...`
+          )
+        )
+      } else {
+        // Другие ошибки
+        dispatch(setMarketError(error.message || "Ошибка загрузки данных"))
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setFlagForLoader(false)
+      }
+    }
+  }, [
+    dispatch,
+    flagForLoader,
+    marketData.length,
+    is429Error,
+    clearAllTimers,
+    startCountdown
+  ])
+
+  // Функция подгрузки следующей страницы
+  const loadMoreData = useCallback(async () => {
+    if (
+      !marketHasMore ||
+      marketIsLoadingMore ||
+      isLoadingMoreRef.current ||
+      !isMountedRef.current
+    ) {
+      console.log("Не загружаем: нет данных или уже идет загрузка")
+      return
+    }
+
+    const pageToLoad = marketCurrentPage
+    console.log(`Начало загрузки страницы ${pageToLoad}`)
+
+    isLoadingMoreRef.current = true
+
+    try {
+      dispatch(setMarketIsLoadingMore(true))
+      const nextPageData = await GetMarketData(pageToLoad)
+
+      if (nextPageData.length === 0) {
+        console.log("Больше данных для загрузки нет")
+        dispatch(setMarketHasMore(false))
+      } else {
+        const existingIds = new Set(marketData.map((item) => item.id))
+        const newItems = nextPageData.filter((item) => !existingIds.has(item.id))
+
+        if (newItems.length > 0) {
+          dispatch(addMoreMarketData(newItems))
+          const nextPage = pageToLoad + 1
+          dispatch(setMarketCurrentPage(nextPage))
+          dispatch(setMarketLastUpdated(Date.now()))
+          console.log(`Добавлено ${newItems.length} новых монет`)
+        } else {
+          console.log("Все монеты уже есть, увеличиваем счетчик")
+          dispatch(setMarketCurrentPage(pageToLoad + 1))
+        }
+      }
+
+      // Успешная загрузка - сбрасываем баннер 429
+      if (is429Error) {
+        console.log("Подгрузка успешна, скрываем баннер 429")
+        clearAllTimers()
+        setIs429Error(false)
+        setRetryCountdown(0)
+        dispatch(setMarketError(null))
+      }
+
+      consecutiveErrorsRef.current = 0
+    } catch (error) {
+      console.error(`Ошибка загрузки страницы ${marketCurrentPage}:`, error.message)
+
+      if (error.message === "Request failed with status code 429") {
+        consecutiveErrorsRef.current += 1
+
+        // Минимальная задержка 1 минута
+        const delay = Math.max(
+          60000,
+          2000 * Math.pow(2, Math.min(consecutiveErrorsRef.current - 1, 5))
+        )
+
+        const delayInSeconds = Math.ceil(delay / 1000)
+
+        console.log(
+          `Ошибка 429 при подгрузке. Устанавливаем отсчет ${delayInSeconds} секунд`
+        )
+
+        // Запуск обратного отсчета с функцией повтора
+        startCountdown(delayInSeconds, () => {
+          console.log("Автоматический повтор подгрузки после отсчета")
+          loadMoreData()
+        })
+
+        dispatch(
+          setMarketError(
+            `Слишком много запросов. Автоматический повтор через ${delayInSeconds}сек...`
+          )
+        )
+
+        return
+      } else {
+        // Другие ошибки
+        dispatch(setMarketError(error.message))
+      }
+    } finally {
+      if (isLoadingMoreRef.current && isMountedRef.current) {
+        dispatch(setMarketIsLoadingMore(false))
+        isLoadingMoreRef.current = false
+      }
+    }
+  }, [
+    marketHasMore,
+    marketIsLoadingMore,
+    marketCurrentPage,
+    marketData,
+    dispatch,
+    is429Error,
+    clearAllTimers,
+    startCountdown
+  ])
+
+  // Функция обновления (pull-to-refresh)
+  const handleRefresh = useCallback(async () => {
+    if (!isMountedRef.current) return
+
+    console.log("🌀 Pull-to-refresh")
+    setRefreshing(true)
+    try {
+      clearAllTimers()
+
+      // Сброс баннера при ручном обновлении
+      if (is429Error) {
+        setIs429Error(false)
+        setRetryCountdown(0)
+      }
+
+      dispatch(resetMarketData())
+      dispatch(setMarketError(null))
+      initialLoadDoneRef.current = false
+      consecutiveErrorsRef.current = 0
+
+      await fetchInitialMarketData()
+    } catch (error) {
+      console.error("Ошибка:", error)
+    } finally {
+      if (isMountedRef.current) {
+        setRefreshing(false)
+      }
+    }
+  }, [dispatch, fetchInitialMarketData, clearAllTimers, is429Error])
+
+  // Первая загрузка при монтировании - Только один раз!
+  useEffect(() => {
+    console.log("🏁 Компонент монтируется")
+    isMountedRef.current = true
+
+    // Загружаем только если еще не пытались
+    if (!initialLoadAttempted && marketData.length === 0) {
+      fetchInitialMarketData()
+    }
+
+    return () => {
+      console.log("🧹 Компонент размонтируется")
+      isMountedRef.current = false
+      clearAllTimers()
+    }
+  }, []) // Запуск только при монтировании
+
+  // Ручной повтор
+  const handleManualRetry = useCallback(async () => {
+    if (!isMountedRef.current) return
+
+    console.log("Ручной повтор...")
+    clearAllTimers()
+    setIs429Error(false)
+    setRetryCountdown(0)
+    consecutiveErrorsRef.current = 0
+    dispatch(setMarketError(null))
+
+    try {
+      if (marketData.length === 0) {
+        await fetchInitialMarketData()
+      }
+    } catch (error) {
+      console.error("Ошибка при ручном повторе:", error)
+    }
+  }, [clearAllTimers, dispatch, marketData.length, fetchInitialMarketData])
+
   const openModal = async (item) => {
+    if (!isMountedRef.current) return
+
     setSelectedCoinData(item)
     setModalVisible(true)
     setIsLoading(true)
+
     try {
-      const historicalData = await FetchCoinHistoricalData(item.id)
-      setCoinHistoryData(historicalData)
+      const historicalData = await FetchCoinHistoricalData(item.id, switchChartDays)
+      setCoinHistoryData(historicalData || [])
     } catch (error) {
-      console.error(error)
+      console.error("Ошибка:", error)
+      setCoinHistoryData([])
     } finally {
-      setIsLoading(false)
+      if (isMountedRef.current) {
+        setIsLoading(false)
+      }
     }
   }
 
   const closeModal = () => {
+    if (!isMountedRef.current) return
+
     setModalVisible(false)
     setSelectedCoinData(null)
-    setCoinHistoryData([]) // Сбрасываем исторические данные при закрытии
+    setCoinHistoryData([])
   }
 
-  const chartData = prepareChartData(coinHistoryData)
-  // console.log("chartData:", chartData.labelDate)
-  // console.log("chartData2:", chartData.prices)
-  // Для получения новых исторических данных при изменении chartDays(таймфрейм недельки/дни), чтобы данные на графике менялись не закрывая его.
-  // При переключении Таймфрейма график будет перерисован
-
   useEffect(() => {
-    if (selectedCoinData) {
-      // Проверяем, выбрана ли монета
-      const fetchHistoricalData = async () => {
-        setIsLoading(true)
-        try {
-          const historicalData = await FetchCoinHistoricalData(
-            selectedCoinData.id,
-            switchChartDays
-          )
-          setCoinHistoryData(historicalData)
-        } catch (error) {
-          console.error(error)
-        } finally {
+    if (!isMountedRef.current || !selectedCoinData) return
+
+    const fetchHistoricalData = async () => {
+      setIsLoading(true)
+      try {
+        const historicalData = await FetchCoinHistoricalData(
+          selectedCoinData.id,
+          switchChartDays
+        )
+        setCoinHistoryData(historicalData || [])
+      } catch (error) {
+        console.error("Ошибка:", error)
+      } finally {
+        if (isMountedRef.current) {
           setIsLoading(false)
         }
       }
-
-      fetchHistoricalData()
     }
+
+    fetchHistoricalData()
   }, [switchChartDays, selectedCoinData])
+
+  const chartData = prepareChartData(coinHistoryData)
+  const toggleModal = () => {
+    if (!isMountedRef.current) return
+    setModal(!modal)
+  }
+
+  const handleSearch = (text) => {
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current)
+    }
+    setTimeout(() => {
+      if (isMountedRef.current) {
+        setSearch(text)
+      }
+    }, 300)
+  }
 
   return (
     <View style={styles.container}>
+      {/* Баннер с ошибкой 429 */}
+      {is429Error && (
+        <View style={styles.errorBanner}>
+          <View style={styles.errorBannerContent}>
+            <Ionicons name='time-outline' size={22} color='#D4AF37' />
+            <View style={styles.errorTextContainer}>
+              <Text style={styles.errorBannerTitle}>Превышен лимит запросов</Text>
+              <View style={styles.countdownContainer}>
+                <Text style={styles.countdownText}>Автоматический повтор через</Text>
+                <Text style={styles.countdownNumber}>{retryCountdown} сек</Text>
+              </View>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.retryButtonSmall}
+            onPress={handleManualRetry}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.retryButtonTextSmall}>Повторить сейчас</Text>
+          </TouchableOpacity>
+
+          {/* Прогресс-бар обратного отсчета */}
+          <View style={styles.countdownBar}>
+            <View
+              style={[
+                styles.countdownProgress,
+                {
+                  width: `${((60 - retryCountdown) / 60) * 100}%`
+                }
+              ]}
+            />
+          </View>
+        </View>
+      )}
+
+      {/* Информация о состоянии */}
+      <View style={styles.infoContainer}>
+        <Text style={styles.infoText}>
+          Монет: {marketData.length} | Страница:{" "}
+          {marketCurrentPage === 1
+            ? "1 (загружена)"
+            : `${
+                marketCurrentPage - 1
+              } (загружена), следующая: ${marketCurrentPage}`}{" "}
+          | Загрузка: {marketIsLoadingMore ? "Да" : "Нет"} | Еще есть:{" "}
+          {marketHasMore ? "Да" : "Нет"}
+          {is429Error && ` | Повтор через: ${retryCountdown}сек`}
+        </Text>
+      </View>
+
       <StatusBar backgroundColor='#0e0275' />
+
       <View style={styles.header}>
         <Text style={styles.title}>CryptoCurrencies</Text>
+
         <TextInput
           style={styles.searchInput}
           placeholder='Search Crypto'
           placeholderTextColor='#858585'
-          onChangeText={(text) => text && setSearch(text)}
+          onChangeText={handleSearch}
         />
+
         <View style={styles.openMenu}>
           <TouchableOpacity onPress={toggleModal}>
             <Ionicons style={styles.changeView} name='list' size={20} />
           </TouchableOpacity>
         </View>
-
-        {/* logo-codepen, logo-buffer, tv, pulse, menu, list, analytics , grid, */}
       </View>
+
       <ModalView modal={modal} setModal={setModal} />
-      {flagForLoader ? (
-        <ActivityIndicator size='large' color='red' />
+
+      {/* Основной контент */}
+      {flagForLoader && marketData.length === 0 ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size='large' color='#FFD700' />
+          <Text style={styles.loadingText}>Загрузка данных...</Text>
+        </View>
       ) : (
-        // ...flatlist...
         <>
-          {!marketViewFlag ? (
-            <CoinList
-              data={data}
-              openModal={openModal}
-              refreshing={refreshing}
-              setRefreshing={setRefreshing}
-              search={search}
-              fetchMarketData={fetchMarketData}
-              errorMessage={errorMessage}
-            />
-          ) : (
-            <CoinList2
-              data={data}
-              openModal={openModal}
-              refreshing={refreshing}
-              setRefreshing={setRefreshing}
-              search={search}
-              fetchMarketData={fetchMarketData}
-              errorMessage={errorMessage}
-            />
+          {marketData.length === 0 && !flagForLoader && !marketError && !is429Error && (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>Нет данных</Text>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={fetchInitialMarketData}
+              >
+                <Text style={styles.retryButtonText}>Загрузить данные</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Всегда показываем CoinList если есть данные, даже при ошибке 429 */}
+          {(marketData.length > 0 || is429Error) && (
+            <>
+              {!marketViewFlag ? (
+                <CoinList
+                  data={marketData}
+                  search={search}
+                  openModal={openModal}
+                  refreshing={refreshing}
+                  setRefreshing={setRefreshing}
+                  fetchMarketData={handleRefresh}
+                  errorMessage={is429Error ? null : marketError}
+                  loadMoreData={loadMoreData}
+                  isLoadingMore={marketIsLoadingMore}
+                  hasMore={marketHasMore}
+                />
+              ) : (
+                <CoinList2
+                  data={marketData}
+                  search={search}
+                  openModal={openModal}
+                  refreshing={refreshing}
+                  setRefreshing={setRefreshing}
+                  fetchMarketData={handleRefresh}
+                  errorMessage={is429Error ? null : marketError}
+                  loadMoreData={loadMoreData}
+                  isLoadingMore={marketIsLoadingMore}
+                  hasMore={marketHasMore}
+                />
+              )}
+            </>
           )}
         </>
       )}
-      {/* Модальное окно с графиком */}
-      {/* {chartData.prices.length > 0 && chartData.labelDate.length > 0 && ( */}
+
       <Chart
         selectedCoinData={selectedCoinData}
         chartData={chartData}
@@ -175,7 +595,6 @@ const Main = () => {
         isloading={isloading}
         coinHistoryData={coinHistoryData}
       />
-      {/* )} */}
     </View>
   )
 }

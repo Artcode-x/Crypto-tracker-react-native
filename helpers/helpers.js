@@ -75,22 +75,46 @@ export const formatTime = (prices) => {
 }
 
 export const formatCryptoAmount = (amount) => {
-  if (amount === 0) return "0"
+  // ЗАЩИТА ОТ UNDEFINED И NULL
+  if (amount === undefined || amount === null) {
+    return "0"
+  }
 
-  let result = amount.toString()
+  // Преобразуем в число
+  const numAmount = Number(amount)
 
+  // Проверяем, что это валидное число
+  if (isNaN(numAmount)) {
+    return "0"
+  }
+
+  // Если 0 - возвращаем "0"
+  if (numAmount === 0) return "0"
+
+  // Преобразуем в строку
+  let result = numAmount.toString()
+
+  // Обработка десятичных знаков
   if (result.includes(".")) {
+    // Убираем лишние нули в конце
     while (result.endsWith("0")) {
       result = result.slice(0, -1)
     }
 
+    // Убираем точку если она в конце
     if (result.endsWith(".")) {
       result = result.slice(0, -1)
     }
   }
 
+  // Форматирование больших чисел без десятичных знаков
   if (!result.includes(".") && result.length > 3) {
-    result = parseInt(result).toLocaleString("en-US")
+    try {
+      result = parseInt(result).toLocaleString("en-US")
+    } catch (error) {
+      // В случае ошибки возвращаем как есть
+      console.warn("Ошибка форматирования числа:", amount, error)
+    }
   }
 
   return result

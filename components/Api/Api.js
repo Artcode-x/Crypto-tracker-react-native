@@ -1,12 +1,46 @@
 import axios from "axios"
 
-export async function GetMarketData() {
-  const response = await axios.get(
-    //  "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=true&price_change_percentage=7d"
-    "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=true&price_change_percentage=7d"
-  )
-  const data = response.data
-  return data
+// export async function GetMarketData() {
+//   const response = await axios.get(
+//     //  "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=true&price_change_percentage=7d"
+//     "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=true&price_change_percentage=7d"
+//   )
+//   const data = response.data
+//   return data
+// }
+
+// Оригинальная функция с параметром page
+export async function GetMarketData(page = 1, perPage = 250) {
+  try {
+    console.log(`Загрузка страницы ${page}...`)
+    const response = await axios.get(
+      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${perPage}&page=${page}&sparkline=true&price_change_percentage=7d`
+    )
+    return response.data
+  } catch (error) {
+    console.error(`Ошибка загрузки страницы ${page}:`, error.message)
+    throw error
+  }
+}
+
+// Новая функция для подгрузки следующей страницы
+export async function GetNextMarketPage(page) {
+  return GetMarketData(page)
+}
+
+// Можно добавить функцию для обновления цен
+export async function UpdatePricesForIds(coinIds) {
+  try {
+    const response = await axios.get(
+      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${coinIds.join(
+        ","
+      )}&sparkline=false`
+    )
+    return response.data
+  } catch (error) {
+    console.error("Ошибка обновления цен:", error)
+    return []
+  }
 }
 
 export async function FetchCoinHistoricalData(coinId, switchChartDays) {
@@ -77,5 +111,36 @@ export async function GetSantiment(coin) {
     return response.data
   } catch (error) {
     console.log(error.message)
+  }
+}
+
+export async function FetchCoinPriceChange(coinId, days) {
+  try {
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${days}`
+    )
+
+    if (!response.ok) {
+      throw new Error(`CoinGecko API error: ${response.status}`)
+    }
+
+    const result = await response.json()
+    const prices = result.prices
+
+    if (!prices || prices.length < 2) {
+      return 0
+    }
+
+    // Берем первую и последнюю цену
+    const startPrice = prices[0][1] // [timestamp, price]
+    const endPrice = prices[prices.length - 1][1]
+
+    // Рассчитываем процентное изменение
+    const priceChange = ((endPrice - startPrice) / startPrice) * 100
+
+    return priceChange
+  } catch (error) {
+    console.error(`Error fetching ${days}d data for ${coinId}:`, error.message)
+    return 0 // Возвращаем 0 при ошибке
   }
 }

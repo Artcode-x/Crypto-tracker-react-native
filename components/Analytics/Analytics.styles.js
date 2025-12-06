@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native"
+import { Platform, StyleSheet } from "react-native"
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize"
 
 export const styles = StyleSheet.create({
@@ -87,6 +87,10 @@ export const styles = StyleSheet.create({
     backgroundColor: "rgba(212, 175, 55, 0.3)"
   },
 
+  timeframeButtonDisabled: {
+    opacity: 0.5
+  },
+
   timeframeText: {
     color: "rgba(255, 255, 255, 0.6)",
     fontSize: RFValue(11),
@@ -95,6 +99,10 @@ export const styles = StyleSheet.create({
 
   timeframeTextActive: {
     color: "#FFD700"
+  },
+
+  timeframeTextDisabled: {
+    color: "rgba(255, 255, 255, 0.3)"
   },
 
   mainMetrics: {
@@ -113,10 +121,11 @@ export const styles = StyleSheet.create({
     marginBottom: 4
   },
 
-  metricValue: {
+  portfolioValueText: {
     color: "#FFFFFF",
-    fontSize: RFValue(28),
-    fontWeight: "700"
+    fontSize: RFValue(20),
+    fontWeight: "700",
+    letterSpacing: 0.5
   },
 
   changeContainer: {
@@ -136,7 +145,70 @@ export const styles = StyleSheet.create({
     fontSize: RFValue(12)
   },
 
-  // Секции
+  // Доп элементы
+  timeframeDetails: {
+    alignItems: "center",
+    marginBottom: 12,
+    padding: 5,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderRadius: 10
+  },
+
+  timeframeDetailsText: {
+    color: "rgba(255, 255, 255, 0.7)",
+    fontSize: RFValue(11),
+    textAlign: "center",
+    marginBottom: 2
+  },
+
+  timeframeSource: {
+    color: "rgba(255, 215, 0, 0.6)",
+    fontSize: RFValue(8),
+    fontStyle: "italic",
+    textAlign: "center"
+  },
+
+  simulationIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 215, 0, 0.1)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 8
+  },
+
+  simulationText: {
+    color: "#FFD700",
+    fontSize: RFValue(10),
+    marginLeft: 4
+  },
+
+  calculatingIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(212, 175, 55, 0.1)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 8
+  },
+
+  calculatingText: {
+    color: "#FFD700",
+    fontSize: RFValue(10),
+    marginLeft: 6
+  },
+
+  dataWarning: {
+    color: "rgba(255, 215, 0, 0.6)",
+    fontSize: RFValue(10),
+    textAlign: "center",
+    marginTop: 12,
+    fontStyle: "italic"
+  },
+
+  // Секции аккордиона
   sectionCard: {
     backgroundColor: "rgba(26, 26, 26, 0.8)",
     borderRadius: 16,
@@ -162,10 +234,10 @@ export const styles = StyleSheet.create({
   },
 
   sectionContent: {
-    padding: 16
+    padding: Platform.OS === "android" ? 12 : 16 // Меньше паддинг на Android
   },
 
-  // Обзор
+  // Быстрый обзор
   overviewGrid: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -232,83 +304,116 @@ export const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.1)"
   },
 
-  // Распределение активов
+  // ========== ОПТИМИЗИРОВАННЫЙ БЛОК РАСПРЕДЕЛЕНИЯ АКТИВОВ ==========
   allocationRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
-    paddingBottom: 16,
+    justifyContent: "space-between",
+    marginBottom: Platform.OS === "android" ? 12 : 14,
+    paddingBottom: Platform.OS === "android" ? 12 : 14,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.1)"
+    borderBottomColor: "rgba(255, 255, 255, 0.1)",
+    minHeight: Platform.OS === "android" ? 44 : 48 // Фиксированная минимальная высота
   },
 
+  // ЛЕВАЯ ЧАСТЬ: Название крипты и номер
   assetInfo: {
     flexDirection: "row",
     alignItems: "center",
-    flex: 2
+    flex: Platform.OS === "android" ? 0.4 : 0.45, // Меньше места на Android
+    minWidth: 0,
+    flexShrink: 1
   },
 
   assetRank: {
     color: "rgba(255, 255, 255, 0.4)",
-    fontSize: RFValue(12),
-    width: 24
+    fontSize: Platform.OS === "android" ? RFValue(10) : RFValue(11),
+    width: Platform.OS === "android" ? 18 : 22,
+    textAlign: "center",
+    marginRight: Platform.OS === "android" ? 2 : 4
   },
 
   assetNameContainer: {
-    marginLeft: 8
+    flex: 1,
+    minWidth: 0,
+    flexShrink: 1
   },
 
   assetName: {
     color: "#FFFFFF",
-    fontSize: RFValue(12),
+    fontSize: Platform.OS === "android" ? RFValue(10) : RFValue(11),
     fontWeight: "500",
-    maxWidth: 80
+    flexShrink: 1,
+    includeFontPadding: false, // Убирает лишние отступы на Android
+    textAlignVertical: "center"
   },
 
   assetSymbol: {
     color: "rgba(255, 255, 255, 0.5)",
-    fontSize: RFValue(10)
+    fontSize: Platform.OS === "android" ? RFValue(8) : RFValue(9),
+    marginTop: Platform.OS === "android" ? 0 : 1,
+    includeFontPadding: false,
+    textAlignVertical: "center"
   },
 
+  // Центр: Шкала с процентом
   allocationInfo: {
-    flex: 3,
-    marginHorizontal: 8
+    flex: Platform.OS === "android" ? 0.35 : 0.4, // Больше места для шкалы
+    marginHorizontal: Platform.OS === "android" ? 4 : 6,
+    minWidth: 0,
+    alignItems: "center"
   },
 
   allocationBarContainer: {
-    height: 6,
+    width: "100%",
+    height: Platform.OS === "android" ? 4 : 5,
     backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 3,
+    borderRadius: Platform.OS === "android" ? 2 : 2.5,
     overflow: "hidden",
-    marginBottom: 4
+    marginBottom: Platform.OS === "android" ? 2 : 3
   },
 
   allocationBar: {
     height: "100%",
-    borderRadius: 3
+    borderRadius: Platform.OS === "android" ? 2 : 2.5
   },
 
   allocationPercent: {
     color: "rgba(255, 255, 255, 0.7)",
-    fontSize: RFValue(10),
-    textAlign: "center"
+    fontSize: Platform.OS === "android" ? RFValue(8) : RFValue(9),
+    textAlign: "center",
+    includeFontPadding: false
   },
 
+  // ПРАВАЯ ЧАСТЬ: Цена и изменение
   assetMetrics: {
-    flex: 2,
-    alignItems: "flex-end"
+    flex: Platform.OS === "android" ? 0.25 : 0.3,
+    alignItems: "flex-end",
+    minWidth: 0,
+    flexShrink: 1
   },
 
   assetValue: {
     color: "#FFFFFF",
-    fontSize: RFValue(12),
+    fontSize: Platform.OS === "android" ? RFValue(10) : RFValue(11),
     fontWeight: "600",
-    marginBottom: 2
+    marginBottom: Platform.OS === "android" ? 1 : 2,
+    textAlign: "right",
+    flexShrink: 1,
+    includeFontPadding: false,
+    textAlignVertical: "center"
   },
 
   assetChange: {
-    fontSize: RFValue(10),
-    fontWeight: "600"
+    fontSize: Platform.OS === "android" ? RFValue(8) : RFValue(9),
+    fontWeight: "600",
+    textAlign: "right",
+    includeFontPadding: false,
+    textAlignVertical: "center"
+  },
+
+  dataIndicator: {
+    marginLeft: Platform.OS === "android" ? 2 : 4
   },
 
   // Анализ риска
@@ -360,6 +465,14 @@ export const styles = StyleSheet.create({
     borderRadius: 2
   },
 
+  riskDescription: {
+    color: "rgba(255, 255, 255, 0.6)",
+    fontSize: RFValue(10),
+    marginTop: 8,
+    textAlign: "center",
+    fontStyle: "italic"
+  },
+
   riskAdvice: {
     color: "rgba(255, 255, 255, 0.7)",
     fontSize: RFValue(10),
@@ -371,7 +484,7 @@ export const styles = StyleSheet.create({
   recommendationCard: {
     backgroundColor: "rgba(212, 175, 55, 0.1)",
     borderRadius: 16,
-    marginBottom: 20,
+    marginBottom: 35,
     borderWidth: 1,
     borderColor: "rgba(212, 175, 55, 0.2)",
     overflow: "hidden"
@@ -410,5 +523,22 @@ export const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
     lineHeight: 18
+  },
+
+  // ФУТЕР
+  footer: {
+    padding: 12,
+    backgroundColor: "rgba(26, 26, 26, 0.8)",
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 215, 0, 0.1)"
+  },
+
+  footerText: {
+    color: "rgba(255, 255, 255, 0.5)",
+    fontSize: RFValue(10),
+    textAlign: "center",
+    lineHeight: 16
   }
 })

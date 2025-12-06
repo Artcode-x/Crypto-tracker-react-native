@@ -7,7 +7,15 @@ const initialState = {
   flag: false,
   chartDays: "1h",
   flagForView: false,
-  duplicate: false
+  duplicate: false,
+
+  // для рыночных данных
+  marketData: [], // Все загруженные монеты
+  marketCurrentPage: 1, // Текущая страница
+  marketIsLoadingMore: false, // Флаг загрузки дополнительных данных
+  marketHasMore: true, // Есть ли еще данные для загрузки
+  marketLastUpdated: null, // Когда последний раз обновляли
+  marketError: null // Ошибка загрузки
 }
 
 const reducersSlice = createSlice({
@@ -44,6 +52,54 @@ const reducersSlice = createSlice({
         ...state.userAssets,
         [coinId]: amount
       }
+    },
+
+    // нов
+    setMarketData: (state, action) => {
+      state.marketData = action.payload
+    },
+
+    addMoreMarketData: (state, action) => {
+      // Доб нов данные к существующим
+      state.marketData = [...state.marketData, ...action.payload]
+    },
+
+    setMarketCurrentPage: (state, action) => {
+      state.marketCurrentPage = action.payload
+    },
+
+    setMarketIsLoadingMore: (state, action) => {
+      state.marketIsLoadingMore = action.payload
+    },
+
+    setMarketHasMore: (state, action) => {
+      state.marketHasMore = action.payload
+    },
+
+    setMarketLastUpdated: (state, action) => {
+      state.marketLastUpdated = action.payload
+    },
+
+    setMarketError: (state, action) => {
+      state.marketError = action.payload
+    },
+
+    resetMarketData: (state) => {
+      // Полный сброс рыночных данных
+      state.marketData = []
+      state.marketCurrentPage = 1
+      state.marketHasMore = true
+      state.marketIsLoadingMore = false
+      state.marketError = null
+    },
+
+    updateMarketDataItem: (state, action) => {
+      // Обновление конкретной монеты при изменении цены
+      const { id, data } = action.payload
+      const index = state.marketData.findIndex((item) => item.id === id)
+      if (index !== -1) {
+        state.marketData[index] = { ...state.marketData[index], ...data }
+      }
     }
   }
 })
@@ -56,6 +112,17 @@ export const {
   rewriteFavorite,
   setFlagForView,
   setDuplicate,
-  updateUserAsset
+  updateUserAsset,
+  // Новые экшены
+  setMarketData,
+  addMoreMarketData,
+  setMarketCurrentPage,
+  setMarketIsLoadingMore,
+  setMarketHasMore,
+  setMarketLastUpdated,
+  setMarketError,
+  resetMarketData,
+  updateMarketDataItem
 } = reducersSlice.actions
+
 export default reducersSlice.reducer
