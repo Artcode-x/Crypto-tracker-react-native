@@ -1,4 +1,5 @@
 import { StyleSheet, Dimensions, Platform } from "react-native"
+import { RFValue } from "react-native-responsive-fontsize"
 
 const { width } = Dimensions.get("window")
 const CARD_WIDTH = (width - 32) / 2
@@ -140,18 +141,21 @@ export const styles = StyleSheet.create({
     marginBottom: 2
   },
   coinName: {
-    fontSize: 13,
+    // fontSize: 13,
+    fontSize: RFValue(12),
     fontWeight: "600",
     color: "#FFF",
     marginBottom: 2
   },
   coinSymbol: {
-    fontSize: 10,
+    // fontSize: 10,
+    fontSize: RFValue(9),
     color: "rgba(255, 255, 255, 0.5)",
     fontWeight: "500"
   },
   coinPrice: {
-    fontSize: 14,
+    // fontSize: 14,
+    fontSize: RFValue(11),
     fontWeight: "500",
     marginBottom: 8
   },

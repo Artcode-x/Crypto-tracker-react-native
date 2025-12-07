@@ -102,7 +102,7 @@ export const styles = StyleSheet.create({
   },
 
   infoText: {
-    fontSize: 12,
+    fontSize: RFValue(10),
     color: "#aaa",
     textAlign: "center"
   },

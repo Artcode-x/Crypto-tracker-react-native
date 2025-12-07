@@ -401,16 +401,16 @@ const Favorite = () => {
                   <Text style={styles.modalSubtitle}>
                     ({selectedCoinForInput.symbol?.toUpperCase()})
                   </Text>
-                  <Text style={styles.modalPrice}>
+                  {/* <Text style={styles.modalPrice}>
                     Current price: $
                     {selectedCoinForInput.current_price?.toLocaleString() || "0.00"}
-                  </Text>
+                  </Text> */}
                 </View>
 
                 <TextInput
                   style={styles.amountInput}
                   key={selectedCoinForInput.id}
-                  defaultValue={(userAssets[selectedCoinForInput?.id] || 0).toString()}
+                  defaultValue={(userAssets[selectedCoinForInput?.id] || "").toString()}
                   onChangeText={(text) => {
                     amountInputRef.current = text
                   }}

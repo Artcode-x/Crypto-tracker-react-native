@@ -212,7 +212,7 @@ const Main = () => {
         // Сообщение для пользователя
         dispatch(
           setMarketError(
-            `Слишком много запросов. Автоматический повтор через ${delayInSeconds}сек...`
+            `Too many requests. Automatically repeat after ${delayInSeconds} sec...`
           )
         )
       } else {

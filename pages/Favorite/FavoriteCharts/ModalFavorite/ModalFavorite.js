@@ -23,6 +23,7 @@ import {
 } from "../../../../components/Api/Api"
 import { SwitchTimeframeButtons } from "../../SwitchTimeframeButtons/SwitchTimeframeButtons"
 import { VolumeChart } from "../VolumeChart/VolumeChart" // Вынесенный компонент объема
+import { RFValue } from "react-native-responsive-fontsize"
 
 const { width, height } = Dimensions.get("window")
 
@@ -70,6 +71,32 @@ const CandlestickChart = ({ data, width: chartWidth, height: chartHeight, limit 
     margin.top + innerHeight - ((price - minPrice) / priceRange) * innerHeight
 
   // Метки на оси Y
+  // const generateYAxisLabels = () => {
+  //   const numberOfLabels = 5
+  //   const labels = []
+
+  //   for (let i = 0; i <= numberOfLabels; i++) {
+  //     const price = minPrice + (priceRange * i) / numberOfLabels
+  //     const yPosition = yScale(price)
+
+  //     let formattedPrice
+  //     if (price >= 1000) {
+  //       formattedPrice = `$${(price / 1000).toFixed(1)}k`
+  //     } else if (price >= 1) {
+  //       formattedPrice = `$${price.toFixed(2)}`
+  //     } else {
+  //       formattedPrice = `$${price.toFixed(6)}`
+  //     }
+
+  //     labels.push({
+  //       price: formattedPrice,
+  //       y: yPosition
+  //     })
+  //   }
+
+  //   return labels
+  // }
+  // В компоненте CandlestickChart обновите функцию generateYAxisLabels:
   const generateYAxisLabels = () => {
     const numberOfLabels = 5
     const labels = []
@@ -78,18 +105,35 @@ const CandlestickChart = ({ data, width: chartWidth, height: chartHeight, limit 
       const price = minPrice + (priceRange * i) / numberOfLabels
       const yPosition = yScale(price)
 
+      // Улучшенное форматирование для больших чисел
       let formattedPrice
-      if (price >= 1000) {
-        formattedPrice = `$${(price / 1000).toFixed(1)}k`
+      if (price >= 1000000) {
+        formattedPrice = `$${(price / 1000000).toFixed(2)}M`
+      } else if (price >= 1000) {
+        formattedPrice = `$${(price / 1000).toFixed(2)}K`
       } else if (price >= 1) {
         formattedPrice = `$${price.toFixed(2)}`
-      } else {
+      } else if (price >= 0.1) {
+        formattedPrice = `$${price.toFixed(3)}`
+      } else if (price >= 0.01) {
+        formattedPrice = `$${price.toFixed(4)}`
+      } else if (price >= 0.001) {
+        formattedPrice = `$${price.toFixed(5)}`
+      } else if (price >= 0.0001) {
         formattedPrice = `$${price.toFixed(6)}`
+      } else {
+        formattedPrice = `$${price.toFixed(8)}`
+      }
+
+      // Дополнительно: ограничиваем максимальную длину
+      if (formattedPrice.length > 12) {
+        formattedPrice = `$${price.toExponential(3)}`
       }
 
       labels.push({
         price: formattedPrice,
-        y: yPosition
+        y: yPosition,
+        rawPrice: price
       })
     }
 
@@ -103,7 +147,7 @@ const CandlestickChart = ({ data, width: chartWidth, height: chartHeight, limit 
     <View style={styles.chartContainerStyle}>
       {/* Индикатор лимита */}
       <View style={styles.limitContainer}>
-        <Text style={styles.limitLabel}>Limit: {limit}</Text>
+        {/* <Text style={styles.limitLabel}>Limit: {limit}</Text> */}
         <Text style={styles.limitHint}>Pinch to zoom</Text>
       </View>
 
@@ -117,9 +161,11 @@ const CandlestickChart = ({ data, width: chartWidth, height: chartHeight, limit 
               {
                 position: "absolute",
                 top: label.y - 8,
-                left: 8,
+                // left: 8,
+                left: 3,
                 zIndex: 1,
-                backgroundColor: "transparent"
+                backgroundColor: "transparent",
+                fontSize: RFValue(7)
               }
             ]}
           >
@@ -205,7 +251,7 @@ const CandlestickChart = ({ data, width: chartWidth, height: chartHeight, limit 
       </View>
 
       {/* Блок с ценами */}
-      <View style={styles.priceBlock}>
+      {/* <View style={styles.priceBlock}>
         <View style={styles.priceContainer}>
           <Text style={styles.label}>Low:</Text>
           <Text style={[styles.priceValue, { color: "#F44336" }]}>
@@ -230,17 +276,12 @@ const CandlestickChart = ({ data, width: chartWidth, height: chartHeight, limit 
             ${currentCandle.high?.toFixed(2) || "0.00"}
           </Text>
         </View>
-      </View>
+      </View> */}
     </View>
   )
 }
 
-const ModalFavorite = ({
-  visible,
-  onClose,
-  selectedCoin,
-  chartDays // timeframe из Redux
-}) => {
+const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
   const dispatch = useDispatch()
   const [prices, setPrices] = useState([])
   const [minMax, setMinMax] = useState({ minPrice: null, maxPrice: null })
@@ -265,7 +306,15 @@ const ModalFavorite = ({
     ]
   }
 
-  // Функции для масштабирования (переносим из Favorite)
+  // Получаем последнюю свечу для отображения цен
+  const getCurrentCandle = () => {
+    if (!prices || prices.length === 0) return null
+    return prices[prices.length - 1]
+  }
+
+  const currentCandle = getCurrentCandle()
+
+  // Функции для масштабирования
   const onPinchEvent = useCallback((event) => {
     const scaleChange = event.nativeEvent.scale / scaleRef.current
     if (scaleChange > 1.1) {
@@ -349,96 +398,137 @@ const ModalFavorite = ({
     <Modal visible={visible} animationType='slide' onRequestClose={onClose}>
       <ScrollView
         style={{ flex: 1, backgroundColor: "#0A0A0F" }}
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+        contentContainerStyle={{ flexGrow: 1 }}
       >
         <View style={styles.chartContainer}>
+          {/* Заголовок */}
           <View style={styles.modalHeader}>
             <View>
               <Text style={styles.selectedCoinName}>{selectedCoin?.name}</Text>
               <Text style={styles.selectedCoinSymbol}>
-                {selectedCoin?.symbol?.toUpperCase()} Analysis
+                {selectedCoin?.symbol?.toUpperCase()} • {chartDays}
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.modalCloseButton}>
-              <Ionicons name='close' size={24} color='#D4AF37' />
+              <Ionicons name='close' size={20} color='#D4AF37' />
             </TouchableOpacity>
           </View>
 
-          {/* Santiment для BTC и ETH */}
+          {/* Sentiment badge */}
           {santiment && (
-            <View style={styles.santimentContainer}>
-              <Text style={styles.santimentText}>
-                Market Sentiment:
-                <Text
-                  style={
-                    santiment === "bullish" ? styles.bullishText : styles.bearishText
-                  }
-                >
-                  {" "}
-                  {santiment.toUpperCase()}
-                </Text>
+            <View style={styles.sentimentBadge}>
+              <Text style={[styles.sentimentText, styles[santiment]]}>
+                {santiment.toUpperCase()}
               </Text>
             </View>
           )}
 
-          <View style={styles.minmaxBlock}>
-            <Text style={styles.textUp}>
-              Min 24h: <Text style={{ color: "lightblue" }}>{minMax.minPrice}$</Text>
-            </Text>
-            <Text style={styles.textUp}>
-              Max 24h: <Text style={{ color: "wheat" }}>{minMax.maxPrice}$</Text>
-            </Text>
+          {/* Инфо строка */}
+          <View style={styles.infoRow}>
+            <View style={styles.infoBlock}>
+              <Text style={styles.infoText}>24h Low</Text>
+              <Text style={[styles.infoValue, { color: "lightblue" }]}>
+                {minMax.minPrice}$
+              </Text>
+            </View>
+            <View style={styles.infoBlock}>
+              <Text style={styles.infoText}>Current</Text>
+              <Text style={styles.infoValue}>
+                ${selectedCoin?.current_price?.toFixed(2) || "0.00"}
+              </Text>
+            </View>
+            <View style={styles.infoBlock}>
+              <Text style={styles.infoText}>24h High</Text>
+              <Text style={[styles.infoValue, { color: "wheat" }]}>
+                {minMax.maxPrice}$
+              </Text>
+            </View>
           </View>
 
-          {loadingChart ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size='large' color='#D4AF37' />
-              <Text style={styles.loadingText}>Loading chart data...</Text>
+          {/* График цены (УВЕЛИЧЕН) */}
+          <View style={styles.chartWrapper}>
+            <View style={styles.chartHeader}>
+              <Text style={styles.chartTitle}>Price Chart</Text>
+              <Text style={styles.chartLimit}>Limit: {limit}</Text>
             </View>
-          ) : prices.length === 0 ? (
-            <Text style={{ color: "white", textAlign: "center", marginTop: 20 }}>
-              No data available
-            </Text>
-          ) : (
-            <>
-              <Text style={styles.textTit}>Price Chart:</Text>
 
+            {loadingChart ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size='large' color='#D4AF37' />
+                <Text style={styles.loadingText}>Loading...</Text>
+              </View>
+            ) : prices.length === 0 ? (
+              <View style={styles.loadingContainer}>
+                <Text style={{ color: "rgba(255,255,255,0.6)" }}>No data</Text>
+              </View>
+            ) : (
               <PinchGestureHandler
                 onGestureEvent={onPinchEvent}
                 onHandlerStateChange={onPinchStateChange}
               >
-                <View style={{ alignItems: "center", width: "100%" }}>
+                <View style={styles.chartBox}>
                   <CandlestickChart
                     data={prices}
-                    width={width * 0.92}
-                    height={height * 0.35}
+                    width={width * 0.9}
+                    height={height * 0.32} // УВЕЛИЧЕН
                     limit={limit}
                   />
                 </View>
               </PinchGestureHandler>
+            )}
 
-              {/* График объема */}
-              <View style={styles.volumeSection}>
-                <Text style={styles.volumeTitle}>Volume</Text>
-                <VolumeChart volumeData={volumeData} />
+            {/* Цены под графиком (УМЕНЬШЕНА ВЫСОТА) */}
+            {!loadingChart && prices.length > 0 && currentCandle && (
+              <View style={styles.priceRow}>
+                <View style={styles.priceItem}>
+                  <Text style={styles.priceLabel}>Low</Text>
+                  <Text style={[styles.priceValue, styles.priceLow]}>
+                    ${currentCandle.low?.toFixed(2) || "0.00"}
+                  </Text>
+                </View>
+                <View style={styles.priceItem}>
+                  <Text style={styles.priceLabel}>Open</Text>
+                  <Text style={[styles.priceValue, styles.priceOpen]}>
+                    ${currentCandle.open?.toFixed(2) || "0.00"}
+                  </Text>
+                </View>
+                <View style={styles.priceItem}>
+                  <Text style={styles.priceLabel}>Close</Text>
+                  <Text style={[styles.priceValue, styles.priceClose]}>
+                    ${currentCandle.close?.toFixed(2) || "0.00"}
+                  </Text>
+                </View>
+                <View style={styles.priceItem}>
+                  <Text style={styles.priceLabel}>High</Text>
+                  <Text style={[styles.priceValue, styles.priceHigh]}>
+                    ${currentCandle.high?.toFixed(2) || "0.00"}
+                  </Text>
+                </View>
               </View>
-            </>
-          )}
-
-          {/* Selected Timeframe */}
-          <View style={styles.selectedTimeframeContainer}>
-            <Text style={styles.selectedTimeframeText}>
-              Selected timeframe: <Text style={styles.textZ}>{chartDays}</Text>
-            </Text>
+            )}
           </View>
 
-          <View style={styles.timeframeContainer}>
+          {/* Volume (УМЕНЬШЕН) */}
+          <View style={styles.volumeSection}>
+            <Text style={styles.volumeTitle}>Volume</Text>
+            <View style={styles.volumeChartContainer}>
+              <VolumeChart volumeData={volumeData} height={height * 0.12} />
+            </View>
+          </View>
+
+          {/* Timeframe */}
+          <View style={styles.timeframeSection}>
+            <View style={styles.timeframeHeader}>
+              <Text style={styles.timeframeTitle}>Timeframe:</Text>
+              <Text style={styles.timeframeValue}>{chartDays}</Text>
+            </View>
             <SwitchTimeframeButtons chartDays={chartDays} />
           </View>
 
-          <View style={styles.chartButtonsClose}>
-            <TouchableOpacity style={styles.buttonClose} onPress={onClose}>
-              <Text style={styles.closeb}>Close Analysis</Text>
+          {/* Кнопка закрытия */}
+          <View style={styles.buttonsContainer}>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
