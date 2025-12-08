@@ -1,51 +1,12 @@
-// import { Dimensions, View } from "react-native"
-// import { LineChart } from "react-native-chart-kit"
-// import { RFValue } from "react-native-responsive-fontsize"
-// export const VolumeChart = ({ volumeData }) => {
-//   return (
-//     <View>
-//       <LineChart
-//         data={volumeData}
-//         width={Dimensions.get("window").width * 0.99}
-//         height={Dimensions.get("window").height * 0.2}
-//         chartConfig={{
-//           backgroundColor: "#1e1e1e",
-//           backgroundGradientFrom: "#3a3a3a",
-//           backgroundGradientTo: "#1e1e1e",
-//           decimalPlaces: 0,
-//           color: (opacity = 1) => `rgba(211, 211, 211, ${opacity * 0})`,
-//           labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-
-//           style: {
-//             borderRadius: 16
-//           },
-//           propsForDots: {
-//             r: "0",
-//             strokeWidth: "2",
-//             stroke: "#ffa726"
-//           },
-//           propsForLabels: {
-//             fontSize: RFValue(7)
-//           }
-//         }}
-//         bezier
-//         style={{
-//           marginVertical: 8,
-//           borderRadius: 16,
-//           borderColor: "wheat",
-//           borderWidth: 1,
-//           overflow: "hidden"
-//         }}
-//       />
-//     </View>
-//   )
-// }
-
-import { ScrollView, Text, View } from "react-native"
+import React from "react"
+import { ScrollView, Text, View, Dimensions, Platform } from "react-native"
 import Svg, { Rect } from "react-native-svg"
 import { styles } from "./VolumeChart.styles"
 
-export const VolumeChart = ({ volumeData }) => {
+const { width } = Dimensions.get("window")
+const isAndroid = Platform.OS === "android"
+
+export const VolumeChart = ({ volumeData, height = 100 }) => {
   if (
     !volumeData ||
     !volumeData.datasets ||
@@ -53,7 +14,7 @@ export const VolumeChart = ({ volumeData }) => {
     !volumeData.datasets[0].data
   ) {
     return (
-      <View style={styles.volumeChartContainer}>
+      <View style={[styles.volumeChartContainer, { height }]}>
         <Text style={styles.noVolumeText}>No volume data</Text>
       </View>
     )
@@ -61,26 +22,87 @@ export const VolumeChart = ({ volumeData }) => {
 
   const volumeValues = volumeData.datasets[0].data
   const maxVolume = Math.max(...volumeValues)
-  const chartHeight = 40 // УМЕНЬШИЛ В 2 РАЗА (было 80)
-  const barWidth = 3 // Уже бары
-  const spacing = 1 // Меньше отступов
+  const currentVolume = volumeValues[volumeValues.length - 1] || 0
+  const avgVolume = volumeValues.reduce((a, b) => a + b, 0) / volumeValues.length
+
+  const formatVolume = (volume) => {
+    if (volume >= 1000000) return `${(volume / 1000000).toFixed(1)}M`
+    if (volume >= 1000) return `${(volume / 1000).toFixed(0)}K`
+    return volume.toFixed(0)
+  }
+
+  const getVolumeIndicator = () => {
+    if (currentVolume > avgVolume * 1.5) return "🔥"
+    if (currentVolume > avgVolume * 1.2) return "↑"
+    if (currentVolume < avgVolume * 0.8) return "↓"
+    return "•"
+  }
+
+  const getIndicatorColor = () => {
+    if (currentVolume > avgVolume * 1.5) return "#FF453A"
+    if (currentVolume > avgVolume * 1.2) return "#FF9F0A"
+    if (currentVolume < avgVolume * 0.8) return "#30D158"
+    return "#64D2FF"
+  }
+
+  const chartHeight = Math.max(40, height * 0.85) // 85% для графика
+  const statsHeight = Math.max(16, height * 0.12) // 12% для статистики
+  const barWidth = isAndroid ? 2.5 : 2.8
+  const spacing = 0.8
+  const svgWidth = volumeValues.length * (barWidth + spacing)
 
   return (
-    <View style={styles.volumeChartContainer}>
+    <View style={[styles.volumeChartContainer, { height, padding: isAndroid ? 6 : 8 }]}>
+      {/*  Статистика графика - сверху */}
+      <View style={[styles.statsOverlay, { height: statsHeight }]}>
+        <View style={styles.ultraCompactRow}>
+          {/* Now с индикатором */}
+          <View style={styles.compactStatItem}>
+            <Text style={[styles.indicator, { color: getIndicatorColor() }]}>
+              {getVolumeIndicator()}
+            </Text>
+            <Text style={styles.compactStatLabel}>Now:</Text>
+            <Text style={styles.compactStatValue}>{formatVolume(currentVolume)}</Text>
+          </View>
+
+          {/* Avg */}
+          <View style={styles.compactStatItem}>
+            <Text style={styles.compactStatLabel}>Avg:</Text>
+            <Text style={styles.compactStatValue}>{formatVolume(avgVolume)}</Text>
+          </View>
+
+          {/* Peak */}
+          <View style={styles.compactStatItem}>
+            <Text style={styles.compactStatLabel}>Peak:</Text>
+            <Text style={styles.compactStatValue}>{formatVolume(maxVolume)}</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* График объема */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={styles.volumeScroll}
+        style={[
+          styles.volumeScroll,
+          {
+            height: chartHeight,
+            marginTop: 2
+          }
+        ]}
+        contentContainerStyle={{
+          minWidth: Math.max(svgWidth, width - 20),
+          alignItems: "flex-end"
+        }}
       >
-        <Svg width={volumeValues.length * (barWidth + spacing)} height={chartHeight}>
+        <Svg width={svgWidth} height={chartHeight}>
           {volumeValues.map((volume, index) => {
-            const barHeight = (volume / maxVolume) * chartHeight
+            const barHeight = (volume / maxVolume) * chartHeight * 0.85
             const x = index * (barWidth + spacing)
             const y = chartHeight - barHeight
-
-            // Цвет бара в зависимости от объема
             const opacity = volume / maxVolume
-            const color = `rgba(255, 59, 48, ${0.4 + opacity * 0.6})`
+            //
+            const color = `rgba(255, 59, 48, ${0.5 + opacity * 0.5})`
 
             return (
               <Rect
@@ -97,12 +119,6 @@ export const VolumeChart = ({ volumeData }) => {
           })}
         </Svg>
       </ScrollView>
-      <View style={styles.volumeStats}>
-        <Text style={styles.volumeStat}>Max: {(maxVolume / 1000000).toFixed(1)}M</Text>
-        <Text style={styles.volumeStat}>
-          Now: {((volumeValues[volumeValues.length - 1] || 0) / 1000000).toFixed(1)}M
-        </Text>
-      </View>
     </View>
   )
 }
