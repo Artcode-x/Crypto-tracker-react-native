@@ -1,0 +1,54 @@
+import { useEffect, useRef } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { priceAlertsSelector } from "../store/alertsSelectors"
+import AlertManager from "../services/AlertManager"
+
+export const useAlertChecker = (coinData, checkInterval = 60000) => {
+  const dispatch = useDispatch()
+  const priceAlerts = useSelector(priceAlertsSelector)
+  const intervalRef = useRef(null)
+
+  useEffect(() => {
+    // Инициализация AlertManager
+    AlertManager.initialize(dispatch)
+
+    // Функция для проверки алертов
+    const checkAlerts = () => {
+      if (coinData.length > 0 && priceAlerts.length > 0) {
+        const activeAlerts = priceAlerts.filter(
+          (alert) => alert.isActive && !alert.triggeredAt
+        )
+
+        if (activeAlerts.length > 0) {
+          console.log(`Periodic check: ${activeAlerts.length} active alerts`)
+          AlertManager.checkAlerts(activeAlerts, coinData)
+        }
+      }
+    }
+
+    // Проверка сразу при монтировании
+    checkAlerts()
+
+    // Уст-ка переодической проверки
+    intervalRef.current = setInterval(checkAlerts, checkInterval)
+
+    // Очистка интервала при размонтировании
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+    }
+  }, [dispatch, coinData, priceAlerts, checkInterval])
+
+  return {
+    checkAlerts: () => {
+      if (coinData.length > 0 && priceAlerts.length > 0) {
+        const activeAlerts = priceAlerts.filter(
+          (alert) => alert.isActive && !alert.triggeredAt
+        )
+        return AlertManager.checkAlerts(activeAlerts, coinData)
+      }
+      return []
+    }
+  }
+}

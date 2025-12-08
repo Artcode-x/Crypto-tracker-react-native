@@ -3,17 +3,20 @@ import { RFValue } from "react-native-responsive-fontsize"
 
 const { width } = Dimensions.get("window")
 const CARD_WIDTH = (width - 32) / 2
+const isIOS = Platform.OS === "ios"
 
 export const styles = StyleSheet.create({
   premiumContainer: {
     flex: 1,
     backgroundColor: "#0A0A0F"
   },
+
   premiumHeader: {
     paddingTop: Platform.OS === "ios" ? 20 : 15,
     paddingHorizontal: 16,
     paddingBottom: 12
   },
+
   headerGradient: {
     flexDirection: "row",
     alignItems: "center",
@@ -23,24 +26,66 @@ export const styles = StyleSheet.create({
     borderColor: "rgba(212, 175, 55, 0.2)",
     backgroundColor: "rgba(26, 26, 26, 0.8)"
   },
+
   headerTextContainer: {
     flex: 1,
     marginLeft: 10
   },
+
   headerTitle: {
     fontSize: Platform.OS === "ios" ? 15 : 14,
     fontWeight: "700",
     color: "#D4AF37"
   },
+
   headerSubtitle: {
     fontSize: Platform.OS === "ios" ? 9.5 : 9,
     color: "rgba(255, 255, 255, 0.6)",
     marginTop: 2
   },
+
+  headerLeftContainer: {
+    flex: 1,
+    marginLeft: 10
+  },
+
+  headerRightContainer: {
+    alignItems: "flex-end",
+    marginLeft: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8
+  },
+
+  portfolioLabel: {
+    fontSize: 8,
+    color: "rgba(255, 255, 255, 0.5)",
+    marginBottom: 2
+  },
+
+  portfolioValue: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#D4AF37"
+  },
+
+  refreshButton: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: "rgba(212, 175, 55, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(212, 175, 55, 0.2)"
+  },
+
+  refreshButtonDisabled: {
+    opacity: 0.5
+  },
+
   statsPanel: {
     paddingHorizontal: 16,
     marginBottom: 12
   },
+
   statsGradient: {
     borderRadius: 12,
     padding: 9,
@@ -59,67 +104,115 @@ export const styles = StyleSheet.create({
       }
     })
   },
+
   compactStats: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center"
   },
+
   statItemCompact: {
     alignItems: "center",
     flex: 1
   },
+
   statNumberCompact: {
     fontSize: 13,
     fontWeight: "700",
     color: "#FFF",
     marginTop: 4
   },
+
   statLabelCompact: {
     fontSize: 9,
     color: "rgba(255, 255, 255, 0.6)",
     marginTop: 2
   },
+
   statDivider: {
     width: 1,
     height: 24,
     backgroundColor: "rgba(212, 175, 55, 0.2)"
   },
-  premiumList: {
-    paddingHorizontal: 8,
-    paddingBottom: 80
-  },
-  premiumCoinCard: {
-    borderRadius: 14,
-    overflow: "hidden",
-    height: Platform.OS === "ios" ? 165 : 170,
-    width: CARD_WIDTH,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.15,
-        shadowRadius: 5
-      },
-      android: {
-        elevation: 2
-      }
-    })
-  },
-  cardGradient: {
-    padding: 10,
+
+  alertBadgeContainer: {
     position: "relative",
-    flex: 1
-  },
-  topRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8
-  },
-  rankContainer: {
-    flexDirection: "row",
     alignItems: "center"
   },
+
+  unreadBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "#FF3B30",
+    borderRadius: 6,
+    minWidth: 12,
+    height: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#FFF"
+  },
+
+  unreadBadgeText: {
+    fontSize: 6,
+    color: "#FFF",
+    fontWeight: "700",
+    textAlign: "center"
+  },
+
+  premiumList: {
+    paddingHorizontal: 8,
+    paddingBottom: 100
+  },
+
+  cardContainer: {
+    width: CARD_WIDTH,
+    margin: 4
+  },
+
+  /* ===== КАРТОЧКА МОНЕТЫ ===== */
+  premiumCoinCard: {
+    borderRadius: 16,
+    overflow: "hidden",
+    height: 190,
+    ...(isIOS
+      ? {
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.15,
+          shadowRadius: 6
+        }
+      : {
+          elevation: 4
+        })
+  },
+
+  cardGradient: {
+    padding: 14,
+    flex: 1,
+    justifyContent: "space-between"
+  },
+
+  /* ===== ВЕРХНЯЯ ЧАСТЬ - Заголовок и алерты ===== */
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 14
+  },
+
+  coinInfo: {
+    flex: 1,
+    marginRight: 8
+  },
+
+  rankRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6
+  },
+
   rankText: {
     fontSize: 11,
     color: "#D4AF37",
@@ -131,78 +224,203 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(212, 175, 55, 0.3)"
   },
+
   crownIcon: {
     marginLeft: 4
   },
-  coinContent: {
-    marginBottom: 7
-  },
-  coinHeader: {
-    marginBottom: 2
-  },
+
   coinName: {
-    // fontSize: 13,
-    fontSize: RFValue(12),
+    fontSize: 13,
     fontWeight: "600",
     color: "#FFF",
     marginBottom: 2
   },
+
   coinSymbol: {
-    // fontSize: 10,
-    fontSize: RFValue(9),
-    color: "rgba(255, 255, 255, 0.5)",
+    fontSize: 11,
+    color: "rgba(255, 255, 255, 0.6)",
     fontWeight: "500"
   },
+
+  alertButtonContainer: {
+    alignItems: "center"
+  },
+
+  alertButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: "rgba(212, 175, 55, 0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    position: "relative"
+  },
+
+  alertButtonActive: {
+    borderColor: "#D4AF37",
+    backgroundColor: "rgba(212, 175, 55, 0.1)"
+  },
+
+  alertBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "#FF3B30",
+    borderRadius: 9,
+    minWidth: 18,
+    height: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#1A1A1A",
+    ...(isIOS
+      ? {
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.3,
+          shadowRadius: 1.5
+        }
+      : {
+          elevation: 2
+        })
+  },
+
+  alertBadgeText: {
+    fontSize: 10,
+    color: "#FFF",
+    fontWeight: "800",
+    textAlign: "center",
+    includeFontPadding: false
+  },
+
+  /* ===== СРЕДНЯЯ ЧАСТЬ - Цена и сумма пользователя ===== */
+  middleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Platform.OS === "ios" ? 18 : 10
+  },
+
+  priceSection: {
+    flex: 1,
+    marginRight: 8
+  },
+
   coinPrice: {
-    // fontSize: 14,
-    fontSize: RFValue(11),
-    fontWeight: "500",
-    marginBottom: 8
+    fontSize: Platform.OS === "ios" ? RFValue(12) : RFValue(11.5),
+    fontWeight: "700",
+    marginBottom: 6
   },
-  changeRow: {
-    alignItems: "flex-start"
+
+  changeContainer: {
+    alignSelf: "flex-start"
   },
+
   changeBadge: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8
+    // paddingVertical: 4,
+    paddingVertical: Platform.OS === "ios" ? 4 : 2,
+    // Platform.OS === 'ios' ?
+    borderRadius: 8,
+    minWidth: 70
   },
+
   changeText: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: "700",
     marginLeft: 4
   },
 
-  deleteButton: {
-    flex: 1,
-    marginLeft: 4,
-    height: 25
+  userAmountSection: {
+    alignItems: "flex-end",
+    minWidth: 70
   },
 
-  deleteButtonGradient: {
-    paddingHorizontal: Platform.OS === "ios" ? 10 : 8,
-    paddingVertical: 0,
-    borderRadius: 10,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    height: "100%"
-    // flex: 1
+  userAmount: {
+    fontSize: Platform.OS === "ios" ? RFValue(12) : RFValue(12),
+    color: "#D4AF37",
+    fontWeight: "700",
+    textAlign: "right",
+    marginBottom: 2
   },
 
-  deleteButtonText: {
-    fontSize: Platform.OS === "ios" ? 9 : 8,
-    color: "#FFF",
-    marginLeft: 0,
+  userValue: {
+    fontSize: Platform.OS === "ios" ? RFValue(11) : RFValue(11),
+    color: "rgba(255, 255, 255, 0.9)",
     fontWeight: "600",
-    includeFontPadding: false,
-    textAlignVertical: "center",
-    paddingVertical: 0,
-    lineHeight: Platform.OS === "ios" ? 12 : 14
+    textAlign: "right"
   },
 
+  userAmountPlaceholder: {
+    fontSize: 11,
+    color: "rgba(255, 255, 255, 0.3)",
+    fontStyle: "italic",
+    textAlign: "right",
+    marginBottom: 2
+  },
+
+  userValuePlaceholder: {
+    fontSize: 11,
+    color: "rgba(255, 255, 255, 0.3)",
+    fontStyle: "italic",
+    textAlign: "right"
+  },
+
+  /* ===== НИЖНЯЯ ЧАСТЬ - КНОПКИ ===== */
+  bottomActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 6,
+    // height: 36
+    height: 32
+  },
+
+  actionButton: {
+    flex: 1
+  },
+
+  actionButtonGradient: {
+    flex: 1,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: Platform.OS === "ios" ? 4 : 2,
+    borderWidth: 1,
+    height: "100%"
+  },
+
+  actionButtonText: {
+    // fontSize: Platform.OS === "ios" ? RFValue(10) : RFValue(10),
+    fontSize: RFValue(10),
+    fontWeight: "600",
+    includeFontPadding: false
+  },
+
+  removeButtonText: {
+    color: "#FFF"
+  },
+
+  addButtonText: {
+    color: "#D4AF37"
+  },
+
+  // Специфичные стили для градиентов
+  addButtonGradient: {
+    borderColor: "rgba(212, 175, 55, 0.25)",
+    backgroundColor: "rgba(212, 175, 55, 0.08)"
+  },
+
+  removeButtonGradient: {
+    borderColor: "rgba(255, 107, 107, 0.25)",
+    backgroundColor: "rgba(255, 107, 107, 0.08)"
+  },
+
+  /* ===== ОСТАЛЬНЫЕ СТИЛИ ===== */
   emptyState: {
     flex: 1,
     justifyContent: "center",
@@ -236,66 +454,6 @@ export const styles = StyleSheet.create({
     lineHeight: 18
   },
 
-  userAmountContainer: {
-    alignItems: "flex-end",
-    minHeight: 32
-  },
-
-  userAmountText: {
-    fontSize: 10,
-    color: "#D4AF37",
-    fontWeight: "600",
-    textAlign: "right"
-  },
-
-  userAmountValue: {
-    fontSize: 8,
-    color: "rgba(255, 255, 255, 0.7)",
-    marginTop: 2,
-    textAlign: "right"
-  },
-
-  // Строка с кнопками внизу
-  bottomButtonsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 8,
-    minHeight: 28,
-    alignItems: "stretch"
-  },
-
-  // Кнопка для ввода количества
-  amountButton: {
-    flex: 1,
-    marginRight: 4,
-    height: 25
-  },
-
-  amountButtonGradient: {
-    paddingHorizontal: Platform.OS === "ios" ? 10 : 8,
-    paddingVertical: 0,
-    borderRadius: 10,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "rgba(212, 175, 55, 0.3)",
-    height: "100%"
-    // flex: 1
-  },
-
-  amountButtonText: {
-    fontSize: Platform.OS === "ios" ? 9 : 10,
-    color: "#FFD700",
-    marginLeft: 4,
-    fontWeight: "600",
-    includeFontPadding: false,
-    textAlignVertical: "center",
-    paddingVertical: 0,
-    lineHeight: Platform.OS === "ios" ? 12 : 14
-  },
-
-  // Модалка для ввода количества
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.7)",
@@ -380,39 +538,60 @@ export const styles = StyleSheet.create({
     fontWeight: "600"
   },
 
-  // Левая часть шапки
-  headerLeftContainer: {
-    flex: 1,
-    marginLeft: 10
+  updateStatus: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    alignItems: "center"
   },
 
-  // Правая часть с Portfolio
-  headerRightContainer: {
-    alignItems: "flex-end",
-    marginLeft: 10
-  },
-
-  portfolioLabel: {
-    fontSize: 8,
-    color: "rgba(255, 255, 255, 0.5)",
-    marginBottom: 2
-  },
-
-  portfolioValue: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#D4AF37"
-  },
-
-  userAmountPlaceholder: {
-    fontSize: 9,
-    color: "rgba(255, 255, 255, 0.2)",
+  updateStatusText: {
+    color: "#D4AF37",
+    fontSize: 13,
     fontStyle: "italic",
-    textAlign: "right"
-  }
+    fontWeight: "600"
+  },
 
-  // buttonIcon: {
-  //   textAlign: "center",
-  //   textAlignVertical: "center"
-  // }
+  notificationPermissionButton: {
+    marginTop: 16,
+    borderRadius: 10,
+    overflow: "hidden"
+  },
+
+  notificationPermissionGradient: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8
+  },
+
+  notificationPermissionText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#000"
+  },
+
+  testNotificationButton: {
+    borderRadius: 8,
+    overflow: "hidden",
+    marginTop: 8
+  },
+
+  testNotificationGradient: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderColor: "rgba(33, 150, 243, 0.3)"
+  },
+
+  testNotificationText: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#2196F3"
+  }
 })

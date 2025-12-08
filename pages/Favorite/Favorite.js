@@ -17,12 +17,22 @@ import {
   daysSelector,
   userAssetsSelector
 } from "../../store/toolkitSelectors"
+import {
+  priceAlertsSelector,
+  unreadAlertsCountSelector
+} from "../../store/alertsSelectors"
 import { removeCoin, updateUserAsset } from "../../store/reducersSlice"
+import { addPriceAlert, deletePriceAlert, markAlertAsRead } from "../../store/alertsSlice"
 import { styles } from "./Favorite.styles"
 import ModalFavorite from "./FavoriteCharts/ModalFavorite/ModalFavorite"
+import AlertModal from "../../components/Alerts/AlertModal/AlertModal"
+
 import { formatCryptoAmount } from "../../helpers/helpers"
 import { useFavoriteUpdate } from "../../hooks/useFavoriteUpdate"
 import { useAppState } from "../../hooks/useAppState"
+import NotificationService from "../../services/NotificationService"
+import AlertManager from "../../services/AlertManager"
+import { useAlertChecker } from "../../hooks/useAlertChecker"
 
 const { width } = Dimensions.get("window")
 const CARD_PADDING = 8
@@ -34,6 +44,9 @@ const Favorite = () => {
   const coinData = useSelector(coinSelector)
   const chartDays = useSelector(daysSelector)
   const userAssets = useSelector(userAssetsSelector) || {}
+  const priceAlerts = useSelector(priceAlertsSelector)
+  const unreadAlertsCount = useSelector(unreadAlertsCountSelector)
+
   const [removingCoinId, setRemovingCoinId] = useState(null)
   const [isModalVisible, setModalVisible] = useState(false)
   const [selectedCoin, setSelectedCoin] = useState(null)
@@ -42,33 +55,117 @@ const Favorite = () => {
   const [lastUpdateTime, setLastUpdateTime] = useState(null)
   const [isUpdating, setIsUpdating] = useState(false)
 
+  // Состояния для алертов
+  const [alertModalVisible, setAlertModalVisible] = useState(false)
+  const [selectedCoinForAlert, setSelectedCoinForAlert] = useState(null)
+  const [notificationPermission, setNotificationPermission] = useState(null)
+
   const amountInputRef = useRef("")
 
-  // Используем хук обновления
+  // Хук обновления
   const { updateFavoritePrices } = useFavoriteUpdate(1)
+
+  // Хук для периодической проверки алертов
+  useAlertChecker(coinData, 60000)
+
+  // Инициализация уведомлений
+  useEffect(() => {
+    const initializeNotifications = async () => {
+      const granted = await NotificationService.requestPermissions()
+      setNotificationPermission(granted)
+
+      if (granted) {
+        console.log("Уведомления разрешены")
+
+        AlertManager.initialize(dispatch)
+
+        // Регистрация обработчиков уведомлений
+        const subscriptions = NotificationService.registerNotificationHandlers(
+          (notification) => {
+            console.log("Уведомление получено:", notification.request.content.data)
+          },
+          (response) => {
+            const data = response.notification.request.content.data
+            if (data.type === "price-alert" && data.alertId) {
+              // Пометка алерта как прочитанного при нажатии
+              dispatch(markAlertAsRead(data.alertId))
+              console.log("Алёрт помечен как прочитанный:", data.alertId)
+            }
+          }
+        )
+
+        return () => {
+          if (subscriptions) {
+            NotificationService.removeNotificationHandlers(subscriptions)
+          }
+        }
+      } else {
+        console.log("Уведомления не разрешены")
+      }
+    }
+
+    initializeNotifications()
+  }, [dispatch])
+
+  // Обновление бейджей при изменении алертов
+  useEffect(() => {
+    if (notificationPermission) {
+      NotificationService.setBadgeCount(unreadAlertsCount)
+    }
+  }, [unreadAlertsCount, notificationPermission])
+
+  // Проверка алертов при изменении данных монет
+  useEffect(() => {
+    if (coinData.length > 0 && priceAlerts.length > 0) {
+      const activeAlerts = priceAlerts.filter(
+        (alert) => alert.isActive && !alert.triggeredAt
+      )
+
+      if (activeAlerts.length > 0) {
+        console.log(`Проверка ${activeAlerts.length} активных алертов`)
+        const triggeredAlerts = AlertManager.checkAlerts(activeAlerts, coinData)
+
+        if (triggeredAlerts.length > 0) {
+          console.log(`Сработало ${triggeredAlerts.length} алертов`)
+        }
+      }
+    }
+  }, [coinData, priceAlerts])
 
   // Логирование при изменении избранного
   useEffect(() => {
-    console.log(`\n ==== FAVORITE: ОБНОВЛЕНИЕ ДАННЫХ ====`)
-    console.log(`Количество монет: ${coinData.length}`)
-    if (coinData.length > 0) {
-      console.log(`Монеты в избранном:`)
-      coinData.forEach((coin, index) => {
+    console.log("\n ==== ОБНОВЛЕНИЕ ИЗБРАННОГО ====")
+    console.log(`Монеты: ${coinData.length}`)
+    console.log(`Алёрты: ${priceAlerts.length} (${unreadAlertsCount} непрочитанных)`)
+
+    // Статистика по активным алертам
+    const activeAlerts = priceAlerts.filter(
+      (alert) => alert.isActive && !alert.triggeredAt
+    )
+    const triggeredAlerts = priceAlerts.filter((alert) => alert.triggeredAt)
+
+    if (activeAlerts.length > 0) {
+      console.log(`🔔 Активные алерты: ${activeAlerts.length}`)
+      activeAlerts.forEach((alert, index) => {
         console.log(
-          `   ${index + 1}. ${coin.name} (${coin.symbol.toUpperCase()}): $${
-            coin.current_price || 0
-          }`
+          `   ${index + 1}. ${alert.coinSymbol}: $${alert.targetPrice} (${
+            alert.condition
+          })`
         )
       })
     }
-    console.log(`Пользовательские активы:`, userAssets)
-    console.log(`==== КОНЕЦ ОБНОВЛЕНИЯ ДАННЫХ ====\n`)
-  }, [coinData, userAssets])
 
-  // Обновляем при возвращении в приложение
+    if (triggeredAlerts.length > 0) {
+      console.log(` Сработавшие алерты: ${triggeredAlerts.length}`)
+    }
+
+    console.log("=============================\n")
+  }, [coinData, priceAlerts, unreadAlertsCount])
+
+  // Обновление при возвращении в приложение
   useAppState(() => {
     if (coinData.length > 0) {
-      console.log("FAVORITE: Приложение стало активным, запускаем обновление цен")
+      console.log("Приложение активно, обновляем цены")
       handleManualUpdate()
     }
   })
@@ -76,60 +173,118 @@ const Favorite = () => {
   // Обработчик ручного обновления
   const handleManualUpdate = useCallback(async () => {
     if (isUpdating) {
-      console.log("FAVORITE: Уже идет обновление, пропускаем")
+      console.log("Обновление уже выполняется")
       return
     }
 
-    console.log("FAVORITE: Ручное обновление избранного")
+    console.log("Ручное обновление избранного")
     setIsUpdating(true)
     setLastUpdateTime(new Date().toLocaleTimeString())
 
     try {
       await updateFavoritePrices()
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-      console.log("FAVORITE: Ручное обновление завершено успешно")
+      console.log("Обновление завершено успешно")
     } catch (error) {
-      console.error("FAVORITE: Ошибка ручного обновления:", error)
+      console.error("Ошибка обновления:", error)
     } finally {
       setIsUpdating(false)
     }
   }, [updateFavoritePrices, isUpdating])
 
+  // Подсчет стоимости портфеля
   const totalPortfolioValue = coinData.reduce((total, coin) => {
     const amount = (userAssets && userAssets[coin.id]) || 0
     return total + amount * (coin.current_price || 0)
   }, 0)
 
+  // Статистика
   const stats = {
     total: coinData.length,
     bullish: coinData.filter((c) => c.price_change_percentage_24h >= 0).length,
     bearish: coinData.filter((c) => c.price_change_percentage_24h < 0).length,
-    top10: coinData.filter((c) => c.market_cap_rank <= 10).length
+    top10: coinData.filter((c) => c.market_cap_rank <= 10).length,
+    activeAlerts: priceAlerts.filter((a) => a.isActive && !a.triggeredAt).length,
+    triggeredAlerts: priceAlerts.filter((a) => a.triggeredAt).length
   }
 
+  // Функция для открытия модалки создания алерта
+  const openAlertModal = useCallback((coin) => {
+    console.log(`Открытие алерта для: ${coin.name}`)
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    setSelectedCoinForAlert(coin)
+    setAlertModalVisible(true)
+  }, [])
+
+  // Функция для сохранения алерта
+  const handleSaveAlert = useCallback(
+    (alertData) => {
+      console.log(`Сохранение алерта: ${alertData.coinName} @ $${alertData.targetPrice}`)
+
+      // Проверяем разрешения на уведомления
+      if (!notificationPermission) {
+        console.log("⚠️ Уведомления не разрешены, алерт будет сохранен без уведомлений")
+      }
+
+      dispatch(addPriceAlert(alertData))
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    },
+    [dispatch, notificationPermission]
+  )
+
+  // Функция для удаления алерта (чуть позже в ui)
+  const handleDeleteAlert = useCallback(
+    (alertId) => {
+      console.log(`🗑️ Удаление алерта: ${alertId}`)
+      dispatch(deletePriceAlert(alertId))
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    },
+    [dispatch]
+  )
+
+  // Функция для отметки алерта как прочитанного
+  const handleMarkAlertAsRead = useCallback(
+    (alertId) => {
+      console.log(`Отметка алерта как прочитанного: ${alertId}`)
+      dispatch(markAlertAsRead(alertId))
+    },
+    [dispatch]
+  )
+
+  // Удаление монеты из избранного
   const removeFromFav = useCallback(
     (coin) => {
       console.log(`\n ==== УДАЛЕНИЕ МОНЕТЫ ====`)
       console.log(`Монета: ${coin.name} (${coin.symbol.toUpperCase()})`)
       console.log(`Цена: $${coin.current_price || 0}`)
       console.log(`Ранг: #${coin.market_cap_rank || "?"}`)
-      console.log(` ==== НАЧАЛО УДАЛЕНИЯ ====\n`)
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
       setRemovingCoinId(coin.id)
 
+      // Удаляем все алерты для этой монеты
+      const coinAlerts = priceAlerts.filter((alert) => alert.coinId === coin.id)
+      coinAlerts.forEach((alert) => {
+        dispatch(deletePriceAlert(alert.id))
+      })
+
+      if (coinAlerts.length > 0) {
+        console.log(`Удалено ${coinAlerts.length} алертов для монеты`)
+      }
+
       setTimeout(() => {
         setRemovingCoinId(null)
         dispatch(removeCoin(coin))
-        console.log(`Монета успешно удалена из избранного: ${coin.name}`)
+        console.log(`Монета успешно удалена из избранного`)
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       }, 1500)
     },
-    [dispatch]
+    [dispatch, priceAlerts]
   )
 
+  // Открытие графика
   const openChartModal = useCallback((coin) => {
-    console.log(`Открытие графика для: ${coin.name} (${coin.symbol.toUpperCase()})`)
+    console.log(`Открытие графика для: ${coin.name}`)
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     setSelectedCoin(coin)
     setModalVisible(true)
@@ -141,6 +296,7 @@ const Favorite = () => {
     setSelectedCoin(null)
   }, [])
 
+  // Открытие формы ввода количества
   const openAmountInput = (coin) => {
     console.log(`Открытие формы ввода количества: ${coin.name}`)
     console.log(`Текущее количество: ${userAssets[coin.id] || 0}`)
@@ -149,6 +305,7 @@ const Favorite = () => {
     setInputModalVisible(true)
   }
 
+  // Сохранение количества
   const saveAmount = () => {
     if (selectedCoinForInput && amountInputRef.current) {
       let text = amountInputRef.current.replace(/,/g, ".")
@@ -168,8 +325,8 @@ const Favorite = () => {
         })
       )
 
-      console.log(`Количество сохранено в Redux`)
-      console.log(` ==== КОНЕЦ СОХРАНЕНИЯ ====\n`)
+      console.log(` Количество сохранено`)
+      console.log(`==========================\n`)
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     }
@@ -178,7 +335,8 @@ const Favorite = () => {
     amountInputRef.current = ""
   }
 
-  const PremiumCoinCard = ({ item, index }) => {
+  // Компонент карточки монеты
+  const PremiumCoinCard = React.memo(({ item }) => {
     const isRemoving = removingCoinId === item.id
     const priceChangeColor = item.price_change_percentage_24h >= 0 ? "#00C853" : "#FF3B30"
     const priceChangeIcon =
@@ -187,14 +345,18 @@ const Favorite = () => {
     const userAmount = (userAssets && userAssets[item.id]) || 0
     const userValue = userAmount * (item.current_price || 0)
 
+    // Получаем алерты для этой монеты
+    const coinAlerts = priceAlerts.filter(
+      (alert) => alert.coinId === item.id && alert.isActive && !alert.triggeredAt
+    )
+    const hasActiveAlerts = coinAlerts.length > 0
+    const alertsCount = coinAlerts.length
+
     return (
       <TouchableOpacity
         activeOpacity={0.9}
         onPress={() => openChartModal(item)}
-        style={{
-          width: CARD_WIDTH,
-          margin: CARD_MARGIN
-        }}
+        style={styles.cardContainer}
       >
         <View style={styles.premiumCoinCard}>
           <LinearGradient
@@ -205,118 +367,163 @@ const Favorite = () => {
             }
             style={styles.cardGradient}
           >
-            {/* Верхняя строка */}
-            <View style={styles.topRow}>
-              <View style={styles.rankContainer}>
-                <Text style={styles.rankText}>#{item.market_cap_rank || "?"}</Text>
-                {item.market_cap_rank <= 10 && (
-                  <MaterialCommunityIcons
-                    name='crown'
-                    size={10}
-                    color='#FFD700'
-                    style={styles.crownIcon}
-                  />
-                )}
-              </View>
-
-              {/* отображение кол-ва и стоимости справа */}
-              {userAmount > 0 ? (
-                <>
-                  <Text style={styles.userAmountText}>
-                    {formatCryptoAmount(userAmount)}
-                  </Text>
-                  <Text style={styles.userAmountValue}>
-                    $
-                    {userValue.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })}
-                  </Text>
-                </>
-              ) : (
-                // Пустое состояние - отображаем плейсхолдер
-                <>
-                  <Text style={styles.userAmountPlaceholder}>Add amount</Text>
-                  <Text style={styles.userAmountPlaceholder}>$0.00</Text>
-                </>
-              )}
-            </View>
-
-            {/* Основной контент -  */}
-            <View style={styles.coinContent}>
-              <View style={styles.coinHeader}>
+            {/* Верхняя строка - заголовок и алерты */}
+            <View style={styles.headerRow}>
+              {/* Левая часть - название и ранг */}
+              <View style={styles.coinInfo}>
+                <View style={styles.rankRow}>
+                  <Text style={styles.rankText}>#{item.market_cap_rank || "?"}</Text>
+                  {item.market_cap_rank <= 10 && (
+                    <MaterialCommunityIcons
+                      name='crown'
+                      size={10}
+                      color='#FFD700'
+                      style={styles.crownIcon}
+                    />
+                  )}
+                </View>
                 <Text style={styles.coinName} numberOfLines={1}>
                   {item.name}
                 </Text>
                 <Text style={styles.coinSymbol}>{item.symbol?.toUpperCase()}</Text>
               </View>
 
-              <Text style={[styles.coinPrice, { color: priceChangeColor }]}>
-                $
-                {item.current_price?.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2
-                }) || "0.00"}
-              </Text>
-
-              <View style={styles.changeRow}>
+              {/* Правая часть - алерты сверху */}
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation()
+                  openAlertModal(item)
+                }}
+                style={styles.alertButtonContainer}
+                activeOpacity={0.7}
+              >
                 <View
                   style={[
-                    styles.changeBadge,
-                    { backgroundColor: `${priceChangeColor}26` }
+                    styles.alertButton,
+                    hasActiveAlerts && styles.alertButtonActive
                   ]}
                 >
-                  <Ionicons name={priceChangeIcon} size={12} color={priceChangeColor} />
-                  <Text style={[styles.changeText, { color: priceChangeColor }]}>
-                    {Math.abs(item.price_change_percentage_24h?.toFixed(2) || 0)}%
-                  </Text>
+                  <Ionicons
+                    name={hasActiveAlerts ? "notifications" : "notifications-outline"}
+                    size={16}
+                    color={hasActiveAlerts ? "#D4AF37" : "rgba(255,255,255,0.6)"}
+                  />
+
+                  {/* Бейдж с количеством алертов */}
+                  {hasActiveAlerts && (
+                    <View style={styles.alertBadge}>
+                      <Text style={styles.alertBadgeText}>{alertsCount}</Text>
+                    </View>
+                  )}
                 </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Средняя строка - цена и сумма пользователя */}
+            <View style={styles.middleRow}>
+              {/* Левая часть - цена */}
+              <View style={styles.priceSection}>
+                <Text style={[styles.coinPrice, { color: priceChangeColor }]}>
+                  $
+                  {item.current_price?.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                  }) || "0.00"}
+                </Text>
+
+                <View style={styles.changeContainer}>
+                  <View
+                    style={[
+                      styles.changeBadge,
+                      { backgroundColor: `${priceChangeColor}15` }
+                    ]}
+                  >
+                    <Ionicons name={priceChangeIcon} size={11} color={priceChangeColor} />
+                    <Text style={[styles.changeText, { color: priceChangeColor }]}>
+                      {Math.abs(item.price_change_percentage_24h?.toFixed(2) || 0)}%
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Правая часть - сумма пользователя */}
+              <View style={styles.userAmountSection}>
+                {userAmount > 0 ? (
+                  <>
+                    <Text style={styles.userAmount}>
+                      {formatCryptoAmount(userAmount)}
+                    </Text>
+                    <Text style={styles.userValue}>
+                      $
+                      {userValue.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })}
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.userAmountPlaceholder}>No amount</Text>
+                    <Text style={styles.userValuePlaceholder}>$0.00</Text>
+                  </>
+                )}
               </View>
             </View>
 
-            {/* ... нижние кнопки ... */}
-            <View style={styles.bottomButtonsRow}>
+            {/* Нижняя часть - кнопки действий */}
+            <View style={styles.bottomActions}>
+              {/* Кнопка Add/Edit */}
               <TouchableOpacity
                 onPress={(e) => {
                   e.stopPropagation()
                   openAmountInput(item)
                 }}
-                style={styles.amountButton}
+                style={styles.actionButton}
                 activeOpacity={0.7}
               >
                 <LinearGradient
-                  colors={["rgba(212, 175, 55, 0.3)", "rgba(183, 121, 31, 0.2)"]}
-                  style={styles.amountButtonGradient}
+                  colors={["rgba(212, 175, 55, 0.15)", "rgba(183, 121, 31, 0.08)"]}
+                  style={[styles.actionButtonGradient, styles.addButtonGradient]}
                 >
-                  <Ionicons name='add-circle-outline' size={14} color='#FFD700' />
-                  <Text style={styles.amountButtonText}>
+                  <Ionicons
+                    name={userAmount > 0 ? "pencil-outline" : "add-circle-outline"}
+                    size={14}
+                    color='#D4AF37'
+                  />
+                  <Text style={[styles.actionButtonText, styles.addButtonText]}>
                     {userAmount > 0 ? "Edit" : "Add"}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
 
+              {/* Кнопка Remove */}
               <TouchableOpacity
                 onPress={(e) => {
                   e.stopPropagation()
                   removeFromFav(item)
                 }}
-                style={styles.deleteButton}
+                style={styles.actionButton}
                 activeOpacity={0.7}
               >
                 <LinearGradient
                   colors={
                     isRemoving
-                      ? ["#F44336", "#C62828"]
-                      : ["rgba(255,255,255,0.1)", "rgba(255,255,255,0.05)"]
+                      ? ["rgba(244, 67, 54, 0.5)", "rgba(183, 28, 28, 0.3)"]
+                      : ["rgba(255, 107, 107, 0.15)", "rgba(255, 87, 87, 0.08)"]
                   }
-                  style={styles.deleteButtonGradient}
+                  style={[styles.actionButtonGradient, styles.removeButtonGradient]}
                 >
                   <Ionicons
-                    name={isRemoving ? "checkmark" : "close"}
+                    name={isRemoving ? "checkmark" : "trash-outline"}
                     size={14}
                     color={isRemoving ? "#FFF" : "#FF6B6B"}
                   />
-                  <Text style={styles.deleteButtonText}>
+                  <Text
+                    style={[
+                      styles.actionButtonText,
+                      isRemoving && styles.removeButtonText
+                    ]}
+                  >
                     {isRemoving ? "Removing" : "Remove"}
                   </Text>
                 </LinearGradient>
@@ -326,37 +533,64 @@ const Favorite = () => {
         </View>
       </TouchableOpacity>
     )
-  }
+  })
 
-  // Статистическая панель
-  const StatsPanel = () => (
-    <View style={styles.statsPanel}>
-      <LinearGradient
-        colors={["rgba(212, 175, 55, 0.15)", "rgba(183, 121, 31, 0.08)"]}
-        style={styles.statsGradient}
-      >
-        <View style={styles.compactStats}>
-          <View style={styles.statItemCompact}>
-            <Ionicons name='trending-up' size={14} color='#00C853' />
-            <Text style={styles.statNumberCompact}>{stats.bullish}</Text>
-            <Text style={styles.statLabelCompact}>Growing</Text>
+  // Статистическая панель с алертами
+  const StatsPanel = () => {
+    const alertStats = AlertManager.getAlertStats(priceAlerts)
+
+    return (
+      <View style={styles.statsPanel}>
+        <LinearGradient
+          colors={["rgba(212, 175, 55, 0.15)", "rgba(183, 121, 31, 0.08)"]}
+          style={styles.statsGradient}
+        >
+          <View style={styles.compactStats}>
+            <View style={styles.statItemCompact}>
+              <Ionicons name='trending-up' size={14} color='#00C853' />
+              <Text style={styles.statNumberCompact}>{stats.bullish}</Text>
+              <Text style={styles.statLabelCompact}>Growing</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItemCompact}>
+              <Ionicons name='trending-down' size={14} color='#FF3B30' />
+              <Text style={styles.statNumberCompact}>{stats.bearish}</Text>
+              <Text style={styles.statLabelCompact}>Declining</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItemCompact}>
+              <MaterialCommunityIcons name='diamond-stone' size={14} color='#FFD700' />
+              <Text style={styles.statNumberCompact}>{stats.top10}</Text>
+              <Text style={styles.statLabelCompact}>Top-10</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <TouchableOpacity
+              style={styles.statItemCompact}
+              onPress={() => {
+                // Показываем информацию об алертах
+                console.log("Статистика алертов:")
+                console.log(`   Всего: ${alertStats.total}`)
+                console.log(`   Активных: ${alertStats.active}`)
+                console.log(`   Сработавших: ${alertStats.triggered}`)
+                console.log(`   Непрочитанных: ${alertStats.unread}`)
+              }}
+            >
+              <Ionicons name='notifications' size={14} color='#FF6B6B' />
+              <View style={styles.alertBadgeContainer}>
+                <Text style={styles.statNumberCompact}>{stats.activeAlerts}</Text>
+                {unreadAlertsCount > 0 && (
+                  <View style={styles.unreadBadge}>
+                    <Text style={styles.unreadBadgeText}>{unreadAlertsCount}</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.statLabelCompact}>Alerts</Text>
+            </TouchableOpacity>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItemCompact}>
-            <Ionicons name='trending-down' size={14} color='#FF3B30' />
-            <Text style={styles.statNumberCompact}>{stats.bearish}</Text>
-            <Text style={styles.statLabelCompact}>Declining</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItemCompact}>
-            <MaterialCommunityIcons name='diamond-stone' size={14} color='#FFD700' />
-            <Text style={styles.statNumberCompact}>{stats.top10}</Text>
-            <Text style={styles.statLabelCompact}>Top-10</Text>
-          </View>
-        </View>
-      </LinearGradient>
-    </View>
-  )
+        </LinearGradient>
+      </View>
+    )
+  }
 
   // Пустое состояние
   const EmptyState = () => (
@@ -374,6 +608,20 @@ const Favorite = () => {
         <Text style={styles.emptySubtitle}>
           Add coins to start building your portfolio
         </Text>
+        {!notificationPermission && (
+          <TouchableOpacity
+            onPress={() => NotificationService.requestPermissions()}
+            style={styles.notificationPermissionButton}
+          >
+            <LinearGradient
+              colors={["#D4AF37", "#B3791F"]}
+              style={styles.notificationPermissionGradient}
+            >
+              <Ionicons name='notifications-outline' size={16} color='#000' />
+              <Text style={styles.notificationPermissionText}>Enable Price Alerts</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
       </LinearGradient>
     </View>
   )
@@ -423,7 +671,7 @@ const Favorite = () => {
                 <View style={styles.modalButtonsRow}>
                   <TouchableOpacity
                     onPress={() => {
-                      console.log("❌ Отмена ввода количества")
+                      console.log("Отмена ввода количества")
                       setInputModalVisible(false)
                     }}
                     style={styles.modalButtonCancel}
@@ -448,6 +696,38 @@ const Favorite = () => {
     </Modal>
   )
 
+  // Кнопка тестового уведомления (для отладки)
+  const TestNotificationButton = () => (
+    <TouchableOpacity
+      onPress={async () => {
+        if (!notificationPermission) {
+          console.log("⚠️ Сначала разрешите уведомления")
+          return
+        }
+
+        console.log("Отправка тестового уведомления...")
+        const success = await NotificationService.sendTestNotification()
+        if (success) {
+          console.log("Тестовое уведомление отправлено")
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+        } else {
+          console.log("Не удалось отправить тестовое уведомление")
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+        }
+      }}
+      style={styles.testNotificationButton}
+    >
+      {/* Важный раздел для теста */}
+      {/* <LinearGradient
+        colors={["rgba(33, 150, 243, 0.2)", "rgba(33, 150, 243, 0.1)"]}
+        style={styles.testNotificationGradient}
+      >
+        <Ionicons name='notifications-outline' size={12} color='#2196F3' />
+        <Text style={styles.testNotificationText}>Test Alert</Text>
+      </LinearGradient> */}
+    </TouchableOpacity>
+  )
+
   return (
     <LinearGradient
       colors={["#0A0A0F", "#121218", "#0A0A0F"]}
@@ -465,6 +745,8 @@ const Favorite = () => {
             <Text style={styles.headerSubtitle}>
               Total: {stats.total} asset{stats.total !== 1 ? "s" : ""}
               {lastUpdateTime && ` | Last: ${lastUpdateTime}`}
+              {priceAlerts.length > 0 && ` | Alerts: ${priceAlerts.length}`}
+              {!notificationPermission && " | 🔕"}
             </Text>
           </View>
 
@@ -491,6 +773,9 @@ const Favorite = () => {
                 <Ionicons name='refresh' size={16} color='#D4AF37' />
               )}
             </TouchableOpacity>
+
+            {/* Кнопка тестового уведомления (видна только в development) */}
+            {__DEV__ && notificationPermission && <TestNotificationButton />}
           </View>
         </LinearGradient>
       </View>
@@ -509,17 +794,34 @@ const Favorite = () => {
       ) : (
         <FlatList
           data={coinData}
-          renderItem={({ item, index }) => <PremiumCoinCard item={item} index={index} />}
+          renderItem={({ item }) => <PremiumCoinCard item={item} />}
           numColumns={2}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.premiumList}
           showsVerticalScrollIndicator={false}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
         />
       )}
 
       <AmountInputModal />
 
-      {/* Используем вынесенную модалку */}
+      {/* Модалка алерта */}
+      {selectedCoinForAlert && (
+        <AlertModal
+          visible={alertModalVisible}
+          onClose={() => {
+            setAlertModalVisible(false)
+            setSelectedCoinForAlert(null)
+          }}
+          onSave={handleSaveAlert}
+          coin={selectedCoinForAlert}
+          currentPrice={selectedCoinForAlert.current_price || 0}
+        />
+      )}
+
+      {/* Модалка с графиком */}
       <ModalFavorite
         visible={isModalVisible}
         onClose={closeChartModal}
