@@ -114,24 +114,6 @@ const Favorite = () => {
     }
   }, [unreadAlertsCount, notificationPermission])
 
-  // Проверка алертов при изменении данных монет
-  useEffect(() => {
-    if (coinData.length > 0 && priceAlerts.length > 0) {
-      const activeAlerts = priceAlerts.filter(
-        (alert) => alert.isActive && !alert.triggeredAt
-      )
-
-      if (activeAlerts.length > 0) {
-        console.log(`Проверка ${activeAlerts.length} активных алертов`)
-        const triggeredAlerts = AlertManager.checkAlerts(activeAlerts, coinData)
-
-        if (triggeredAlerts.length > 0) {
-          console.log(`Сработало ${triggeredAlerts.length} алертов`)
-        }
-      }
-    }
-  }, [coinData, priceAlerts])
-
   // Логирование при изменении избранного
   useEffect(() => {
     console.log("\n ==== ОБНОВЛЕНИЕ ИЗБРАННОГО ====")
