@@ -2,6 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
 import { Text, TouchableOpacity, View } from "react-native"
 import { styles } from "./FavoriteHeader.styles"
+import TestNotificationButton from "./TestNotificationButton"
 
 const FavoriteHeader = ({
   stats,
@@ -10,8 +11,7 @@ const FavoriteHeader = ({
   notificationPermission,
   totalPortfolioValue,
   isUpdating,
-  handleManualUpdate,
-  TestNotificationButton
+  handleManualUpdate
 }) => {
   return (
     <View style={styles.premiumHeader}>
@@ -55,7 +55,9 @@ const FavoriteHeader = ({
           </TouchableOpacity>
 
           {/* Кнопка тестового уведомления (видна только в development) */}
-          {__DEV__ && notificationPermission && <TestNotificationButton />}
+          {__DEV__ && notificationPermission && (
+            <TestNotificationButton notificationPermission={notificationPermission} />
+          )}
         </View>
       </LinearGradient>
     </View>

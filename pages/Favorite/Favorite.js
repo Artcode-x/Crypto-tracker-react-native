@@ -530,38 +530,6 @@ const Favorite = () => {
     )
   })
 
-  // Кнопка тестового уведомления (для отладки)
-  const TestNotificationButton = () => (
-    <TouchableOpacity
-      onPress={async () => {
-        if (!notificationPermission) {
-          console.log("⚠️ Сначала разрешите уведомления")
-          return
-        }
-
-        console.log("Отправка тестового уведомления...")
-        const success = await NotificationService.sendTestNotification()
-        if (success) {
-          console.log("Тестовое уведомление отправлено")
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-        } else {
-          console.log("Не удалось отправить тестовое уведомление")
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
-        }
-      }}
-      style={styles.testNotificationButton}
-    >
-      {/* Важный раздел для теста */}
-      {/* <LinearGradient
-        colors={["rgba(33, 150, 243, 0.2)", "rgba(33, 150, 243, 0.1)"]}
-        style={styles.testNotificationGradient}
-      >
-        <Ionicons name='notifications-outline' size={12} color='#2196F3' />
-        <Text style={styles.testNotificationText}>Test Alert</Text>
-      </LinearGradient> */}
-    </TouchableOpacity>
-  )
-
   return (
     <LinearGradient
       colors={["#0A0A0F", "#121218", "#0A0A0F"]}
@@ -576,7 +544,6 @@ const Favorite = () => {
         totalPortfolioValue={totalPortfolioValue}
         isUpdating={isUpdating}
         handleManualUpdate={handleManualUpdate}
-        TestNotificationButton={TestNotificationButton}
       />
       {/*  Панель header-a с индикаторами */}
       {coinData.length > 0 && (
