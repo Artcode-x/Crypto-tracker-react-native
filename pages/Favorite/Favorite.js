@@ -16,7 +16,7 @@ import {
 import { removeCoin, updateUserAsset } from "../../store/reducersSlice"
 import { addPriceAlert, deletePriceAlert, markAlertAsRead } from "../../store/alertsSlice"
 import { styles } from "./Favorite.styles"
-import ModalFavorite from "./FavoriteCharts/ModalFavorite/ModalFavorite"
+import ModalFavorite from "./ModalChart/ModalFavorite"
 import AlertModal from "../../components/Alerts/AlertModal/AlertModal"
 
 import { formatCryptoAmount } from "../../helpers/helpers"

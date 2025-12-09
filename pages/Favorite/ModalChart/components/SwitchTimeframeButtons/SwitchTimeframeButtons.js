@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { styles } from "./SwitchtimeframeButtons.styles"
 import { useDispatch } from "react-redux"
-import { setChartDays } from "../../../store/reducersSlice"
+import { setChartDays } from "../../../../../store/reducersSlice"
 
 export const SwitchTimeframeButtons = ({ chartDays, compactMode = false }) => {
   const dispatch = useDispatch()
