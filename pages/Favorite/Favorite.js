@@ -33,6 +33,7 @@ import { useAppState } from "../../hooks/useAppState"
 import NotificationService from "../../services/NotificationService"
 import AlertManager from "../../services/AlertManager"
 import { useAlertChecker } from "../../hooks/useAlertChecker"
+import { EmptyState } from "./FavComponents/EmptyState/EmptyState"
 
 const { width } = Dimensions.get("window")
 const CARD_PADDING = 8
@@ -574,40 +575,6 @@ const Favorite = () => {
     )
   }
 
-  // Пустое состояние
-  const EmptyState = () => (
-    <View style={styles.emptyState}>
-      <LinearGradient
-        colors={["rgba(212, 175, 55, 0.1)", "rgba(183, 121, 31, 0.05)"]}
-        style={styles.emptyStateGradient}
-      >
-        <MaterialCommunityIcons
-          name='treasure-chest'
-          size={60}
-          color='rgba(212, 175, 55, 0.3)'
-        />
-        <Text style={styles.emptyTitle}>Your Watchlist is Empty</Text>
-        <Text style={styles.emptySubtitle}>
-          Add coins to start building your portfolio
-        </Text>
-        {!notificationPermission && (
-          <TouchableOpacity
-            onPress={() => NotificationService.requestPermissions()}
-            style={styles.notificationPermissionButton}
-          >
-            <LinearGradient
-              colors={["#D4AF37", "#B3791F"]}
-              style={styles.notificationPermissionGradient}
-            >
-              <Ionicons name='notifications-outline' size={16} color='#000' />
-              <Text style={styles.notificationPermissionText}>Enable Price Alerts</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
-      </LinearGradient>
-    </View>
-  )
-
   // Модалка для ввода количества
   const AmountInputModal = () => (
     <Modal
@@ -772,7 +739,7 @@ const Favorite = () => {
       )}
 
       {coinData.length === 0 ? (
-        <EmptyState />
+        <EmptyState notificationPermission={notificationPermission} />
       ) : (
         <FlatList
           data={coinData}
