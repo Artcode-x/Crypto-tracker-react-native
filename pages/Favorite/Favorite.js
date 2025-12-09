@@ -33,7 +33,8 @@ import { useAppState } from "../../hooks/useAppState"
 import NotificationService from "../../services/NotificationService"
 import AlertManager from "../../services/AlertManager"
 import { useAlertChecker } from "../../hooks/useAlertChecker"
-import { EmptyState } from "./FavComponents/EmptyState/EmptyState"
+import EmptyState from "./FavoriteComponents/EmptyState/EmptyState"
+import FavoriteHeader from "./FavoriteHeader/FavoriteHeader"
 
 const { width } = Dimensions.get("window")
 const CARD_PADDING = 8
@@ -683,61 +684,23 @@ const Favorite = () => {
       style={styles.premiumContainer}
     >
       {/* Заголовок с Portfolio справа */}
-      <View style={styles.premiumHeader}>
-        <LinearGradient
-          colors={["rgba(212, 175, 55, 0.2)", "rgba(183, 121, 31, 0.1)"]}
-          style={styles.headerGradient}
-        >
-          <MaterialCommunityIcons name='crown' size={22} color='#D4AF37' />
-          <View style={styles.headerLeftContainer}>
-            <Text style={styles.headerTitle}>Watchlist</Text>
-            <Text style={styles.headerSubtitle}>
-              Total: {stats.total} asset{stats.total !== 1 ? "s" : ""}
-              {lastUpdateTime && ` | Last: ${lastUpdateTime}`}
-              {priceAlerts.length > 0 && ` | Alerts: ${priceAlerts.length}`}
-              {!notificationPermission && " | 🔕"}
-            </Text>
-          </View>
-
-          {/* Portfolio справа */}
-          <View style={styles.headerRightContainer}>
-            <Text style={styles.portfolioLabel}>Portfolio</Text>
-            <Text style={styles.portfolioValue}>
-              $
-              {totalPortfolioValue.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })}
-            </Text>
-
-            {/* Кнопка ручного обновления */}
-            <TouchableOpacity
-              onPress={handleManualUpdate}
-              disabled={isUpdating}
-              style={[styles.refreshButton, isUpdating && styles.refreshButtonDisabled]}
-            >
-              {isUpdating ? (
-                <Ionicons name='time-outline' size={16} color='#D4AF37' />
-              ) : (
-                <Ionicons name='refresh' size={16} color='#D4AF37' />
-              )}
-            </TouchableOpacity>
-
-            {/* Кнопка тестового уведомления (видна только в development) */}
-            {__DEV__ && notificationPermission && <TestNotificationButton />}
-          </View>
-        </LinearGradient>
-      </View>
-
+      <FavoriteHeader
+        stats={stats}
+        lastUpdateTime={lastUpdateTime}
+        priceAlerts={priceAlerts}
+        notificationPermission={notificationPermission}
+        totalPortfolioValue={totalPortfolioValue}
+        isUpdating={isUpdating}
+        handleManualUpdate={handleManualUpdate}
+        TestNotificationButton={TestNotificationButton}
+      />
       {coinData.length > 0 && <StatsPanel />}
-
       {/* Информация о статусе обновления */}
       {isUpdating && (
         <View style={styles.updateStatus}>
           <Text style={styles.updateStatusText}>Обновление цен...</Text>
         </View>
       )}
-
       {coinData.length === 0 ? (
         <EmptyState notificationPermission={notificationPermission} />
       ) : (
@@ -753,9 +716,7 @@ const Favorite = () => {
           windowSize={5}
         />
       )}
-
       <AmountInputModal />
-
       {/* Модалка алерта */}
       {selectedCoinForAlert && (
         <AlertModal
@@ -769,7 +730,6 @@ const Favorite = () => {
           currentPrice={selectedCoinForAlert.current_price || 0}
         />
       )}
-
       {/* Модалка с графиком */}
       <ModalFavorite
         visible={isModalVisible}

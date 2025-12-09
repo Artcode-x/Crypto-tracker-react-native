@@ -4,7 +4,7 @@ import { styles } from "./EmptyState.styles"
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import NotificationService from "../../../../services/NotificationService"
 
-export const EmptyState = ({ notificationPermission }) => (
+const EmptyState = ({ notificationPermission }) => (
   <View style={styles.emptyState}>
     <LinearGradient
       colors={["rgba(212, 175, 55, 0.1)", "rgba(183, 121, 31, 0.05)"]}
@@ -34,3 +34,5 @@ export const EmptyState = ({ notificationPermission }) => (
     </LinearGradient>
   </View>
 )
+
+export default EmptyState
