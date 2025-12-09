@@ -1,0 +1,63 @@
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
+import { LinearGradient } from "expo-linear-gradient"
+import { TouchableOpacity, View, Text } from "react-native"
+import { styles } from "./FavoriteStatsPanel.styles"
+import AlertManager from "../../../services/AlertManager"
+
+const FavoriteStatsPanel = ({ priceAlerts, stats, unreadAlertsCount }) => {
+  const alertStats = AlertManager.getAlertStats(priceAlerts)
+
+  return (
+    <View style={styles.statsPanel}>
+      <LinearGradient
+        colors={["rgba(212, 175, 55, 0.15)", "rgba(183, 121, 31, 0.08)"]}
+        style={styles.statsGradient}
+      >
+        <View style={styles.compactStats}>
+          <View style={styles.statItemCompact}>
+            <Ionicons name='trending-up' size={14} color='#00C853' />
+            <Text style={styles.statNumberCompact}>{stats.bullish}</Text>
+            <Text style={styles.statLabelCompact}>Growing</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItemCompact}>
+            <Ionicons name='trending-down' size={14} color='#FF3B30' />
+            <Text style={styles.statNumberCompact}>{stats.bearish}</Text>
+            <Text style={styles.statLabelCompact}>Declining</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItemCompact}>
+            <MaterialCommunityIcons name='diamond-stone' size={14} color='#FFD700' />
+            <Text style={styles.statNumberCompact}>{stats.top10}</Text>
+            <Text style={styles.statLabelCompact}>Top-10</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <TouchableOpacity
+            style={styles.statItemCompact}
+            onPress={() => {
+              // Показываем информацию об алертах
+              console.log("Статистика алертов:")
+              console.log(`   Всего: ${alertStats.total}`)
+              console.log(`   Активных: ${alertStats.active}`)
+              console.log(`   Сработавших: ${alertStats.triggered}`)
+              console.log(`   Непрочитанных: ${alertStats.unread}`)
+            }}
+          >
+            <Ionicons name='notifications' size={14} color='#FF6B6B' />
+            <View style={styles.alertBadgeContainer}>
+              <Text style={styles.statNumberCompact}>{stats.activeAlerts}</Text>
+              {unreadAlertsCount > 0 && (
+                <View style={styles.unreadBadge}>
+                  <Text style={styles.unreadBadgeText}>{unreadAlertsCount}</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.statLabelCompact}>Alerts</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+    </View>
+  )
+}
+
+export default FavoriteStatsPanel
