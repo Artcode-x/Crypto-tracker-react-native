@@ -39,7 +39,7 @@ export const styles = StyleSheet.create({
   },
 
   cardGradient: {
-    padding: 14,
+    padding: 12,
     flex: 1,
     justifyContent: "space-between"
   },
@@ -49,22 +49,23 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 14
+    marginBottom: 10
   },
 
   coinInfo: {
     flex: 1,
-    marginRight: 8
+    marginRight: 8,
+    minWidth: 0
   },
 
   rankRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 6
+    marginBottom: 4
   },
 
   rankText: {
-    fontSize: 11,
+    fontSize: 10,
     color: "#D4AF37",
     fontWeight: "700",
     backgroundColor: "rgba(212, 175, 55, 0.15)",
@@ -83,7 +84,8 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     color: "#FFF",
-    marginBottom: 2
+    marginBottom: 2,
+    flexShrink: 1
   },
 
   coinSymbol: {
@@ -97,9 +99,9 @@ export const styles = StyleSheet.create({
   },
 
   alertButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     borderWidth: 1.5,
     borderColor: "rgba(212, 175, 55, 0.3)",
     justifyContent: "center",
@@ -115,12 +117,12 @@ export const styles = StyleSheet.create({
 
   alertBadge: {
     position: "absolute",
-    top: -5,
-    right: -5,
+    top: -4,
+    right: -4,
     backgroundColor: "#FF3B30",
-    borderRadius: 9,
-    minWidth: 18,
-    height: 18,
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
@@ -138,7 +140,7 @@ export const styles = StyleSheet.create({
   },
 
   alertBadgeText: {
-    fontSize: 10,
+    fontSize: 9,
     color: "#FFF",
     fontWeight: "800",
     textAlign: "center",
@@ -150,18 +152,22 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: Platform.OS === "ios" ? 18 : 10
+    marginBottom: 14,
+    minHeight: 52
   },
 
   priceSection: {
     flex: 1,
-    marginRight: 8
+    marginRight: 6,
+    minWidth: 0
   },
 
   coinPrice: {
-    fontSize: Platform.OS === "ios" ? RFValue(12) : RFValue(11.5),
+    fontSize: RFValue(10.5),
     fontWeight: "700",
-    marginBottom: 6
+    marginBottom: 4,
+    flexShrink: 1,
+    includeFontPadding: false
   },
 
   changeContainer: {
@@ -171,53 +177,61 @@ export const styles = StyleSheet.create({
   changeBadge: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 8,
-    // paddingVertical: 4,
-    paddingVertical: Platform.OS === "ios" ? 4 : 2,
-    // Platform.OS === 'ios' ?
-    borderRadius: 8,
-    minWidth: 70
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
+    minWidth: 62
   },
 
   changeText: {
-    fontSize: 11,
+    fontSize: 9.5,
     fontWeight: "700",
-    marginLeft: 4
+    marginLeft: 3,
+    flexShrink: 1,
+    includeFontPadding: false
   },
 
   userAmountSection: {
     alignItems: "flex-end",
-    minWidth: 70
+    flex: 1,
+    minWidth: 0,
+    maxWidth: "48%"
   },
 
   userAmount: {
-    fontSize: Platform.OS === "ios" ? RFValue(12) : RFValue(12),
+    fontSize: RFValue(10),
     color: "#D4AF37",
     fontWeight: "700",
     textAlign: "right",
-    marginBottom: 2
+    marginBottom: 2,
+    flexShrink: 1,
+    includeFontPadding: false
   },
 
   userValue: {
-    fontSize: Platform.OS === "ios" ? RFValue(11) : RFValue(11),
+    fontSize: RFValue(9.5),
     color: "rgba(255, 255, 255, 0.9)",
     fontWeight: "600",
-    textAlign: "right"
+    textAlign: "right",
+    flexShrink: 1,
+    includeFontPadding: false
   },
 
   userAmountPlaceholder: {
-    fontSize: 11,
+    fontSize: 10,
     color: "rgba(255, 255, 255, 0.3)",
     fontStyle: "italic",
     textAlign: "right",
-    marginBottom: 2
+    marginBottom: 2,
+    includeFontPadding: false
   },
 
   userValuePlaceholder: {
-    fontSize: 11,
+    fontSize: 10,
     color: "rgba(255, 255, 255, 0.3)",
     fontStyle: "italic",
-    textAlign: "right"
+    textAlign: "right",
+    includeFontPadding: false
   },
 
   /* ===== НИЖНЯЯ ЧАСТЬ - КНОПКИ ===== */
@@ -225,8 +239,8 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 6,
-    // height: 36
-    height: 32
+    height: 30,
+    marginTop: "auto"
   },
 
   actionButton: {
@@ -239,16 +253,17 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
-    gap: Platform.OS === "ios" ? 4 : 2,
+    gap: 4,
     borderWidth: 1,
-    height: "100%"
+    height: "100%",
+    paddingHorizontal: 6
   },
 
   actionButtonText: {
-    // fontSize: Platform.OS === "ios" ? RFValue(10) : RFValue(10),
-    fontSize: RFValue(10),
+    fontSize: RFValue(9),
     fontWeight: "600",
-    includeFontPadding: false
+    includeFontPadding: false,
+    flexShrink: 1
   },
 
   removeButtonText: {
@@ -259,7 +274,7 @@ export const styles = StyleSheet.create({
     color: "#D4AF37"
   },
 
-  // Специфичные стили для градиентов
+  // Стили для градиентов
   addButtonGradient: {
     borderColor: "rgba(212, 175, 55, 0.25)",
     backgroundColor: "rgba(212, 175, 55, 0.08)"
@@ -268,64 +283,5 @@ export const styles = StyleSheet.create({
   removeButtonGradient: {
     borderColor: "rgba(255, 107, 107, 0.25)",
     backgroundColor: "rgba(255, 107, 107, 0.08)"
-  },
-
-  /* ===== ОСТАЛЬНЫЕ СТИЛИ ===== */
-
-  updateStatus: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    alignItems: "center"
-  },
-
-  updateStatusText: {
-    color: "#D4AF37",
-    fontSize: 13,
-    fontStyle: "italic",
-    fontWeight: "600"
-  },
-
-  notificationPermissionButton: {
-    marginTop: 16,
-    borderRadius: 10,
-    overflow: "hidden"
-  },
-
-  notificationPermissionGradient: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8
-  },
-
-  notificationPermissionText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#000"
-  },
-
-  testNotificationButton: {
-    borderRadius: 8,
-    overflow: "hidden",
-    marginTop: 8
-  },
-
-  testNotificationGradient: {
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-    borderWidth: 1,
-    borderColor: "rgba(33, 150, 243, 0.3)"
-  },
-
-  testNotificationText: {
-    fontSize: 10,
-    fontWeight: "600",
-    color: "#2196F3"
   }
 })

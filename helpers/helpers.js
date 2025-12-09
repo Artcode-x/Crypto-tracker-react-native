@@ -130,3 +130,105 @@ export const formatNumber = (num, decimals = 2) => {
   }
   return `$${num.toFixed(decimals)}`
 }
+
+// Умное форматирование чисел с поддержкой очень маленьких значений для компонента Favorite (а точнее PremiumCoinCard в нем)
+export const smartFormatNumber = (num, isPrice = false, isCrypto = false) => {
+  if (num === 0 || num === null || num === undefined) return isPrice ? "$0.00" : "0"
+
+  const absNum = Math.abs(num)
+
+  // Для криптовалютных количеств (очень маленькие числа)
+  if (isCrypto) {
+    // Экстремально маленькие числа (< 0.00000001)
+    if (absNum < 0.00000001) {
+      return num.toExponential(4)
+    }
+
+    // Очень маленькие числа (< 0.001)
+    if (absNum < 0.001) {
+      // Ищем первую ненулевую цифру
+      const str = absNum.toFixed(12)
+      const match = str.match(/0\.0*([1-9])/)
+      if (match) {
+        const zerosBefore = match[0].length - 3 // количество нулей
+        if (zerosBefore >= 4) {
+          // Показываем как 0.0000...123
+          const significant = str.substring(zerosBefore + 2)
+          const firstSix = significant.substring(0, Math.min(6, significant.length))
+          return `0.${"0".repeat(zerosBefore)}${firstSix}${
+            firstSix.length === 6 ? "…" : ""
+          }`
+        }
+      }
+      return num.toFixed(8).replace(/(\.\d*?[1-9])0+$/, "$1")
+    }
+
+    // Средние числа
+    if (absNum >= 1000000) {
+      return (num / 1000000).toFixed(2) + "M"
+    }
+
+    if (absNum >= 1000) {
+      return (num / 1000).toFixed(2) + "K"
+    }
+
+    // Стандартные числа
+    return num.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 6
+    })
+  }
+
+  // Для цен активов (долларов)
+  if (isPrice) {
+    // Экстремально маленькие цены (< $0.000001)
+    if (absNum < 0.000001) {
+      const formatted = num.toFixed(12)
+      const match = formatted.match(/0\.0*([1-9])/)
+      if (match) {
+        const zerosBefore = match[0].length - 3
+        if (zerosBefore >= 4) {
+          const significant = formatted.substring(zerosBefore + 2)
+          const firstSix = significant.substring(0, Math.min(6, significant.length))
+          return `$0.${"0".repeat(zerosBefore)}${firstSix}${
+            firstSix.length === 6 ? "…" : ""
+          }`
+        }
+      }
+      return `$${num.toFixed(8)}`
+    }
+
+    // Маленькие цены (< $0.01)
+    if (absNum < 0.01) {
+      return `$${num.toFixed(6)}`
+    }
+
+    // Стандартные цены
+    return `$${num.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: Math.abs(num) < 1 ? 6 : 2
+    })}`
+  }
+
+  // Для денежных значений (стоимость в долларах)
+  if (absNum < 0.01) {
+    return "< $0.01"
+  }
+
+  if (absNum >= 1000000000) {
+    return `$${(num / 1000000000).toFixed(2)}B`
+  }
+
+  if (absNum >= 1000000) {
+    return `$${(num / 1000000).toFixed(2)}M`
+  }
+
+  if (absNum >= 1000) {
+    return `$${(num / 1000).toFixed(2)}K`
+  }
+
+  return `$${num.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}`
+}

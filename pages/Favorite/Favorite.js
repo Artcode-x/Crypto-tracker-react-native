@@ -19,7 +19,7 @@ import { styles } from "./Favorite.styles"
 import ModalFavorite from "./ModalChart/ModalFavorite"
 import AlertModal from "../../components/Alerts/AlertModal/AlertModal"
 
-import { formatCryptoAmount } from "../../helpers/helpers"
+import { formatCryptoAmount, smartFormatNumber } from "../../helpers/helpers"
 import { useFavoriteUpdate } from "../../hooks/useFavoriteUpdate"
 import { useAppState } from "../../hooks/useAppState"
 import NotificationService from "../../services/NotificationService"
@@ -314,6 +314,7 @@ const Favorite = () => {
   }
 
   // Компонент карточки монеты
+  // Реализовано отображение очень больших и очень маленьких чисел
   const PremiumCoinCard = React.memo(({ item }) => {
     const isRemoving = removingCoinId === item.id
     const priceChangeColor = item.price_change_percentage_24h >= 0 ? "#00C853" : "#FF3B30"
@@ -360,7 +361,7 @@ const Favorite = () => {
                     />
                   )}
                 </View>
-                <Text style={styles.coinName} numberOfLines={1}>
+                <Text style={styles.coinName} numberOfLines={1} ellipsizeMode='tail'>
                   {item.name}
                 </Text>
                 <Text style={styles.coinSymbol}>{item.symbol?.toUpperCase()}</Text>
@@ -401,12 +402,14 @@ const Favorite = () => {
             <View style={styles.middleRow}>
               {/* Левая часть - цена */}
               <View style={styles.priceSection}>
-                <Text style={[styles.coinPrice, { color: priceChangeColor }]}>
-                  $
-                  {item.current_price?.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                  }) || "0.00"}
+                <Text
+                  style={[styles.coinPrice, { color: priceChangeColor }]}
+                  numberOfLines={1}
+                  ellipsizeMode='tail'
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.7}
+                >
+                  {smartFormatNumber(item.current_price, true)}
                 </Text>
 
                 <View style={styles.changeContainer}>
@@ -416,7 +419,7 @@ const Favorite = () => {
                       { backgroundColor: `${priceChangeColor}15` }
                     ]}
                   >
-                    <Ionicons name={priceChangeIcon} size={11} color={priceChangeColor} />
+                    <Ionicons name={priceChangeIcon} size={10} color={priceChangeColor} />
                     <Text style={[styles.changeText, { color: priceChangeColor }]}>
                       {Math.abs(item.price_change_percentage_24h?.toFixed(2) || 0)}%
                     </Text>
@@ -428,15 +431,23 @@ const Favorite = () => {
               <View style={styles.userAmountSection}>
                 {userAmount > 0 ? (
                   <>
-                    <Text style={styles.userAmount}>
-                      {formatCryptoAmount(userAmount)}
+                    <Text
+                      style={styles.userAmount}
+                      numberOfLines={1}
+                      ellipsizeMode='tail'
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                    >
+                      {smartFormatNumber(userAmount, false, true)}
                     </Text>
-                    <Text style={styles.userValue}>
-                      $
-                      {userValue.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                      })}
+                    <Text
+                      style={styles.userValue}
+                      numberOfLines={1}
+                      ellipsizeMode='tail'
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.7}
+                    >
+                      {smartFormatNumber(userValue)}
                     </Text>
                   </>
                 ) : (
@@ -465,10 +476,14 @@ const Favorite = () => {
                 >
                   <Ionicons
                     name={userAmount > 0 ? "pencil-outline" : "add-circle-outline"}
-                    size={14}
+                    size={13}
                     color='#D4AF37'
                   />
-                  <Text style={[styles.actionButtonText, styles.addButtonText]}>
+                  <Text
+                    style={[styles.actionButtonText, styles.addButtonText]}
+                    numberOfLines={1}
+                    ellipsizeMode='tail'
+                  >
                     {userAmount > 0 ? "Edit" : "Add"}
                   </Text>
                 </LinearGradient>
@@ -493,7 +508,7 @@ const Favorite = () => {
                 >
                   <Ionicons
                     name={isRemoving ? "checkmark" : "trash-outline"}
-                    size={14}
+                    size={13}
                     color={isRemoving ? "#FFF" : "#FF6B6B"}
                   />
                   <Text
@@ -501,6 +516,8 @@ const Favorite = () => {
                       styles.actionButtonText,
                       isRemoving && styles.removeButtonText
                     ]}
+                    numberOfLines={1}
+                    ellipsizeMode='tail'
                   >
                     {isRemoving ? "Removing" : "Remove"}
                   </Text>
@@ -512,10 +529,6 @@ const Favorite = () => {
       </TouchableOpacity>
     )
   })
-
-  // Статистическая панель с алертами
-
-  // Модалка для ввода количества
 
   // Кнопка тестового уведомления (для отладки)
   const TestNotificationButton = () => (
