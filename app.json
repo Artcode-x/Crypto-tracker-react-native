@@ -3,7 +3,7 @@
     "newArchEnabled": true,
     "name": "Crypto-Tracker",
     "slug": "crypto-tracker",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -13,22 +13,22 @@
       "backgroundColor": "#ffffff"
     },
     "assetBundlePatterns": ["**/*"],
-
-    // Подключение плагина уведомлений
     "plugins": ["expo-notifications"],
-
+    "notification": {
+      "icon": "./assets/adaptive-icon.png",
+      "color": "#D4AF37",
+      "iosDisplayInForeground": true,
+      "androidMode": "default",
+      "androidChannelId": "price-alerts"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.crypto.artcode",
       "buildNumber": "1",
-      "icon": "./assets/icon.png",
-
-      // iOS: Разрешение фоновых уведомлений
       "infoPlist": {
         "UIBackgroundModes": ["remote-notification"]
       }
     },
-
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -36,38 +36,21 @@
       },
       "package": "com.crypto.artcode",
       "versionCode": 1,
-      "icon": "./assets/android-icon.png",
-
-      // Android: Добавление необходимых permissions
-      "permissions": ["VIBRATE", "RECEIVE_BOOT_COMPLETED", "WAKE_LOCK"],
-
-      // Android: Настройка канала уведомлений (согласно коду в NotificationService.js)
-      "notification": {
-        "icon": "./assets/adaptive-icon.png",
-        "color": "#D4AF37",
-        "defaultChannel": "price-alerts"
-      },
-
-      "softwareKeyboardLayoutMode": "resize",
-      "versionName": "1.0.0"
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "WAKE_LOCK",
+        "POST_NOTIFICATIONS"
+      ],
+      "softwareKeyboardLayoutMode": "resize"
     },
-
     "web": {
       "favicon": "./assets/favicon.png",
       "lang": "ru"
     },
-
-    // Общие настройки уведомлений
-    "notification": {
-      "icon": "./assets/icon.png",
-      "color": "#D4AF37",
-      "iosDisplayInForeground": true,
-      "androidMode": "default"
-    },
-
     "extra": {
       "eas": {
-        "projectId": "d1c4797d-f2a9-4056-9029-f0a30caaaa58"
+        "projectId": "f556dbb0-4097-471a-8189-9f4c6d13fefd"
       }
     }
   }
