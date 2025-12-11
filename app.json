@@ -58,7 +58,7 @@
         "FOREGROUND_SERVICE"
       ],
       "softwareKeyboardLayoutMode": "resize",
-      "googleServicesFile": "./google-services.json",
+      // "googleServicesFile": "./google-services.json",
       "useNextNotificationsApi": true,
       "allowBackup": true,
       "newArchEnabled": true
