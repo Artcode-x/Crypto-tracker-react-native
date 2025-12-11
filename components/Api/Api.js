@@ -171,3 +171,31 @@ export async function UpdateFavoriteCoins(coinIds) {
     return []
   }
 }
+
+// Функция получения текущих цен для BackgroundService
+export async function fetchCurrentPrices(coinIds) {
+  try {
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${coinIds.join(
+        ","
+      )}&vs_currencies=usd`
+    )
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+    const prices = {}
+
+    // Преобразование данных в удобный формат
+    coinIds.forEach((id) => {
+      prices[id] = data[id]?.usd || 0
+    })
+
+    return prices
+  } catch (error) {
+    console.error("Ошибка получения цен:", error)
+    return {}
+  }
+}
