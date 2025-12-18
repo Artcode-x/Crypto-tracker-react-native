@@ -16,7 +16,14 @@ import { Ionicons } from "@expo/vector-icons"
 import * as Haptics from "expo-haptics"
 import { styles } from "./AlertModal.styles"
 
-const AlertModal = ({ visible, onClose, onSave, coin, currentPrice }) => {
+const AlertModal = ({
+  visible,
+  onClose,
+  onSave,
+  coin,
+  currentPrice,
+  notificationPermission // ДОБАВЛЕНО: получаем статус разрешений
+}) => {
   const [targetPrice, setTargetPrice] = useState("")
   const [condition, setCondition] = useState("above")
   const [error, setError] = useState("")
@@ -107,6 +114,16 @@ const AlertModal = ({ visible, onClose, onSave, coin, currentPrice }) => {
                           maximumFractionDigits: 2
                         }) || "0.00"}
                       </Text>
+
+                      {/* Индикатор статуса уведомлений */}
+                      {!notificationPermission && (
+                        <View style={styles.notificationWarning}>
+                          <Ionicons name='notifications-off' size={16} color='#FF6B6B' />
+                          <Text style={styles.notificationWarningText}>
+                            Notifications disabled
+                          </Text>
+                        </View>
+                      )}
                     </View>
 
                     {/* Условие алерта */}
@@ -186,8 +203,15 @@ const AlertModal = ({ visible, onClose, onSave, coin, currentPrice }) => {
                           style={styles.priceInput}
                           value={targetPrice}
                           onChangeText={(text) => {
-                            setTargetPrice(text.replace(/[^0-9.]/g, ""))
-                            setError("")
+                            const formattedText = text.replace(",", ".")
+
+                            const filteredText = formattedText.replace(/[^0-9.]/g, "")
+                            // Проверяем, что точка только одна
+                            const dotCount = (filteredText.match(/\./g) || []).length
+                            if (dotCount <= 1) {
+                              setTargetPrice(filteredText)
+                              setError("")
+                            }
                           }}
                           placeholder='0.00'
                           placeholderTextColor='rgba(255, 255, 255, 0.3)'
@@ -238,8 +262,18 @@ const AlertModal = ({ visible, onClose, onSave, coin, currentPrice }) => {
                           colors={["#D4AF37", "#B3791F"]}
                           style={styles.saveButtonGradient}
                         >
-                          <Ionicons name='notifications-outline' size={20} color='#000' />
-                          <Text style={styles.saveButtonText}>Set Alert</Text>
+                          <Ionicons
+                            name={
+                              notificationPermission
+                                ? "notifications-outline"
+                                : "notifications-off"
+                            }
+                            size={20}
+                            color='#000'
+                          />
+                          <Text style={styles.saveButtonText}>
+                            {notificationPermission ? "Set Alert" : "Save Alert"}
+                          </Text>
                         </LinearGradient>
                       </TouchableOpacity>
                     </View>

@@ -18,28 +18,21 @@
         {
           "icon": "./assets/adaptive-icon.png",
           "color": "#D4AF37",
-          "sounds": ["./assets/notification.wav"],
-          "androidMode": "collapse",
-          "androidCollapsedTitle": "#{unread_notifications} new alerts",
           "iosDisplayInForeground": true
         }
       ],
       "expo-background-fetch"
     ],
-    "notification": {
-      "icon": "./assets/adaptive-icon.png",
-      "color": "#D4AF37",
-      "iosDisplayInForeground": true,
-      "androidMode": "default",
-      "androidChannelId": "price-alerts"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.crypto.artcode",
       "buildNumber": "1",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification", "fetch"],
-        "NSUserNotificationsUsageDescription": "This app uses notifications to send price alerts."
+        "UIBackgroundModes": ["fetch", "remote-notification"],
+        "NSUserNotificationsUsageDescription": "This app uses notifications to send price alerts.",
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
       },
       "requireFullScreen": false
     },
@@ -55,13 +48,12 @@
         "VIBRATE",
         "WAKE_LOCK",
         "POST_NOTIFICATIONS",
-        "FOREGROUND_SERVICE"
+        "FOREGROUND_SERVICE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.WAKE_LOCK"
       ],
-      "softwareKeyboardLayoutMode": "resize",
-      // "googleServicesFile": "./google-services.json",
       "useNextNotificationsApi": true,
-      "allowBackup": true,
-      "newArchEnabled": true
+      "allowBackup": true
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -69,8 +61,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "f556dbb0-4097-471a-8189-9f4c6d13fefd"
+        "projectId": "8a1401d1-7ebd-4be4-b520-7b18ad4517ba"
       }
-    }
+    },
+    "owner": "art-codes-organization"
   }
 }

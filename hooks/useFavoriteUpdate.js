@@ -33,27 +33,18 @@ export const useFavoriteUpdate = (intervalMinutes = 1) => {
 
     // Если нет избранных монет или уже идет обновление
     if (!favoriteCoins || favoriteCoins.length === 0) {
-      console.log(`Обновление #${updateNumber}: Нет избранных монет`)
+      // console.log(`Обновление #${updateNumber}: Нет избранных монет`)
       return
     }
 
     if (isUpdatingRef.current) {
-      console.log(`Обновление #${updateNumber}: Уже идет обновление`)
+      // console.log(`Обновление #${updateNumber}: Уже идет обновление`)
       return
     }
 
     isUpdatingRef.current = true
     const startTime = Date.now()
     lastUpdateTimeRef.current = now
-
-    console.log(`\n ==== ОБНОВЛЕНИЕ ИЗБРАННОГО #${updateNumber} ====`)
-    console.log(
-      `Время с последнего обновления: ${Math.round(timeSinceLastUpdate / 1000)} сек`
-    )
-    console.log(`Монет для обновления: ${favoriteCoins.length}`)
-    console.log(
-      `ID монет: ${favoriteCoins.map((c) => c.symbol.toUpperCase()).join(", ")}`
-    )
 
     try {
       // Получение ID всех избранных монет
@@ -68,9 +59,6 @@ export const useFavoriteUpdate = (intervalMinutes = 1) => {
       if (updatedCoins && updatedCoins.length > 0) {
         const endTime = Date.now()
         const duration = endTime - startTime
-
-        console.log(`Успешно обновлено ${updatedCoins.length} монет`)
-        console.log(`Время обновления: ${duration}ms`)
 
         // Объединяем старые данные с новыми
         console.log(`Объединяем данные...`)
@@ -124,7 +112,7 @@ export const useFavoriteUpdate = (intervalMinutes = 1) => {
   // Запускаем интервал обновления - ТОЛЬКО ПРИ ИЗМЕНЕНИИ КОЛИЧЕСТВА МОНЕТ
   useEffect(() => {
     console.log(`Инициализация автообновления избранного`)
-    console.log(`Количество монет: ${favoriteCoins?.length || 0}`)
+    // console.log(`Количество монет: ${favoriteCoins?.length || 0}`)
 
     // Очищаем предыдущий интервал
     if (updateIntervalRef.current) {

@@ -1,8 +1,17 @@
 import React, { useState, useCallback, useRef, useEffect } from "react"
-import { View, FlatList, Text, Dimensions, TouchableOpacity } from "react-native"
+import {
+  View,
+  FlatList,
+  Text,
+  Dimensions,
+  TouchableOpacity,
+  Alert,
+  Platform
+} from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import * as Haptics from "expo-haptics"
+import * as Notifications from "expo-notifications"
 import { useDispatch, useSelector } from "react-redux"
 import {
   coinSelector,
@@ -19,7 +28,7 @@ import { styles } from "./Favorite.styles"
 import ModalFavorite from "./ModalChart/ModalFavorite"
 import AlertModal from "../../components/Alerts/AlertModal/AlertModal"
 
-import { formatCryptoAmount, smartFormatNumber } from "../../helpers/helpers"
+import { smartFormatNumber } from "../../helpers/helpers"
 import { useFavoriteUpdate } from "../../hooks/useFavoriteUpdate"
 import { useAppState } from "../../hooks/useAppState"
 import NotificationService from "../../services/NotificationService"
@@ -54,7 +63,7 @@ const Favorite = () => {
   // Состояния для алертов
   const [alertModalVisible, setAlertModalVisible] = useState(false)
   const [selectedCoinForAlert, setSelectedCoinForAlert] = useState(null)
-  const [notificationPermission, setNotificationPermission] = useState(null)
+  const [notificationPermission, setNotificationPermission] = useState(false)
 
   const amountInputRef = useRef("")
 
@@ -64,43 +73,45 @@ const Favorite = () => {
   // Хук для периодической проверки алертов
   useAlertChecker(coinData, 60000)
 
-  // Инициализация уведомлений
+  // Инициализация уведомлений - только проверка статуса
   useEffect(() => {
-    const initializeNotifications = async () => {
-      const granted = await NotificationService.requestPermissions()
-      setNotificationPermission(granted)
-
-      if (granted) {
-        console.log("Уведомления разрешены")
-
-        AlertManager.initialize(dispatch)
-
-        // Регистрация обработчиков уведомлений
-        const subscriptions = NotificationService.registerNotificationHandlers(
-          (notification) => {
-            console.log("Уведомление получено:", notification.request.content.data)
-          },
-          (response) => {
-            const data = response.notification.request.content.data
-            if (data.type === "price-alert" && data.alertId) {
-              // Пометка алерта как прочитанного при нажатии
-              dispatch(markAlertAsRead(data.alertId))
-              console.log("Алёрт помечен как прочитанный:", data.alertId)
-            }
-          }
+    const checkNotificationPermission = async () => {
+      try {
+        const { granted } = await Notifications.getPermissionsAsync()
+        setNotificationPermission(granted)
+        console.log(
+          `Текущий статус уведомлений: ${granted ? "Разрешено" : "Не разрешено"}`
         )
 
-        return () => {
-          if (subscriptions) {
-            NotificationService.removeNotificationHandlers(subscriptions)
+        if (granted) {
+          AlertManager.initialize(dispatch)
+
+          const subscriptions = NotificationService.registerNotificationHandlers(
+            (notification) => {
+              console.log("Уведомление получено:", notification.request.content.data)
+            },
+            (response) => {
+              const data = response.notification.request.content.data
+              if (data.type === "price-alert" && data.alertId) {
+                dispatch(markAlertAsRead(data.alertId))
+                console.log("Алёрт помечен как прочитанный:", data.alertId)
+              }
+            }
+          )
+
+          return () => {
+            if (subscriptions) {
+              NotificationService.removeNotificationHandlers(subscriptions)
+            }
           }
         }
-      } else {
-        console.log("Уведомления не разрешены")
+      } catch (error) {
+        console.error("Ошибка проверки разрешений:", error)
+        setNotificationPermission(false)
       }
     }
 
-    initializeNotifications()
+    checkNotificationPermission()
   }, [dispatch])
 
   // Обновление бейджей при изменении алертов
@@ -113,8 +124,9 @@ const Favorite = () => {
   // Логирование при изменении избранного
   useEffect(() => {
     console.log("\n ==== ОБНОВЛЕНИЕ ИЗБРАННОГО ====")
-    console.log(`Монеты: ${coinData.length}`)
+
     console.log(`Алёрты: ${priceAlerts.length} (${unreadAlertsCount} непрочитанных)`)
+    console.log(`Уведомления: ${notificationPermission ? "Разрешены" : "Не разрешены"}`)
 
     // Статистика по активным алертам
     const activeAlerts = priceAlerts.filter(
@@ -123,7 +135,7 @@ const Favorite = () => {
     const triggeredAlerts = priceAlerts.filter((alert) => alert.triggeredAt)
 
     if (activeAlerts.length > 0) {
-      console.log(`🔔 Активные алерты: ${activeAlerts.length}`)
+      console.log(`Активные алерты: ${activeAlerts.length}`)
       activeAlerts.forEach((alert, index) => {
         console.log(
           `   ${index + 1}. ${alert.coinSymbol}: $${alert.targetPrice} (${
@@ -134,11 +146,11 @@ const Favorite = () => {
     }
 
     if (triggeredAlerts.length > 0) {
-      console.log(` Сработавшие алерты: ${triggeredAlerts.length}`)
+      console.log(`Сработавшие алерты: ${triggeredAlerts.length}`)
     }
 
     console.log("=============================\n")
-  }, [coinData, priceAlerts, unreadAlertsCount])
+  }, [coinData, priceAlerts, unreadAlertsCount, notificationPermission])
 
   // Обновление при возвращении в приложение
   useAppState(() => {
@@ -186,31 +198,336 @@ const Favorite = () => {
     triggeredAlerts: priceAlerts.filter((a) => a.triggeredAt).length
   }
 
-  // Функция для открытия модалки создания алерта
-  const openAlertModal = useCallback((coin) => {
-    console.log(`Открытие алерта для: ${coin.name}`)
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    setSelectedCoinForAlert(coin)
-    setAlertModalVisible(true)
-  }, [])
+  // const openAlertModal = useCallback(
+  //   async (coin) => {
+  //     console.log(`Открытие алерта для: ${coin.name}`)
+  //     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+
+  //     try {
+  //       // 1. Проверяем текущий статус
+  //       const { granted } = await Notifications.getPermissionsAsync()
+
+  //       if (!granted) {
+  //         // 2. Показываем кастомный диалог
+  //         Alert.alert(
+  //           "🔔 Price Alerts",
+  //           "Would you like to receive notifications when your price targets are reached?",
+  //           [
+  //             {
+  //               text: "Not Now",
+  //               style: "cancel",
+  //               onPress: () => {
+  //                 console.log("User declined notifications")
+  //                 // Все равно открываем модалку, но предупреждаем
+  //                 setSelectedCoinForAlert(coin)
+  //                 setAlertModalVisible(true)
+  //               }
+  //             },
+  //             {
+  //               text: "Enable",
+  //               onPress: async () => {
+  //                 // 3. Запрашиваем системные разрешения
+  //                 const { granted: newGranted } =
+  //                   await Notifications.requestPermissionsAsync()
+  //                 setNotificationPermission(newGranted)
+
+  //                 if (newGranted) {
+  //                   AlertManager.initialize(dispatch)
+  //                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+  //                 }
+
+  //                 // 4. Открываем модалку
+  //                 setSelectedCoinForAlert(coin)
+  //                 setAlertModalVisible(true)
+  //               }
+  //             }
+  //           ]
+  //         )
+  //       } else {
+  //         // Уже разрешено
+  //         if (!notificationPermission) setNotificationPermission(true)
+  //         setSelectedCoinForAlert(coin)
+  //         setAlertModalVisible(true)
+  //       }
+  //     } catch (error) {
+  //       console.error("Error requesting permissions:", error)
+  //       // В случае ошибки все равно открываем модалку
+  //       setSelectedCoinForAlert(coin)
+  //       setAlertModalVisible(true)
+  //     }
+  //   },
+  //   [dispatch, notificationPermission]
+  // )
+
+  // const openAlertModal = useCallback(
+  //   async (coin) => {
+  //     console.log(`Открытие алерта для: ${coin.name}`)
+  //     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+
+  //     try {
+  //       // 1. Проверяем текущий статус
+  //       const { granted, status } = await Notifications.getPermissionsAsync()
+  //       console.log(`Текущий статус разрешений: ${status}, granted: ${granted}`)
+
+  //       // Если разрешения нет, запрашиваем напрямую
+  //       if (!granted) {
+  //         console.log("Запрашиваем разрешения на уведомления...")
+
+  //         // 2. ПРЯМОЙ запрос системных разрешений
+  //         const requestNotificationPermission = async () => {
+  //           if (Platform.OS === "ios") {
+  //             // Для iOS можно добавить специфичные параметры
+  //             return await Notifications.requestPermissionsAsync({
+  //               ios: {
+  //                 allowAlert: true,
+  //                 allowBadge: true,
+  //                 allowSound: true
+  //               }
+  //             })
+  //           } else {
+  //             // Для Android - простой запрос
+  //             return await Notifications.requestPermissionsAsync()
+  //           }
+  //         }
+
+  //         // Использование:
+  //         const result = await requestNotificationPermission()
+
+  //         console.log(`Новый статус разрешений: ${newStatus}, granted: ${newGranted}`)
+
+  //         setNotificationPermission(newGranted)
+
+  //         if (newGranted) {
+  //           console.log("Разрешения получены, инициализируем AlertManager")
+  //           AlertManager.initialize(dispatch)
+  //           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+  //         } else {
+  //           console.log("Пользователь отказал в разрешениях")
+  //           // Показываем информационное сообщение о важности уведомлений
+  //           Alert.alert(
+  //             "🔔 Notifications are disabled",
+  //             "You can enable notifications in your device settings to receive alerts when alerts are triggered.",
+  //             [
+  //               { text: "Later", style: "cancel" },
+  //               {
+  //                 text: "Settings",
+  //                 onPress: () => {
+  //                   if (Platform.OS === "ios") {
+  //                     // Для iOS можно открыть настройки
+  //                     Linking.openURL("app-settings:")
+  //                   } else {
+  //                     // Для Android можно попробовать открыть настройки уведомлений
+  //                     Linking.openSettings()
+  //                   }
+  //                 }
+  //               }
+  //             ]
+  //           )
+  //         }
+  //       } else {
+  //         // Уже разрешено
+  //         if (!notificationPermission) setNotificationPermission(true)
+  //         console.log("Уведомления уже разрешены")
+  //       }
+
+  //       // 3. Все равно открываем модалку алерта
+  //       setSelectedCoinForAlert(coin)
+  //       setAlertModalVisible(true)
+  //     } catch (error) {
+  //       console.error("Ошибка при запросе разрешений:", error)
+  //       // В случае ошибки все равно открываем модалку
+  //       setSelectedCoinForAlert(coin)
+  //       setAlertModalVisible(true)
+  //     }
+  //   },
+  //   [dispatch, notificationPermission]
+  // )
+
+  const openAlertModal = useCallback(
+    async (coin) => {
+      console.log(`Открытие алерта для: ${coin.name}`)
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+
+      try {
+        // 1. Проверяем текущий статус
+        const { granted, status, canAskAgain } = await Notifications.getPermissionsAsync()
+        console.log(
+          `Текущий статус: ${status}, granted: ${granted}, canAskAgain: ${canAskAgain}`
+        )
+
+        // Функция для открытия модалки алерта
+        const openAlertModalWindow = () => {
+          setSelectedCoinForAlert(coin)
+          setAlertModalVisible(true)
+        }
+
+        // Если разрешения уже есть
+        if (granted) {
+          if (!notificationPermission) {
+            setNotificationPermission(true)
+          }
+          console.log("Уведомления уже разрешены")
+          openAlertModalWindow()
+          return
+        }
+
+        // 2. КРИТИЧЕСКИ ВАЖНЫЙ БЛОК ДЛЯ ANDROID 8+
+        let androidChannelCreated = false
+        if (Platform.OS === "android") {
+          try {
+            // Проверяем, существует ли уже канал
+            const channels = await Notifications.getNotificationChannelsAsync?.()
+            const hasChannel = channels?.some((ch) => ch.id === "price_alerts")
+
+            if (!hasChannel) {
+              console.log("Создаем канал уведомлений для Android...")
+              await Notifications.setNotificationChannelAsync("price_alerts", {
+                name: "Price Alerts",
+                importance: Notifications.AndroidImportance.HIGH,
+                vibrationPattern: [0, 250, 250, 250],
+                lightColor: "#FF231F7C",
+                enableLights: true,
+                enableVibrate: true,
+                showBadge: true,
+                bypassDnd: false // Более безопасный вариант
+              })
+              androidChannelCreated = true
+              console.log("Канал 'price_alerts' успешно создан")
+            } else {
+              console.log("Канал 'price_alerts' уже существует")
+              androidChannelCreated = true
+            }
+          } catch (channelError) {
+            console.warn("Не удалось настроить канал уведомлений:", channelError)
+            // Продолжаем без канала (для Android 7 и ниже это нормально)
+          }
+        }
+
+        // 3. Запрашиваем разрешения с правильной конфигурацией
+        let result
+        if (Platform.OS === "android") {
+          // Для Android - простой запрос, без дополнительных параметров
+          result = await Notifications.requestPermissionsAsync()
+        } else {
+          // Для iOS - с настройками
+          result = await Notifications.requestPermissionsAsync({
+            ios: {
+              allowAlert: true,
+              allowBadge: true,
+              allowSound: true,
+              allowAnnouncements: true
+            }
+          })
+        }
+
+        const {
+          granted: newGranted,
+          status: newStatus,
+          canAskAgain: newCanAskAgain
+        } = result
+        console.log(
+          `Результат запроса: ${newStatus}, granted: ${newGranted}, canAskAgain: ${newCanAskAgain}`
+        )
+
+        // 4. Обновляем состояние и обрабатываем результат
+        setNotificationPermission(newGranted)
+
+        if (newGranted) {
+          console.log("Разрешения получены, инициализируем AlertManager")
+          AlertManager.initialize(dispatch)
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+        } else {
+          console.log("Пользователь отказал в разрешениях")
+
+          // ОСОБАЯ ЛОГИКА ДЛЯ ANDROID 13+ (API 33+)
+          if (Platform.OS === "android" && Platform.Version >= 33) {
+            if (newCanAskAgain === false) {
+              // Пользователь выбрал "Don't ask again"
+              Alert.alert(
+                "🔔 Уведомления отключены",
+                "Разрешите уведомления в настройках приложения, чтобы получать алерты о ценах.",
+                [
+                  {
+                    text: "Продолжить без уведомлений",
+                    style: "cancel",
+                    onPress: openAlertModalWindow
+                  },
+                  {
+                    text: "Открыть настройки",
+                    onPress: () => {
+                      Linking.openSettings()
+                      // Откладываем открытие модалки, чтобы пользователь увидел переход
+                      setTimeout(openAlertModalWindow, 1500)
+                    }
+                  }
+                ]
+              )
+              return // Не открываем модалку сразу
+            }
+          }
+
+          // Для других случаев (Android <13, iOS, или можно спрашивать снова)
+          Alert.alert(
+            "🔔 Уведомления не разрешены",
+            "Вы сможете получать уведомления о ценах, если разрешите их в настройках.",
+            [
+              {
+                text: "Продолжить",
+                style: "default",
+                onPress: openAlertModalWindow
+              },
+              {
+                text: "Настройки",
+                onPress: () => {
+                  Linking.openSettings()
+                  setTimeout(openAlertModalWindow, 1500)
+                }
+              }
+            ]
+          )
+          return // Не открываем модалку сразу, ждем выбора в Alert
+        }
+
+        // 5. Если разрешения получены, открываем модалку
+        openAlertModalWindow()
+      } catch (error) {
+        console.error("Ошибка при запросе разрешений:", error)
+        // В случае ошибки открываем модалку без разрешений
+        setSelectedCoinForAlert(coin)
+        setAlertModalVisible(true)
+      }
+    },
+    [dispatch, notificationPermission]
+  )
 
   // Функция для сохранения алерта
   const handleSaveAlert = useCallback(
     (alertData) => {
       console.log(`Сохранение алерта: ${alertData.coinName} @ $${alertData.targetPrice}`)
 
-      // Проверяем разрешения на уведомления
-      if (!notificationPermission) {
-        console.log("⚠️ Уведомления не разрешены, алерт будет сохранен без уведомлений")
-      }
-
+      // Сохраняем алерт
       dispatch(addPriceAlert(alertData))
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+
+      // Показываем соответствующее сообщение
+      if (notificationPermission) {
+        Alert.alert(
+          "✅ Alert was set!",
+          `You will receive a notification when ${alertData.coinSymbol} reaches $${alertData.targetPrice}`,
+          [{ text: "Great" }]
+        )
+      } else {
+        Alert.alert(
+          "Notifications are disabled",
+          "The alert is saved, but you will not receive a notification when it is triggered.",
+          [{ text: "Ok" }]
+        )
+      }
     },
     [dispatch, notificationPermission]
   )
 
-  // Функция для удаления алерта (чуть позже в ui)
+  // Функция для удаления алерта
   const handleDeleteAlert = useCallback(
     (alertId) => {
       console.log(`🗑️ Удаление алерта: ${alertId}`)
@@ -233,9 +550,9 @@ const Favorite = () => {
   const removeFromFav = useCallback(
     (coin) => {
       console.log(`\n ==== УДАЛЕНИЕ МОНЕТЫ ====`)
-      console.log(`Монета: ${coin.name} (${coin.symbol.toUpperCase()})`)
-      console.log(`Цена: $${coin.current_price || 0}`)
-      console.log(`Ранг: #${coin.market_cap_rank || "?"}`)
+      // console.log(`Монета: ${coin.name} (${coin.symbol.toUpperCase()})`)
+      // console.log(`Цена: $${coin.current_price || 0}`)
+      // console.log(`Ранг: #${coin.market_cap_rank || "?"}`)
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
       setRemovingCoinId(coin.id)
@@ -303,7 +620,7 @@ const Favorite = () => {
         })
       )
 
-      console.log(` Количество сохранено`)
+      console.log(`Количество сохранено`)
       console.log(`==========================\n`)
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
@@ -314,7 +631,6 @@ const Favorite = () => {
   }
 
   // Компонент карточки монеты
-  // Реализовано отображение очень больших и очень маленьких чисел
   const PremiumCoinCard = React.memo(({ item }) => {
     const isRemoving = removingCoinId === item.id
     const priceChangeColor = item.price_change_percentage_24h >= 0 ? "#00C853" : "#FF3B30"
@@ -593,6 +909,7 @@ const Favorite = () => {
           onSave={handleSaveAlert}
           coin={selectedCoinForAlert}
           currentPrice={selectedCoinForAlert.current_price || 0}
+          notificationPermission={notificationPermission}
         />
       )}
       {/* Модалка с графиком */}
