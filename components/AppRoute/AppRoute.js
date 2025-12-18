@@ -6,6 +6,7 @@ import Favorite from "../../pages/Favorite/Favorite"
 import { Ionicons } from "@expo/vector-icons"
 import { StyleSheet } from "react-native"
 import Analytics from "../Analytics/Analytics"
+import PrivacyPolicy from "../../pages/PrivacyPolicy/PrivacyPolicy"
 
 const Tab = createBottomTabNavigator()
 
@@ -58,6 +59,17 @@ export const AppRoute = () => {
             title: "Analytics",
             tabBarIcon: ({ color }) => (
               <Ionicons name='bar-chart' size={24} color={color} />
+              //   star-outline
+            )
+          }}
+        />
+        <Tab.Screen
+          name='PrivacyPolicy'
+          component={PrivacyPolicy}
+          options={{
+            title: "Privacy Policy",
+            tabBarIcon: ({ color }) => (
+              <Ionicons name='mail-unread' size={24} color={color} />
               //   star-outline
             )
           }}
