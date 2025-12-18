@@ -38,4 +38,36 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000"
   }
+  //
+
+  // notificationPermissionButton: {
+  //   marginTop: 20,
+  //   borderRadius: 25,
+  //   overflow: "hidden",
+  //   shadowColor: "#D4AF37",
+  //   shadowOffset: {
+  //     width: 0,
+  //     height: 4
+  //   },
+  //   shadowOpacity: 0.3,
+  //   shadowRadius: 8,
+  //   elevation: 6
+  // },
+
+  // notificationPermissionGradient: {
+  //   flexDirection: "row",
+  //   alignItems: "center",
+  //   justifyContent: "center",
+  //   paddingHorizontal: 10,
+  //   paddingVertical: 5,
+  //   borderRadius: 25
+  // },
+
+  // notificationPermissionText: {
+  //   color: "#000",
+  //   fontSize: 16,
+  //   fontWeight: "600",
+  //   marginLeft: 8,
+  //   letterSpacing: 0.3
+  // }
 })

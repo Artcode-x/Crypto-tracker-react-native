@@ -484,7 +484,8 @@ export const styles = StyleSheet.create({
   recommendationCard: {
     backgroundColor: "rgba(212, 175, 55, 0.1)",
     borderRadius: 16,
-    marginBottom: 35,
+    // marginBottom: 35,
+    marginBottom: 66,
     borderWidth: 1,
     borderColor: "rgba(212, 175, 55, 0.2)",
     overflow: "hidden"
@@ -511,10 +512,14 @@ export const styles = StyleSheet.create({
   tipItem: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginBottom: 12,
-    paddingBottom: 12,
+    // marginBottom: 12,
+    // paddingBottom: 12,
+    marginBottom: 6,
+    paddingBottom: 6,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(212, 175, 55, 0.1)"
+    borderBottomColor: "rgba(212, 175, 55, 0.1)",
+
+    alignItems: "center"
   },
 
   tipText: {

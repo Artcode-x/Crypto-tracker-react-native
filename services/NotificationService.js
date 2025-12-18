@@ -151,7 +151,7 @@ class NotificationService {
           badge: 1,
           color: "#D4AF37",
           // iOS specific
-          subtitle: "Price Alert Triggered",
+          // subtitle: "Price Alert Triggered",
           launchImageName: "adaptive-icon",
           // Android specific
           priority: Notifications.AndroidNotificationPriority.HIGH,

@@ -138,9 +138,9 @@ const AlertManager = {
 
   // Форматирование сообщения алерта
   formatAlertMessage(alert, currentPrice) {
-    if (!alert || !currentPrice) {
-      return "Price alert triggered"
-    }
+    // if (!alert || !currentPrice) {
+    //   return "Price alert triggered"
+    // }
 
     const direction = alert.condition === "above" ? "rose above" : "fell below"
     return `${alert.coinSymbol.toUpperCase()} ${direction} $${alert.targetPrice.toFixed(

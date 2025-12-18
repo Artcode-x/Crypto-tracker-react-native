@@ -2,7 +2,7 @@ import { Text, TouchableOpacity, View } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { styles } from "./EmptyState.styles"
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
-import NotificationService from "../../../../services/NotificationService"
+// import NotificationService from "../../../../services/NotificationService"
 
 const EmptyState = ({ notificationPermission }) => (
   <View style={styles.emptyState}>
@@ -17,7 +17,7 @@ const EmptyState = ({ notificationPermission }) => (
       />
       <Text style={styles.emptyTitle}>Your Watchlist is Empty</Text>
       <Text style={styles.emptySubtitle}>Add coins to start building your portfolio</Text>
-      {!notificationPermission && (
+      {/* {!notificationPermission && (
         <TouchableOpacity
           onPress={() => NotificationService.requestPermissions()}
           style={styles.notificationPermissionButton}
@@ -30,7 +30,7 @@ const EmptyState = ({ notificationPermission }) => (
             <Text style={styles.notificationPermissionText}>Enable Price Alerts</Text>
           </LinearGradient>
         </TouchableOpacity>
-      )}
+      )} */}
     </LinearGradient>
   </View>
 )
