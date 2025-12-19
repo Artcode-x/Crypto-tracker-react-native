@@ -14,8 +14,6 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import * as Haptics from "expo-haptics"
 import { PinchGestureHandler, State } from "react-native-gesture-handler"
-import Svg, { Rect, Line, G } from "react-native-svg"
-import { RFValue } from "react-native-responsive-fontsize"
 import { styles } from "./ModalFavorite.styles"
 import {
   FetchCandleData,
@@ -27,8 +25,6 @@ import { VolumeChart } from "./components/VolumeChart/VolumeChart"
 import CandlestickChart from "./components/CandlestickChart/CandlestickChart"
 
 const { width, height } = Dimensions.get("window")
-
-// Компонент свечного графика вынесен
 
 const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
   const [prices, setPrices] = useState([])
@@ -123,6 +119,8 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
 
         if (candlePrices?.length > 0) {
           setPrices(candlePrices)
+        } else {
+          setPrices([])
         }
 
         setMinMax({
@@ -131,6 +129,7 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
         })
       } catch (error) {
         console.error(error.message)
+        setPrices([])
       }
     },
     [chartDays, limit]
@@ -158,7 +157,6 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
     }
   }, [selectedCoin, visible])
 
-  // Высота экрана с учетом статус бара
   const screenHeight = height + (Platform.OS === "android" ? StatusBar.currentHeight : 0)
 
   return (
@@ -169,7 +167,6 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
       statusBarTranslucent={true}
       hardwareAccelerated={true}
     >
-      {/* Безопасная зона для iOS */}
       {Platform.OS === "ios" ? (
         <SafeAreaView style={styles.modalContainer}>
           <ScrollView
@@ -196,7 +193,6 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
           </ScrollView>
         </SafeAreaView>
       ) : (
-        // Для Android: ручная обработка статус бара
         <View style={styles.modalContainer}>
           <View style={styles.androidStatusBar} />
           <ScrollView
@@ -270,30 +266,34 @@ const Content = ({
       )}
 
       {/* Инфо строка */}
-      <View style={styles.infoRow}>
-        <View style={styles.infoBlock}>
-          <Text style={styles.infoText}>24h Low</Text>
-          <Text style={[styles.infoValue, { color: "lightblue" }]}>
-            {minMax.minPrice}$
-          </Text>
+      {prices.length > 0 && (
+        <View style={styles.infoRow}>
+          <View style={styles.infoBlock}>
+            <Text style={styles.infoText}>24h Low</Text>
+            <Text style={[styles.infoValue, { color: "lightblue" }]}>
+              {minMax.minPrice && !isNaN(minMax.minPrice) ? `${minMax.minPrice}$` : "N/A"}
+            </Text>
+          </View>
+          <View style={styles.infoBlock}>
+            <Text style={styles.infoText}>Current</Text>
+            <Text style={styles.infoValue}>
+              ${selectedCoin?.current_price?.toFixed(2) || "0.00"}
+            </Text>
+          </View>
+          <View style={styles.infoBlock}>
+            <Text style={styles.infoText}>24h High</Text>
+            <Text style={[styles.infoValue, { color: "wheat" }]}>
+              {minMax.maxPrice && !isNaN(minMax.maxPrice) ? `${minMax.maxPrice}$` : "N/A"}
+            </Text>
+          </View>
         </View>
-        <View style={styles.infoBlock}>
-          <Text style={styles.infoText}>Current</Text>
-          <Text style={styles.infoValue}>
-            ${selectedCoin?.current_price?.toFixed(2) || "0.00"}
-          </Text>
-        </View>
-        <View style={styles.infoBlock}>
-          <Text style={styles.infoText}>24h High</Text>
-          <Text style={[styles.infoValue, { color: "wheat" }]}>{minMax.maxPrice}$</Text>
-        </View>
-      </View>
+      )}
 
       {/* График цены */}
       <View style={styles.chartWrapper}>
         <View style={styles.chartHeader}>
           <Text style={styles.chartTitle}>Price Chart</Text>
-          <Text style={styles.chartLimit}>Limit: {limit}</Text>
+          {prices.length > 0 && <Text style={styles.chartLimit}>Limit: {limit}</Text>}
         </View>
 
         {loadingChart ? (
@@ -302,22 +302,26 @@ const Content = ({
             <Text style={styles.loadingText}>Loading...</Text>
           </View>
         ) : prices.length === 0 ? (
-          <View style={[styles.loadingContainer, { height: chartHeight }]}>
-            <Text style={{ color: "rgba(255,255,255,0.6)" }}>No data</Text>
+          // ВОТ ВАШ ПЛЕЙСХОЛДЕР - вместо графика когда нет данных
+          <View style={[styles.noDataPlaceholder, { height: chartHeight }]}>
+            <Ionicons
+              name='bar-chart-outline'
+              size={48}
+              color='rgba(255, 255, 255, 0.3)'
+            />
+            <Text style={styles.noDataPlaceholderText}>Chart Not Available</Text>
+            <Text style={styles.noDataPlaceholderSubText}>
+              The Binance API doesn't offer the ability to open this chart. Currently,
+              detailed charts are only available for coins listed on Binance."
+            </Text>
           </View>
         ) : (
           <PinchGestureHandler
             onGestureEvent={onPinchEvent}
             onHandlerStateChange={onPinchStateChange}
           >
-            {/* Блок со свечным графиком! */}
             <View style={[styles.chartBox, { height: chartHeight }]}>
-              <CandlestickChart
-                data={prices}
-                width={width * 0.9}
-                height={chartHeight}
-                // limit={limit}
-              />
+              <CandlestickChart data={prices} width={width * 0.9} height={chartHeight} />
             </View>
           </PinchGestureHandler>
         )}
@@ -353,13 +357,15 @@ const Content = ({
         )}
       </View>
 
-      {/* Volume */}
-      <View style={styles.volumeSection}>
-        <Text style={styles.volumeTitle}>Volume</Text>
-        <View style={[styles.volumeChartContainer, { height: volumeHeight }]}>
-          <VolumeChart volumeData={volumeData} height={volumeHeight} />
+      {/* Volume - показываем только если есть данные графика */}
+      {prices.length > 0 && (
+        <View style={styles.volumeSection}>
+          <Text style={styles.volumeTitle}>Volume</Text>
+          <View style={[styles.volumeChartContainer, { height: volumeHeight }]}>
+            <VolumeChart volumeData={volumeData} height={volumeHeight} />
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Timeframe */}
       <View style={styles.timeframeSection}>

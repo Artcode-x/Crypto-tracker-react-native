@@ -3,7 +3,6 @@ import { RFValue } from "react-native-responsive-fontsize"
 
 const { width, height } = Dimensions.get("window")
 const isSmallScreen = width < 375
-const isTablet = width > 768
 
 const ANDROID_STATUS_BAR_HEIGHT = Platform.OS === "android" ? 24 : 0
 
@@ -316,5 +315,32 @@ export const styles = StyleSheet.create({
     marginTop: 8,
     color: "#D4AF37",
     fontSize: RFValue(12)
+  },
+
+  // Плейсхолдер для отсутствия данных графика
+  noDataPlaceholder: {
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderRadius: 12,
+    marginVertical: 8,
+    padding: 20
+  },
+
+  noDataPlaceholderText: {
+    color: "rgba(255, 255, 255, 0.6)",
+    fontSize: RFValue(16),
+    fontWeight: "500",
+    marginTop: 16,
+    fontFamily: "System",
+    textAlign: "center"
+  },
+
+  noDataPlaceholderSubText: {
+    color: "rgba(255, 255, 255, 0.4)",
+    fontSize: RFValue(13),
+    marginTop: 8,
+    fontFamily: "System",
+    textAlign: "center"
   }
 })
