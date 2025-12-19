@@ -5,11 +5,10 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Dimensions,
   ActivityIndicator,
   RefreshControl
 } from "react-native"
-import { styles } from "./CoinList.styles"
+import { isSmallScreen, isTablet, styles, width } from "./CoinList.styles"
 import { useDispatch, useSelector } from "react-redux"
 import CoinItem from "../CoinItem/CoinItem"
 import { Ionicons } from "@expo/vector-icons"
@@ -36,10 +35,6 @@ const CoinList = ({
   const dispatch = useDispatch()
 
   const onEndReachedCalledDuringMomentum = useRef(true)
-
-  const { width } = Dimensions.get("window")
-  const isSmallScreen = width < 375
-  const isTablet = width > 768
 
   const getCardHeight = () => {
     if (isTablet) return 120
@@ -106,7 +101,7 @@ const CoinList = ({
 
       setTimeout(() => {
         setModalVisible(false)
-      }, 500)
+      }, 1500)
     }
   }
 
@@ -140,7 +135,7 @@ const CoinList = ({
       return (
         <View
           style={[
-            flag[item.id] && { borderLeftWidth: 2, borderLeftColor: "orange" },
+            flag[item.id] && { borderLeftWidth: 3, borderLeftColor: "#FFD700" }, // Изменен цвет на золотистый
             styles.itemContainer,
             {
               height: getCardHeight(),
@@ -173,20 +168,21 @@ const CoinList = ({
             style={[
               styles.addButton,
               isTablet && styles.tabletAddButton,
-              isSmallScreen && styles.smallAddButton
+              isSmallScreen && styles.smallAddButton,
+              flag[item.id] && styles.addButtonActive // Добавлен активный стиль
             ]}
           >
             {flag[item.id] ? (
               <Ionicons
-                name='checkmark-circle-outline'
-                size={isTablet ? 22 : isSmallScreen ? 16 : 20}
-                color='green'
+                name='checkmark-circle' // Убрано -outline для заполненной иконки
+                size={isTablet ? 24 : isSmallScreen ? 18 : 22} // Немного увеличен размер
+                color='#4CAF50' // Изменен цвет на зеленый
               />
             ) : (
               <Ionicons
                 name='add-circle-outline'
-                size={isTablet ? 22 : isSmallScreen ? 16 : 20}
-                color='gray'
+                size={isTablet ? 24 : isSmallScreen ? 18 : 22} // Немного увеличен размер
+                color='#FFD700' // Изменен цвет на золотистый
               />
             )}
           </TouchableOpacity>
@@ -218,30 +214,21 @@ const CoinList = ({
     onEndReachedCalledDuringMomentum.current = false
   }, [])
 
-  const renderFooter = useCallback(() => {
-    if (!isLoadingMore) return null
-
-    return (
-      <View style={styles.footerContainer}>
-        <ActivityIndicator size='small' color='#0e0275' />
-        <Text style={styles.footerText}>Загрузка...</Text>
-      </View>
-    )
-  }, [isLoadingMore])
-
   const renderEmptyList = useCallback(() => {
     if (isLoadingMore || refreshing) return null
 
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>
-          {search ? "Ничего не найдено" : "Нет данных для отображения"}
-        </Text>
-        {errorMessage && !search && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{errorMessage}</Text>
-          </View>
-        )}
+        <View style={styles.emptyGradient}>
+          <Text style={styles.emptyText}>
+            {search ? "Ничего не найдено" : "Нет данных для отображения"}
+          </Text>
+          {errorMessage && !search && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            </View>
+          )}
+        </View>
       </View>
     )
   }, [search, isLoadingMore, refreshing, errorMessage])
@@ -266,8 +253,7 @@ const CoinList = ({
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
         onMomentumScrollBegin={handleMomentumScrollBegin}
-        ListFooterComponent={renderFooter}
-        ListEmptyComponent={renderEmptyList}
+        ListEmptyComponent={renderEmptyList} // ListFooterComponent удален
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -277,8 +263,9 @@ const CoinList = ({
               setRefreshing(false)
               onEndReachedCalledDuringMomentum.current = false
             }}
-            colors={["#0e0275"]}
-            tintColor='#0e0275'
+            colors={["#FFD700"]}
+            tintColor='#FFD700'
+            progressBackgroundColor='#0A0A0F'
           />
         }
         initialNumToRender={8}
@@ -305,35 +292,44 @@ const CoinList = ({
         scrollEventThrottle={16}
       />
 
-      {hasMore && !isLoadingMore && filteredData.length > 0 && !search && (
-        <View style={styles.moreDataIndicator}>
-          <Text style={styles.moreDataText}>
-            Есть еще данные. Прокрутите вниз для загрузки
-          </Text>
-        </View>
-      )}
-
+      {/* Улучшенное модальное окно успешного добавления */}
       <Modal
         transparent
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.dropdown}>
-          <TouchableOpacity style={styles.dropdownItem}>
-            <Text style={styles.dropdownText}>Added in your favorites!</Text>
-            <Ionicons style={styles.changePoint} name='paper-plane' size={30} />
-          </TouchableOpacity>
+        <View style={styles.modalOverlay}>
+          <View style={styles.successModal}>
+            <Ionicons name='checkmark-circle' size={40} color='#4CAF50' />
+            <Text style={styles.modalTitle}>Success!</Text>
+            <Text style={styles.modalText}>Coin added to favorites</Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
 
+      {/* Улучшенное модальное окно дубликата */}
       <Modal transparent visible={msgDouble} onRequestClose={() => setMsgDouble(false)}>
-        <View style={styles.dropdown}>
-          <TouchableOpacity style={styles.dropdownItem}>
-            <Text style={styles.dropdownText}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.warningModal}>
+            <Ionicons name='warning' size={40} color='#FFD700' />
+            <Text style={styles.modalTitle}>Already Added</Text>
+            <Text style={styles.modalText}>
               You already have {doubles} in your favorites!
             </Text>
-            <Ionicons style={styles.changePoint} name='warning' size={30} />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => setMsgDouble(false)}
+            >
+              <Text style={styles.modalButtonText}>Close</Text>
+              {/* Используем тот же стиль */}
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </>
