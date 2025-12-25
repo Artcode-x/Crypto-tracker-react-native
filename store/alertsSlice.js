@@ -21,6 +21,7 @@ const alertsSlice = createSlice({
         isRead: false,
         triggeredAt: null,
 
+        createdPrice: Number(action.payload.currentPrice) || 0,
         currentPrice: Number(action.payload.currentPrice) || 0,
         targetPrice: Number(action.payload.targetPrice) || 0
       }
@@ -143,6 +144,7 @@ const alertsSlice = createSlice({
       const sanitizedAlerts = alerts.map((alert) => ({
         ...alert,
 
+        createdPrice: Number(alert.createdPrice) || Number(alert.currentPrice) || 0,
         currentPrice: Number(alert.currentPrice) || 0,
         targetPrice: Number(alert.targetPrice) || 0,
 

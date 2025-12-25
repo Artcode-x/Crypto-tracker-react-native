@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { StyleSheet } from "react-native"
 import Analytics from "../Analytics/Analytics"
 import PrivacyPolicy from "../../pages/PrivacyPolicy/PrivacyPolicy"
+import Alerts from "../../pages/Alerts/Alerts"
 
 const Tab = createBottomTabNavigator()
 
@@ -52,6 +53,17 @@ export const AppRoute = () => {
             )
           }}
         />
+        <Tab.Screen
+          name='Alerts'
+          component={Alerts}
+          options={{
+            title: "Price Alerts",
+            tabBarIcon: ({ color }) => (
+              <Ionicons name='notifications' size={24} color={color} />
+            )
+          }}
+        />
+
         <Tab.Screen
           name='Analytics'
           component={Analytics}

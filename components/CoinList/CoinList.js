@@ -89,7 +89,7 @@ const CoinList = ({
       setMsgDouble(true)
       setTimeout(() => {
         setMsgDouble(false)
-      }, 1500)
+      }, 1000)
     } else {
       dispatch(setCoin(coinData))
       setModalVisible(true)
@@ -101,7 +101,7 @@ const CoinList = ({
 
       setTimeout(() => {
         setModalVisible(false)
-      }, 1500)
+      }, 1000)
     }
   }
 
@@ -303,12 +303,12 @@ const CoinList = ({
             <Ionicons name='checkmark-circle' size={40} color='#4CAF50' />
             <Text style={styles.modalTitle}>Success!</Text>
             <Text style={styles.modalText}>Coin added to favorites</Text>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.modalButton}
               onPress={() => setModalVisible(false)}
             >
               <Text style={styles.modalButtonText}>OK</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         </View>
       </Modal>
@@ -322,13 +322,13 @@ const CoinList = ({
             <Text style={styles.modalText}>
               You already have {doubles} in your favorites!
             </Text>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.modalButton}
               onPress={() => setMsgDouble(false)}
             >
               <Text style={styles.modalButtonText}>Close</Text>
               {/* Используем тот же стиль */}
-            </TouchableOpacity>
+            {/* </TouchableOpacity> */}
           </View>
         </View>
       </Modal>

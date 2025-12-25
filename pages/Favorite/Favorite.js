@@ -500,13 +500,23 @@ const Favorite = () => {
     [dispatch, notificationPermission]
   )
 
-  // Функция для сохранения алерта
   const handleSaveAlert = useCallback(
     (alertData) => {
       console.log(`Сохранение алерта: ${alertData.coinName} @ $${alertData.targetPrice}`)
 
-      // Сохраняем алерт
-      dispatch(addPriceAlert(alertData))
+      // Получаем текущую цену монеты
+      const currentCoinPrice = alertData.currentPrice || 0
+
+      // Создаем payload с currentPrice
+      const payload = {
+        ...alertData,
+        currentPrice: currentCoinPrice
+      }
+
+      console.log(`Начальная цена для прогресса: $${currentCoinPrice}`)
+
+      // Сохраняем алерт с payload
+      dispatch(addPriceAlert(payload))
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
 
       // Показываем соответствующее сообщение
@@ -527,24 +537,24 @@ const Favorite = () => {
     [dispatch, notificationPermission]
   )
 
-  // Функция для удаления алерта
-  const handleDeleteAlert = useCallback(
-    (alertId) => {
-      console.log(`🗑️ Удаление алерта: ${alertId}`)
-      dispatch(deletePriceAlert(alertId))
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    },
-    [dispatch]
-  )
+  // // Функция для удаления алерта
+  // const handleDeleteAlert = useCallback(
+  //   (alertId) => {
+  //     console.log(`Удаление алерта: ${alertId}`)
+  //     dispatch(deletePriceAlert(alertId))
+  //     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+  //   },
+  //   [dispatch]
+  // )
 
-  // Функция для отметки алерта как прочитанного
-  const handleMarkAlertAsRead = useCallback(
-    (alertId) => {
-      console.log(`Отметка алерта как прочитанного: ${alertId}`)
-      dispatch(markAlertAsRead(alertId))
-    },
-    [dispatch]
-  )
+  // // Функция для отметки алерта как прочитанного
+  // const handleMarkAlertAsRead = useCallback(
+  //   (alertId) => {
+  //     console.log(`Отметка алерта как прочитанного: ${alertId}`)
+  //     dispatch(markAlertAsRead(alertId))
+  //   },
+  //   [dispatch]
+  // )
 
   // Удаление монеты из избранного
   const removeFromFav = useCallback(
