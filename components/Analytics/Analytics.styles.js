@@ -1,12 +1,29 @@
-import { Platform, StyleSheet } from "react-native"
+import { Platform, StyleSheet, Dimensions } from "react-native"
 import { RFPercentage, RFValue } from "react-native-responsive-fontsize"
 
+const { width: SCREEN_WIDTH } = Dimensions.get("window")
+const TAB_BAR_HEIGHT = 60 // Высота таб-бара
+const BOTTOM_PADDING = TAB_BAR_HEIGHT + 20 // Дополнительный отступ для безопасности
+
 export const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#0A0A0F",
+  safeAreaContainer: {
     flex: 1,
+    backgroundColor: "#0A0A0F"
+  },
+
+  container: {
+    flex: 1
+  },
+
+  scrollContent: {
     paddingHorizontal: 12,
-    paddingTop: 12
+    paddingTop: 12,
+    paddingBottom: BOTTOM_PADDING
+  },
+
+  bottomSpacer: {
+    height: 20,
+    width: "100%"
   },
 
   loadingContainer: {
@@ -234,7 +251,7 @@ export const styles = StyleSheet.create({
   },
 
   sectionContent: {
-    padding: Platform.OS === "android" ? 12 : 16 // Меньше паддинг на Android
+    padding: Platform.OS === "android" ? 12 : 16 // Исправлено с 2/4 на 12/16
   },
 
   // Быстрый обзор
@@ -302,118 +319,6 @@ export const styles = StyleSheet.create({
     width: 1,
     height: 30,
     backgroundColor: "rgba(255, 255, 255, 0.1)"
-  },
-
-  // ========== ОПТИМИЗИРОВАННЫЙ БЛОК РАСПРЕДЕЛЕНИЯ АКТИВОВ ==========
-  allocationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: Platform.OS === "android" ? 12 : 14,
-    paddingBottom: Platform.OS === "android" ? 12 : 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.1)",
-    minHeight: Platform.OS === "android" ? 44 : 48 // Фиксированная минимальная высота
-  },
-
-  // ЛЕВАЯ ЧАСТЬ: Название крипты и номер
-  assetInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: Platform.OS === "android" ? 0.4 : 0.45, // Меньше места на Android
-    minWidth: 0,
-    flexShrink: 1
-  },
-
-  assetRank: {
-    color: "rgba(255, 255, 255, 0.4)",
-    fontSize: Platform.OS === "android" ? RFValue(10) : RFValue(11),
-    width: Platform.OS === "android" ? 18 : 22,
-    textAlign: "center",
-    marginRight: Platform.OS === "android" ? 2 : 4
-  },
-
-  assetNameContainer: {
-    flex: 1,
-    minWidth: 0,
-    flexShrink: 1
-  },
-
-  assetName: {
-    color: "#FFFFFF",
-    fontSize: Platform.OS === "android" ? RFValue(10) : RFValue(11),
-    fontWeight: "500",
-    flexShrink: 1,
-    includeFontPadding: false, // Убирает лишние отступы на Android
-    textAlignVertical: "center"
-  },
-
-  assetSymbol: {
-    color: "rgba(255, 255, 255, 0.5)",
-    fontSize: Platform.OS === "android" ? RFValue(8) : RFValue(9),
-    marginTop: Platform.OS === "android" ? 0 : 1,
-    includeFontPadding: false,
-    textAlignVertical: "center"
-  },
-
-  // Центр: Шкала с процентом
-  allocationInfo: {
-    flex: Platform.OS === "android" ? 0.35 : 0.4, // Больше места для шкалы
-    marginHorizontal: Platform.OS === "android" ? 4 : 6,
-    minWidth: 0,
-    alignItems: "center"
-  },
-
-  allocationBarContainer: {
-    width: "100%",
-    height: Platform.OS === "android" ? 4 : 5,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: Platform.OS === "android" ? 2 : 2.5,
-    overflow: "hidden",
-    marginBottom: Platform.OS === "android" ? 2 : 3
-  },
-
-  allocationBar: {
-    height: "100%",
-    borderRadius: Platform.OS === "android" ? 2 : 2.5
-  },
-
-  allocationPercent: {
-    color: "rgba(255, 255, 255, 0.7)",
-    fontSize: Platform.OS === "android" ? RFValue(8) : RFValue(9),
-    textAlign: "center",
-    includeFontPadding: false
-  },
-
-  // ПРАВАЯ ЧАСТЬ: Цена и изменение
-  assetMetrics: {
-    flex: Platform.OS === "android" ? 0.25 : 0.3,
-    alignItems: "flex-end",
-    minWidth: 0,
-    flexShrink: 1
-  },
-
-  assetValue: {
-    color: "#FFFFFF",
-    fontSize: Platform.OS === "android" ? RFValue(10) : RFValue(11),
-    fontWeight: "600",
-    marginBottom: Platform.OS === "android" ? 1 : 2,
-    textAlign: "right",
-    flexShrink: 1,
-    includeFontPadding: false,
-    textAlignVertical: "center"
-  },
-
-  assetChange: {
-    fontSize: Platform.OS === "android" ? RFValue(8) : RFValue(9),
-    fontWeight: "600",
-    textAlign: "right",
-    includeFontPadding: false,
-    textAlignVertical: "center"
-  },
-
-  dataIndicator: {
-    marginLeft: Platform.OS === "android" ? 2 : 4
   },
 
   // Анализ риска
@@ -484,11 +389,11 @@ export const styles = StyleSheet.create({
   recommendationCard: {
     backgroundColor: "rgba(212, 175, 55, 0.1)",
     borderRadius: 16,
-    // marginBottom: 35,
-    marginBottom: 66,
+    marginBottom: 0,
     borderWidth: 1,
     borderColor: "rgba(212, 175, 55, 0.2)",
-    overflow: "hidden"
+    overflow: "hidden",
+    minHeight: 160
   },
 
   recommendationHeader: {
@@ -511,15 +416,11 @@ export const styles = StyleSheet.create({
 
   tipItem: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    // marginBottom: 12,
-    // paddingBottom: 12,
+    alignItems: "center",
     marginBottom: 6,
     paddingBottom: 6,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(212, 175, 55, 0.1)",
-
-    alignItems: "center"
+    borderBottomColor: "rgba(212, 175, 55, 0.1)"
   },
 
   tipText: {
@@ -535,7 +436,7 @@ export const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: "rgba(26, 26, 26, 0.8)",
     borderRadius: 12,
-    marginBottom: 20,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: "rgba(255, 215, 0, 0.1)"
   },
@@ -545,5 +446,201 @@ export const styles = StyleSheet.create({
     fontSize: RFValue(10),
     textAlign: "center",
     lineHeight: 16
+  },
+
+  // ========== СТИЛИ ДЛЯ ПРЕМИАЛЬНОЙ ДИАГРАММЫ С ТЕКСТАМИ НА СЕГМЕНТАХ ==========
+  premiumChartSection: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 0,
+    position: "relative"
+  },
+
+  // СТИЛИ ДЛЯ ОБЪЕДИНЕННОЙ ЛЕГЕНДЫ
+  combinedLegendContainer: {
+    marginTop: -10,
+    backgroundColor: "rgba(255, 255, 255, 0.03)",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.05)"
+  },
+
+  combinedLegendTitle: {
+    color: "#FFFFFF",
+    fontSize: RFValue(14),
+    fontWeight: "600",
+    marginBottom: 8,
+    textAlign: "center",
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 215, 0, 0.2)"
+  },
+
+  // Стили для элементов легенды
+  legendItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 255, 255, 0.05)"
+  },
+
+  legendLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1
+  },
+
+  legendColor: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)"
+  },
+
+  legendText: {
+    flex: 1
+  },
+
+  legendSymbol: {
+    color: "#FFFFFF",
+    fontSize: RFValue(13),
+    fontWeight: "600"
+  },
+
+  legendName: {
+    color: "rgba(255, 255, 255, 0.6)",
+    fontSize: RFValue(11),
+    marginTop: 2
+  },
+
+  legendRight: {
+    alignItems: "flex-end"
+  },
+
+  legendAllocation: {
+    color: "#FFD700",
+    fontSize: RFValue(14),
+    fontWeight: "700",
+    marginBottom: 2
+  },
+
+  legendChange: {
+    fontSize: RFValue(11),
+    fontWeight: "600"
+  },
+
+  // Стили для маленьких аллокаций внутри легенды
+  smallAllocationsSection: {
+    marginTop: 0,
+    marginBottom: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.04)",
+    borderRadius: 10,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255, 215, 0, 0.15)"
+  },
+
+  smallAllocationsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    backgroundColor: "rgba(255, 215, 0, 0.08)"
+  },
+
+  smallAllocationsTitle: {
+    color: "#FFD700",
+    fontSize: RFValue(12),
+    fontWeight: "600",
+    marginLeft: 8,
+    flex: 1
+  },
+
+  smallAllocationsBadge: {
+    backgroundColor: "rgba(255, 215, 0, 0.2)",
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    minWidth: 24,
+    alignItems: "center"
+  },
+
+  smallAllocationsBadgeText: {
+    color: "#FFD700",
+    fontSize: RFValue(10),
+    fontWeight: "700"
+  },
+
+  smallAllocationsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 8,
+    padding: 12,
+    paddingTop: 8
+  },
+
+  smallAllocationItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    width: "48%",
+    marginBottom: 8
+  },
+
+  smallAllocationColor: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 8,
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.3)"
+  },
+
+  smallAllocationSymbol: {
+    color: "#FFFFFF",
+    fontSize: RFValue(10),
+    fontWeight: "600",
+    flex: 1,
+    marginRight: 4
+  },
+
+  smallAllocationPercent: {
+    color: "#FFD700",
+    fontSize: RFValue(9),
+    fontWeight: "700"
+  },
+
+  smallAllocationsHint: {
+    color: "rgba(255, 255, 255, 0.5)",
+    fontSize: RFValue(9),
+    textAlign: "center",
+    padding: 8,
+    fontStyle: "italic",
+    backgroundColor: "rgba(0, 0, 0, 0.1)"
+  },
+
+  emptyLegend: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderRadius: 12,
+    marginTop: 10
+  },
+
+  emptyLegendText: {
+    color: "rgba(255, 255, 255, 0.6)",
+    fontSize: RFValue(12),
+    textAlign: "center"
   }
 })
