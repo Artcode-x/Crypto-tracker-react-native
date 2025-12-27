@@ -13,11 +13,15 @@ import { LinearGradient } from "expo-linear-gradient"
 import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons"
 import { coinSelector, userAssetsSelector } from "../../store/toolkitSelectors"
 import { FetchCoinHistoricalData } from "../../components/Api/Api"
-import AssetAllocationChart from "./AssetAllocationChart/AssetAllocationChart"
+import AssetAllocationChart from "./components/AllocationSection/AssetAllocationChart/AssetAllocationChart"
 import {
   formatCurrency,
   generateProfessionalPalette
-} from "./AssetAllocationChart/ChartUtils/ChartUtils"
+} from "./components/AllocationSection/ChartUtils/ChartUtils"
+import AllocationList from "./components/AllocationSection/AllocationList/AllocationList"
+import RecommendSection from "./components/RecommendSection/RecommendSection"
+import RiskSection from "./components/RiskSection/RiskSection"
+import OverviewSection from "./components/OverviewSection/OverviewSection"
 
 const Analytics = () => {
   const coinData = useSelector(coinSelector)
@@ -25,7 +29,7 @@ const Analytics = () => {
 
   const [loading, setLoading] = useState(true)
   const [timeframe, setTimeframe] = useState("24h")
-  const [expandedSection, setExpandedSection] = useState("overview")
+  const [expandedSection, setExpandedSection] = useState("overview") // состояние, управляющее открытием/закрытием секций
   const [historicalChanges, setHistoricalChanges] = useState({})
   const [isCalculating, setIsCalculating] = useState(false)
   const [lastCalculationTime, setLastCalculationTime] = useState({})
@@ -436,13 +440,6 @@ const Analytics = () => {
     )
   }
 
-  // Фильтруем большие и маленькие сегменты для легенды
-  const largeAssets = portfolioMetrics.assets.filter(
-    (asset) => (asset.allocation / 100) * 360 >= 5
-  )
-  const smallAssets = portfolioMetrics.assets.filter(
-    (asset) => (asset.allocation / 100) * 360 < 5
-  )
   const colors = generateProfessionalPalette(portfolioMetrics.assets.length)
 
   return (
@@ -565,108 +562,14 @@ const Analytics = () => {
             </Text>
           )}
         </LinearGradient>
-
         {/* Секция обзора */}
-        <TouchableOpacity
-          onPress={() =>
-            setExpandedSection(expandedSection === "overview" ? null : "overview")
-          }
-          style={styles.sectionCard}
-        >
-          <View style={styles.sectionHeader}>
-            <MaterialCommunityIcons name='chart-bar' size={20} color='#FFD700' />
-            <Text style={styles.sectionTitle}>Quick Overview</Text>
-            <Ionicons
-              name={expandedSection === "overview" ? "chevron-up" : "chevron-down"}
-              size={20}
-              color='#FFD700'
-            />
-          </View>
-
-          {expandedSection === "overview" && (
-            <View style={styles.sectionContent}>
-              <View style={styles.overviewGrid}>
-                <View style={styles.overviewItem}>
-                  <MaterialCommunityIcons name='crown' size={16} color='#FFD700' />
-                  <Text style={styles.overviewLabel}>Best Performer</Text>
-                  <Text style={styles.overviewValue} numberOfLines={1}>
-                    {portfolioMetrics.bestPerformer?.symbol || "N/A"}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.overviewChange,
-                      {
-                        color: getColorForValue(
-                          portfolioMetrics.bestPerformer?.priceChange
-                        )
-                      }
-                    ]}
-                  >
-                    {portfolioMetrics.bestPerformer?.priceChange >= 0 ? "+" : ""}
-                    {portfolioMetrics.bestPerformer?.priceChange?.toFixed(2)}%
-                    {!portfolioMetrics.bestPerformer?.hasData &&
-                      timeframe !== "24h" &&
-                      "*"}
-                  </Text>
-                </View>
-
-                <View style={styles.overviewItem}>
-                  <MaterialCommunityIcons
-                    name='alert-octagon'
-                    size={16}
-                    color='#FF5252'
-                  />
-                  <Text style={styles.overviewLabel}>Worst Performer</Text>
-                  <Text style={styles.overviewValue} numberOfLines={1}>
-                    {portfolioMetrics.worstPerformer?.symbol || "N/A"}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.overviewChange,
-                      {
-                        color: getColorForValue(
-                          portfolioMetrics.worstPerformer?.priceChange
-                        )
-                      }
-                    ]}
-                  >
-                    {portfolioMetrics.worstPerformer?.priceChange >= 0 ? "+" : ""}
-                    {portfolioMetrics.worstPerformer?.priceChange?.toFixed(2)}%
-                    {!portfolioMetrics.worstPerformer?.hasData &&
-                      timeframe !== "24h" &&
-                      "*"}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>{portfolioMetrics.totalAssets}</Text>
-                  <Text style={styles.statLabel}>Assets</Text>
-                </View>
-
-                <View style={styles.statDivider} />
-
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>
-                    {Math.round(portfolioMetrics.allocationAnalysis.top3)}%
-                  </Text>
-                  <Text style={styles.statLabel}>Top 3</Text>
-                </View>
-
-                <View style={styles.statDivider} />
-
-                <View style={styles.statItem}>
-                  <Text style={styles.statNumber}>
-                    {portfolioMetrics.riskMetrics.diversificationScore}
-                  </Text>
-                  <Text style={styles.statLabel}>Diversification</Text>
-                </View>
-              </View>
-            </View>
-          )}
-        </TouchableOpacity>
-
+        <OverviewSection
+          expandedSection={expandedSection}
+          setExpandedSection={setExpandedSection}
+          portfolioMetrics={portfolioMetrics}
+          timeframe={timeframe}
+          getColorForValue={getColorForValue}
+        />
         {/* Секция распределения активов  */}
         <TouchableOpacity
           onPress={() =>
@@ -693,110 +596,15 @@ const Analytics = () => {
 
               {/* Объединенная легенда с маленькими аллокациями внутри */}
               {portfolioMetrics.assets && portfolioMetrics.assets.length > 0 ? (
-                <View style={styles.combinedLegendContainer}>
-                  <Text style={styles.combinedLegendTitle}>Allocation Details</Text>
-
-                  {/* Маленькие аллокации (если есть) */}
-                  {smallAssets.length > 0 && (
-                    <View style={styles.smallAllocationsSection}>
-                      <TouchableOpacity
-                        style={styles.smallAllocationsHeader}
-                        onPress={() => setShowSmallAllocations(!showSmallAllocations)}
-                      >
-                        <MaterialCommunityIcons
-                          name={showSmallAllocations ? "chevron-up" : "chevron-down"}
-                          size={16}
-                          color='#FFD700'
-                        />
-                        <Text style={styles.smallAllocationsTitle}>
-                          Small Allocations ({smallAssets.length})
-                        </Text>
-                        <View style={styles.smallAllocationsBadge}>
-                          <Text style={styles.smallAllocationsBadgeText}>
-                            {smallAssets.length}
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-
-                      {showSmallAllocations && (
-                        <View style={styles.smallAllocationsGrid}>
-                          {smallAssets.map((asset, index) => {
-                            const colorIndex = portfolioMetrics.assets.findIndex(
-                              (a) => a.id === asset.id
-                            )
-                            const color = colors[colorIndex]
-
-                            return (
-                              <View key={asset.id} style={styles.smallAllocationItem}>
-                                <View
-                                  style={[
-                                    styles.smallAllocationColor,
-                                    { backgroundColor: color }
-                                  ]}
-                                />
-                                <Text
-                                  style={styles.smallAllocationSymbol}
-                                  numberOfLines={1}
-                                >
-                                  {asset.symbol?.toUpperCase()}
-                                </Text>
-                                <Text style={styles.smallAllocationPercent}>
-                                  {asset.allocation.toFixed(1)}%
-                                </Text>
-                              </View>
-                            )
-                          })}
-                        </View>
-                      )}
-
-                      {!showSmallAllocations && smallAssets.length > 4 && (
-                        <Text style={styles.smallAllocationsHint}>
-                          Tap to expand {smallAssets.length} small allocations
-                        </Text>
-                      )}
-                    </View>
-                  )}
-                  {/* Большие аллокации */}
-                  {largeAssets.map((asset, index) => {
-                    const colorIndex = portfolioMetrics.assets.findIndex(
-                      (a) => a.id === asset.id
-                    )
-                    const color = colors[colorIndex]
-
-                    return (
-                      <View key={asset.id} style={styles.legendItem}>
-                        <View style={styles.legendLeft}>
-                          <View
-                            style={[styles.legendColor, { backgroundColor: color }]}
-                          />
-                          <View style={styles.legendText}>
-                            <Text style={styles.legendSymbol}>
-                              {asset.symbol?.toUpperCase()}
-                            </Text>
-                            <Text style={styles.legendName} numberOfLines={1}>
-                              {asset.name}
-                            </Text>
-                          </View>
-                        </View>
-
-                        <View style={styles.legendRight}>
-                          <Text style={styles.legendAllocation}>
-                            {asset.allocation.toFixed(1)}%
-                          </Text>
-                          <Text
-                            style={[
-                              styles.legendChange,
-                              { color: getColorForValue(asset.priceChange) }
-                            ]}
-                          >
-                            {asset.priceChange >= 0 ? "+" : ""}
-                            {asset.priceChange.toFixed(2)}%
-                          </Text>
-                        </View>
-                      </View>
-                    )
-                  })}
-                </View>
+                <AllocationList
+                  assets={portfolioMetrics.assets} // [{BTC: 35%}, {ETH: 28%}, {SOL: 15%}]
+                  colors={colors}
+                  showSmallAllocations={showSmallAllocations} // true/false
+                  onToggleSmallAllocations={() =>
+                    setShowSmallAllocations(!showSmallAllocations)
+                  }
+                  getColorForValue={getColorForValue}
+                />
               ) : (
                 <View style={styles.emptyLegend}>
                   <Text style={styles.emptyLegendText}>
@@ -807,187 +615,16 @@ const Analytics = () => {
             </View>
           )}
         </TouchableOpacity>
-
         {/* Секция риска */}
-        <TouchableOpacity
-          onPress={() => setExpandedSection(expandedSection === "risk" ? null : "risk")}
-          style={styles.sectionCard}
-        >
-          <View style={styles.sectionHeader}>
-            <MaterialCommunityIcons name='shield' size={20} color='#FFD700' />
-            <Text style={styles.sectionTitle}>Risk Analysis</Text>
-            <Ionicons
-              name={expandedSection === "risk" ? "chevron-up" : "chevron-down"}
-              size={20}
-              color='#FFD700'
-            />
-          </View>
-
-          {expandedSection === "risk" && (
-            <View style={styles.sectionContent}>
-              <View style={styles.riskMetrics}>
-                <View style={styles.riskItem}>
-                  <View style={styles.riskHeader}>
-                    <MaterialCommunityIcons
-                      name='chart-bell-curve'
-                      size={16}
-                      color='#FF5252'
-                    />
-                    <Text style={styles.riskLabel}>Portfolio Volatility</Text>
-                  </View>
-                  <View style={styles.riskValueContainer}>
-                    <Text style={styles.riskValue}>
-                      {portfolioMetrics.riskMetrics.volatility.toFixed(1)}%
-                      {!portfolioMetrics.allDataLoaded && timeframe !== "24h" && "*"}
-                    </Text>
-                    <View style={styles.riskIndicator}>
-                      <View
-                        style={[
-                          styles.riskLevel,
-                          {
-                            width: `${Math.min(
-                              portfolioMetrics.riskMetrics.volatility,
-                              100
-                            )}%`,
-                            backgroundColor:
-                              portfolioMetrics.riskMetrics.volatility > 30
-                                ? "#FF5252"
-                                : portfolioMetrics.riskMetrics.volatility > 15
-                                ? "#FFD700"
-                                : "#4CAF50"
-                          }
-                        ]}
-                      />
-                    </View>
-                    <Text style={styles.riskDescription}>
-                      Average price swing of your assets
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.riskItem}>
-                  <View style={styles.riskHeader}>
-                    <MaterialCommunityIcons name='diversify' size={16} color='#4CAF50' />
-                    <Text style={styles.riskLabel}>Diversification Score</Text>
-                  </View>
-                  <View style={styles.riskValueContainer}>
-                    <Text style={styles.riskValue}>
-                      {portfolioMetrics.riskMetrics.diversificationScore}/100
-                    </Text>
-                    <View style={styles.riskIndicator}>
-                      <View
-                        style={[
-                          styles.riskLevel,
-                          {
-                            width: `${portfolioMetrics.riskMetrics.diversificationScore}%`,
-                            backgroundColor:
-                              portfolioMetrics.riskMetrics.diversificationScore > 70
-                                ? "#4CAF50"
-                                : portfolioMetrics.riskMetrics.diversificationScore > 40
-                                ? "#FFD700"
-                                : "#FF5252"
-                          }
-                        ]}
-                      />
-                    </View>
-                    <Text style={styles.riskDescription}>
-                      How well your portfolio is spread
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.riskItem}>
-                  <View style={styles.riskHeader}>
-                    <MaterialCommunityIcons
-                      name='target'
-                      size={16}
-                      color={getColorForValue(
-                        portfolioMetrics.allocationAnalysis.concentration,
-                        false
-                      )}
-                    />
-                    <Text style={styles.riskLabel}>Top Asset Concentration</Text>
-                  </View>
-                  <View style={styles.riskValueContainer}>
-                    <Text style={styles.riskValue}>
-                      {portfolioMetrics.allocationAnalysis.concentration.toFixed(1)}%
-                    </Text>
-                    <Text style={styles.riskAdvice}>
-                      {portfolioMetrics.allocationAnalysis.concentration > 40
-                        ? "⚠️ High concentration - consider diversifying"
-                        : portfolioMetrics.allocationAnalysis.concentration > 25
-                        ? "⚖️ Moderately concentrated"
-                        : "✅ Well diversified"}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          )}
-        </TouchableOpacity>
-
+        <RiskSection
+          expandedSection={expandedSection}
+          setExpandedSection={setExpandedSection}
+          portfolioMetrics={portfolioMetrics}
+          timeframe={timeframe}
+          getColorForValue={getColorForValue}
+        />
         {/* Секция рекомендаций */}
-        <View style={styles.recommendationCard}>
-          <View style={styles.recommendationHeader}>
-            <MaterialCommunityIcons name='lightbulb' size={20} color='#FFD700' />
-            <Text style={styles.recommendationTitle}>Insights & Tips</Text>
-          </View>
-
-          <View style={styles.recommendationContent}>
-            {portfolioMetrics.totalAssets <= 2 && (
-              <View style={styles.tipItem}>
-                <MaterialCommunityIcons name='plus-circle' size={16} color='#4CAF50' />
-                <Text style={styles.tipText}>
-                  Consider adding more assets to improve diversification
-                </Text>
-              </View>
-            )}
-
-            {portfolioMetrics.allocationAnalysis.concentration > 40 && (
-              <View style={styles.tipItem}>
-                <MaterialCommunityIcons name='scale-balance' size={16} color='#FF5252' />
-                <Text style={styles.tipText}>
-                  High concentration in top asset. Consider rebalancing
-                </Text>
-              </View>
-            )}
-
-            {portfolioMetrics.portfolioChange < -3 && (
-              <View style={styles.tipItem}>
-                <MaterialCommunityIcons name='alert' size={16} color='#FFD700' />
-                <Text style={styles.tipText}>
-                  Market is down. Could be a buying opportunity for strong assets
-                </Text>
-              </View>
-            )}
-
-            {timeframe !== "24h" && !portfolioMetrics.allDataLoaded && (
-              <View style={styles.tipItem}>
-                <MaterialCommunityIcons name='clock-outline' size={16} color='#2196F3' />
-                <Text style={styles.tipText}>
-                  Historical data is still loading. Check back in a moment.
-                </Text>
-              </View>
-            )}
-
-            {portfolioMetrics.hasSimulatedData && (
-              <View style={styles.tipItem}>
-                <MaterialCommunityIcons name='robot' size={16} color='#9C27B0' />
-                <Text style={styles.tipText}>
-                  Using simulated data for some assets. Real data may vary.
-                </Text>
-              </View>
-            )}
-
-            <View style={styles.tipItem}>
-              <MaterialCommunityIcons name='chart-line' size={16} color='#4CAF50' />
-              <Text style={styles.tipText}>
-                Track your portfolio regularly and rebalance quarterly
-              </Text>
-            </View>
-          </View>
-        </View>
-
+        <RecommendSection portfolioMetrics={portfolioMetrics} timeframe={timeframe} />
         {/* Футер с информацией */}
         {(!portfolioMetrics.allDataLoaded || portfolioMetrics.hasSimulatedData) && (
           <View style={styles.footer}>
@@ -1001,7 +638,6 @@ const Analytics = () => {
             </Text>
           </View>
         )}
-
         {/* Пустой блок для отступа снизу */}
         <View style={styles.bottomSpacer} />
       </ScrollView>

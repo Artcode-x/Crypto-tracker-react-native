@@ -6,7 +6,7 @@ import {
   generateProfessionalPalette,
   getContrastColor,
   getLabelPosition
-} from "./ChartUtils/ChartUtils"
+} from "../ChartUtils/ChartUtils"
 import Svg, {
   G,
   Path,
