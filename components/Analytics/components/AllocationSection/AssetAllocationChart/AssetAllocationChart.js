@@ -2,7 +2,6 @@ import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { Text, View } from "react-native"
 import {
   createDonutSegment,
-  formatCurrency,
   generateProfessionalPalette,
   getContrastColor,
   getLabelPosition
@@ -17,6 +16,7 @@ import Svg, {
   Text as SvgText
 } from "react-native-svg"
 import { styles } from "./AssetAllocationChart.styles"
+import { formatCurrency } from "../../../../../helpers/helpers"
 
 const AssetAllocationChart = ({ portfolioMetrics }) => {
   if (!portfolioMetrics || portfolioMetrics.assets.length === 0) {
