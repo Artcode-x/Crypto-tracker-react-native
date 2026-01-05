@@ -1,10 +1,11 @@
-/* eslint-disable no-param-reassign */
 import { createSlice } from "@reduxjs/toolkit"
 
 const initialState = {
   alerts: [],
   lastCheckTime: null,
-  unreadCount: 0
+  unreadCount: 0,
+  serverSyncStatus: "idle", // idle, syncing, synced, error
+  lastServerSync: null
 }
 
 const alertsSlice = createSlice({
@@ -15,11 +16,13 @@ const alertsSlice = createSlice({
     addPriceAlert: (state, action) => {
       const newAlert = {
         ...action.payload,
-        id: Date.now().toString(),
+        id: action.payload.id || Date.now().toString(),
         createdAt: new Date().toISOString(),
         isActive: true,
         isRead: false,
         triggeredAt: null,
+        serverId: null,
+        syncStatus: "local",
 
         createdPrice: Number(action.payload.currentPrice) || 0,
         currentPrice: Number(action.payload.currentPrice) || 0,
@@ -110,6 +113,47 @@ const alertsSlice = createSlice({
       }
     },
 
+    // Активировать алерт с сервера
+    triggerAlertFromServer: (state, action) => {
+      const { alertId, currentPrice, triggeredAt } = action.payload
+
+      // Поиск алерта по ID
+      const alert = state.alerts.find((a) => a.id === alertId)
+
+      if (alert) {
+        // Если алерт уже есть локально
+        if (alert.isActive) {
+          alert.triggeredAt = triggeredAt || new Date().toISOString()
+          alert.currentPrice = Number(currentPrice) || 0
+          alert.isActive = false
+          alert.isRead = false
+          alert.syncStatus = "server_triggered"
+          state.unreadCount = state.unreadCount + 1
+        }
+      } else {
+        // Если алерта нет локально, создаем его как сработавший
+        const newAlert = {
+          id: alertId,
+          coinId: action.payload.coinId,
+          coinName: action.payload.coinName,
+          coinSymbol: action.payload.coinSymbol,
+          targetPrice: Number(action.payload.targetPrice) || 0,
+          currentPrice: Number(currentPrice) || 0,
+          condition: action.payload.condition,
+          isActive: false,
+          isRead: false,
+          triggeredAt: triggeredAt || new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          createdPrice: Number(currentPrice) || 0,
+          syncStatus: "server_only",
+          source: "server"
+        }
+
+        state.alerts.push(newAlert)
+        state.unreadCount = state.unreadCount + 1
+      }
+    },
+
     // Очистить все алерты
     clearAllAlerts: (state) => {
       state.alerts = []
@@ -166,6 +210,31 @@ const alertsSlice = createSlice({
       state.alerts = sanitizedAlerts
       state.lastCheckTime = typeof lastCheckTime === "string" ? lastCheckTime : null
       state.unreadCount = Number(unreadCount) || 0
+    },
+
+    // Обновление статуса синхронизации с сервером
+    updateServerSyncStatus: (state, action) => {
+      state.serverSyncStatus = action.payload.status
+      if (action.payload.timestamp) {
+        state.lastServerSync = action.payload.timestamp
+      }
+    },
+
+    // Обновление serverId для алерта
+    updateAlertServerId: (state, action) => {
+      const { alertId, serverId } = action.payload
+      const alert = state.alerts.find((a) => a.id === alertId)
+
+      if (alert) {
+        alert.serverId = serverId
+        alert.syncStatus = "synced"
+      }
+    },
+
+    // Удалить алерты, синхронизированные с сервером
+    removeSyncedAlerts: (state) => {
+      state.alerts = state.alerts.filter((alert) => alert.syncStatus !== "synced")
+      state.unreadCount = state.alerts.filter((alert) => !alert.isRead).length
     }
   }
 })
@@ -179,10 +248,14 @@ export const {
   setLastAlertCheck,
   updateAlertPrices,
   triggerAlert,
+  triggerAlertFromServer,
   clearAllAlerts,
   clearTriggeredAlerts,
   restoreAlert,
-  loadAlerts
+  loadAlerts,
+  updateServerSyncStatus,
+  updateAlertServerId,
+  removeSyncedAlerts
 } = alertsSlice.actions
 
 export default alertsSlice.reducer

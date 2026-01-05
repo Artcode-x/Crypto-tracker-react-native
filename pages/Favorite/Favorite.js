@@ -6,13 +6,18 @@ import {
   Dimensions,
   TouchableOpacity,
   Alert,
-  Platform
+  Platform,
+  Linking,
+  AppState
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import * as Haptics from "expo-haptics"
 import * as Notifications from "expo-notifications"
 import { useDispatch, useSelector } from "react-redux"
+
+import Constants from "expo-constants"
+import { Clipboard } from "react-native"
 import {
   coinSelector,
   daysSelector,
@@ -23,15 +28,19 @@ import {
   unreadAlertsCountSelector
 } from "../../store/alertsSelectors"
 import { removeCoin, updateUserAsset } from "../../store/reducersSlice"
-import { addPriceAlert, deletePriceAlert, markAlertAsRead } from "../../store/alertsSlice"
+import {
+  addPriceAlert,
+  deletePriceAlert,
+  markAlertAsRead,
+  triggerAlertFromServer
+} from "../../store/alertsSlice"
 import { styles } from "./Favorite.styles"
 import ModalFavorite from "./ModalChart/ModalFavorite"
 import AlertModal from "../../components/Alerts/AlertModal/AlertModal"
-
 import { smartFormatNumber } from "../../helpers/helpers"
 import { useFavoriteUpdate } from "../../hooks/useFavoriteUpdate"
-import { useAppState } from "../../hooks/useAppState"
 import NotificationService from "../../services/NotificationService"
+import ServerSyncService from "../../services/ServerSyncService"
 import AlertManager from "../../services/AlertManager"
 import { useAlertChecker } from "../../hooks/useAlertChecker"
 import EmptyState from "./FavoriteComponents/EmptyState/EmptyState"
@@ -60,10 +69,13 @@ const Favorite = () => {
   const [lastUpdateTime, setLastUpdateTime] = useState(null)
   const [isUpdating, setIsUpdating] = useState(false)
 
-  // Состояния для алертов
+  // Состояния для алертов и серверной синхронизации
   const [alertModalVisible, setAlertModalVisible] = useState(false)
   const [selectedCoinForAlert, setSelectedCoinForAlert] = useState(null)
   const [notificationPermission, setNotificationPermission] = useState(false)
+  const [fcmToken, setFcmToken] = useState(null)
+  const [appState, setAppState] = useState(AppState.currentState)
+  const [serverStatus, setServerStatus] = useState(null)
 
   const amountInputRef = useRef("")
 
@@ -73,31 +85,137 @@ const Favorite = () => {
   // Хук для периодической проверки алертов
   useAlertChecker(coinData, 60000)
 
-  // Инициализация уведомлений - только проверка статуса
+  // Мониторинг состояния приложения
   useEffect(() => {
-    const checkNotificationPermission = async () => {
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      console.log(`Состояние приложения: ${appState} → ${nextAppState}`)
+      setAppState(nextAppState)
+
+      // Обновляем состояние на сервере
+      if (fcmToken) {
+        ServerSyncService.updateAppStateOnServer(nextAppState)
+      }
+
+      if (nextAppState === "active") {
+        // Приложение вернулось на передний план
+        console.log("Приложение активно, проверяем алерты")
+
+        // Проверяем серверную доступность
+        checkServerAvailability()
+
+        // Проверяем алерты
+        if (coinData.length > 0 && priceAlerts.length > 0) {
+          AlertManager.checkAlerts(
+            priceAlerts.filter((a) => a.isActive && !a.triggeredAt),
+            coinData
+          )
+        }
+
+        // Обновляем цены
+        handleManualUpdate()
+      } else if (nextAppState === "background" || nextAppState === "inactive") {
+        // Приложение сворачивается - синхронизируем с сервером
+        if (fcmToken && priceAlerts.length > 0) {
+          console.log("Синхронизация алертов с сервером...")
+          ServerSyncService.syncAlertsWithServer(priceAlerts)
+        }
+      }
+    })
+
+    return () => {
+      subscription.remove()
+    }
+  }, [appState, fcmToken, coinData, priceAlerts])
+
+  const checkServerAvailability = useCallback(async () => {
+    try {
+      const status = ServerSyncService.getStatus()
+      setServerStatus(status)
+
+      if (!status.serverAvailable) {
+        await ServerSyncService.checkServerAvailability()
+        const updatedStatus = ServerSyncService.getStatus()
+        setServerStatus(updatedStatus)
+      }
+    } catch (error) {
+      console.warn("Ошибка проверки сервера:", error)
+    }
+  }, [])
+
+  // Инициализация уведомлений и FCM
+
+  useEffect(() => {
+    const initializeNotifications = async () => {
       try {
-        const { granted } = await Notifications.getPermissionsAsync()
+        // 1. Проверяем текущие разрешения
+        const { granted, status } = await Notifications.getPermissionsAsync()
+        console.log(`Текущий статус уведомлений: ${status}, granted: ${granted}`)
+
         setNotificationPermission(granted)
-        console.log(
-          `Текущий статус уведомлений: ${granted ? "Разрешено" : "Не разрешено"}`
-        )
 
         if (granted) {
+          // 2. Инициализируем AlertManager
           AlertManager.initialize(dispatch)
 
+          // 3. Регистрируем обработчики уведомлений
           const subscriptions = NotificationService.registerNotificationHandlers(
-            (notification) => {
-              console.log("Уведомление получено:", notification.request.content.data)
+            async (notification) => {
+              try {
+                if (!notification?.request?.content?.data) return
+                const data = notification.request.content.data
+                if (data?.type === "price-alert" && data?.alertId) {
+                  dispatch(markAlertAsRead(data.alertId))
+                }
+              } catch (error) {
+                console.warn("Ошибка обработки уведомления:", error)
+              }
             },
             (response) => {
-              const data = response.notification.request.content.data
-              if (data.type === "price-alert" && data.alertId) {
-                dispatch(markAlertAsRead(data.alertId))
-                console.log("Алёрт помечен как прочитанный:", data.alertId)
+              try {
+                if (!response?.notification?.request?.content?.data) return
+                const data = response.notification.request.content.data
+                if (data?.type === "price-alert" && data?.alertId) {
+                  dispatch(markAlertAsRead(data.alertId))
+                  console.log("Алёрт помечен как прочитанный:", data.alertId)
+                }
+              } catch (error) {
+                console.warn("Ошибка обработки ответа:", error)
               }
             }
           )
+
+          // 4. Регистрируемся для FCM с новым методом
+          if (Platform.OS !== "web") {
+            try {
+              // Используем новый метод getFCMToken
+              const token = await NotificationService.getFCMToken()
+              if (token) {
+                setFcmToken(token)
+
+                // Определяем тип токена
+                const isExpoToken = token.startsWith("ExponentPushToken[")
+                console.log(`Токен получен: ${isExpoToken ? "Expo Token" : "FCM Token"}`)
+                console.log(`Token: ${token.substring(0, 20)}...`)
+
+                // Логируем предупреждение если это Expo токен
+                if (isExpoToken) {
+                  console.log("ВНИМАНИЕ: Получен Expo токен. Для FCM токена:")
+                  console.log(
+                    "   - Создайте development build: eas build --profile development --platform android"
+                  )
+                  console.log("   - Или обновите сервер для работы с Expo токенами")
+                }
+
+                // Инициализируем синхронизацию с сервером
+                ServerSyncService.initialize(token)
+
+                // Проверяем доступность сервера
+                checkServerAvailability()
+              }
+            } catch (fcmError) {
+              console.warn("Ошибка получения токена:", fcmError)
+            }
+          }
 
           return () => {
             if (subscriptions) {
@@ -106,59 +224,68 @@ const Favorite = () => {
           }
         }
       } catch (error) {
-        console.error("Ошибка проверки разрешений:", error)
+        console.error("Ошибка инициализации уведомлений:", error)
         setNotificationPermission(false)
       }
     }
 
-    checkNotificationPermission()
+    initializeNotifications()
   }, [dispatch])
 
   // Обновление бейджей при изменении алертов
   useEffect(() => {
-    if (notificationPermission) {
-      NotificationService.setBadgeCount(unreadAlertsCount)
+    const updateBadges = async () => {
+      if (notificationPermission) {
+        try {
+          await NotificationService.setBadgeCount(unreadAlertsCount)
+        } catch (error) {
+          console.warn("Не удалось обновить бейджи:", error)
+        }
+      }
     }
+
+    updateBadges()
   }, [unreadAlertsCount, notificationPermission])
 
   // Логирование при изменении избранного
   useEffect(() => {
-    console.log("\n ==== ОБНОВЛЕНИЕ ИЗБРАННОГО ====")
+    if (__DEV__) {
+      console.log("\n ==== ОБНОВЛЕНИЕ ИЗБРАННОГО ====")
+      console.log(`Монеты: ${coinData.length}`)
+      console.log(`Алёрты: ${priceAlerts.length} (${unreadAlertsCount} непрочитанных)`)
+      console.log(`Уведомления: ${notificationPermission ? "Разрешены" : "Не разрешены"}`)
+      console.log(`FCM Token: ${fcmToken ? "Есть" : "Нет"}`)
+      console.log(`Состояние приложения: ${appState}`)
 
-    console.log(`Алёрты: ${priceAlerts.length} (${unreadAlertsCount} непрочитанных)`)
-    console.log(`Уведомления: ${notificationPermission ? "Разрешены" : "Не разрешены"}`)
+      if (serverStatus) {
+        console.log(`Сервер: ${serverStatus.serverAvailable ? "Доступен" : "Недоступен"}`)
+        console.log(`Ожидающие операции: ${serverStatus.pendingOperations}`)
+      }
 
-    // Статистика по активным алертам
-    const activeAlerts = priceAlerts.filter(
-      (alert) => alert.isActive && !alert.triggeredAt
-    )
-    const triggeredAlerts = priceAlerts.filter((alert) => alert.triggeredAt)
+      const activeAlerts = priceAlerts.filter(
+        (alert) => alert.isActive && !alert.triggeredAt
+      )
+      const triggeredAlerts = priceAlerts.filter((alert) => alert.triggeredAt)
 
-    if (activeAlerts.length > 0) {
-      console.log(`Активные алерты: ${activeAlerts.length}`)
-      activeAlerts.forEach((alert, index) => {
-        console.log(
-          `   ${index + 1}. ${alert.coinSymbol}: $${alert.targetPrice} (${
-            alert.condition
-          })`
-        )
-      })
+      if (activeAlerts.length > 0) {
+        console.log(`Активные алерты: ${activeAlerts.length}`)
+      }
+
+      if (triggeredAlerts.length > 0) {
+        console.log(`Сработавшие алерты: ${triggeredAlerts.length}`)
+      }
+
+      console.log("=============================\n")
     }
-
-    if (triggeredAlerts.length > 0) {
-      console.log(`Сработавшие алерты: ${triggeredAlerts.length}`)
-    }
-
-    console.log("=============================\n")
-  }, [coinData, priceAlerts, unreadAlertsCount, notificationPermission])
-
-  // Обновление при возвращении в приложение
-  useAppState(() => {
-    if (coinData.length > 0) {
-      console.log("Приложение активно, обновляем цены")
-      handleManualUpdate()
-    }
-  })
+  }, [
+    coinData,
+    priceAlerts,
+    unreadAlertsCount,
+    notificationPermission,
+    fcmToken,
+    appState,
+    serverStatus
+  ])
 
   // Обработчик ручного обновления
   const handleManualUpdate = useCallback(async () => {
@@ -195,374 +322,207 @@ const Favorite = () => {
     bearish: coinData.filter((c) => c.price_change_percentage_24h < 0).length,
     top10: coinData.filter((c) => c.market_cap_rank <= 10).length,
     activeAlerts: priceAlerts.filter((a) => a.isActive && !a.triggeredAt).length,
-    triggeredAlerts: priceAlerts.filter((a) => a.triggeredAt).length
+    triggeredAlerts: priceAlerts.filter((a) => a.triggeredAt).length,
+    serverSynced: priceAlerts.filter((a) => a.serverId || a.syncStatus === "synced")
+      .length
   }
 
-  // const openAlertModal = useCallback(
-  //   async (coin) => {
-  //     console.log(`Открытие алерта для: ${coin.name}`)
-  //     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-
-  //     try {
-  //       // 1. Проверяем текущий статус
-  //       const { granted } = await Notifications.getPermissionsAsync()
-
-  //       if (!granted) {
-  //         // 2. Показываем кастомный диалог
-  //         Alert.alert(
-  //           "🔔 Price Alerts",
-  //           "Would you like to receive notifications when your price targets are reached?",
-  //           [
-  //             {
-  //               text: "Not Now",
-  //               style: "cancel",
-  //               onPress: () => {
-  //                 console.log("User declined notifications")
-  //                 // Все равно открываем модалку, но предупреждаем
-  //                 setSelectedCoinForAlert(coin)
-  //                 setAlertModalVisible(true)
-  //               }
-  //             },
-  //             {
-  //               text: "Enable",
-  //               onPress: async () => {
-  //                 // 3. Запрашиваем системные разрешения
-  //                 const { granted: newGranted } =
-  //                   await Notifications.requestPermissionsAsync()
-  //                 setNotificationPermission(newGranted)
-
-  //                 if (newGranted) {
-  //                   AlertManager.initialize(dispatch)
-  //                   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-  //                 }
-
-  //                 // 4. Открываем модалку
-  //                 setSelectedCoinForAlert(coin)
-  //                 setAlertModalVisible(true)
-  //               }
-  //             }
-  //           ]
-  //         )
-  //       } else {
-  //         // Уже разрешено
-  //         if (!notificationPermission) setNotificationPermission(true)
-  //         setSelectedCoinForAlert(coin)
-  //         setAlertModalVisible(true)
-  //       }
-  //     } catch (error) {
-  //       console.error("Error requesting permissions:", error)
-  //       // В случае ошибки все равно открываем модалку
-  //       setSelectedCoinForAlert(coin)
-  //       setAlertModalVisible(true)
-  //     }
-  //   },
-  //   [dispatch, notificationPermission]
-  // )
-
-  // const openAlertModal = useCallback(
-  //   async (coin) => {
-  //     console.log(`Открытие алерта для: ${coin.name}`)
-  //     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-
-  //     try {
-  //       // 1. Проверяем текущий статус
-  //       const { granted, status } = await Notifications.getPermissionsAsync()
-  //       console.log(`Текущий статус разрешений: ${status}, granted: ${granted}`)
-
-  //       // Если разрешения нет, запрашиваем напрямую
-  //       if (!granted) {
-  //         console.log("Запрашиваем разрешения на уведомления...")
-
-  //         // 2. ПРЯМОЙ запрос системных разрешений
-  //         const requestNotificationPermission = async () => {
-  //           if (Platform.OS === "ios") {
-  //             // Для iOS можно добавить специфичные параметры
-  //             return await Notifications.requestPermissionsAsync({
-  //               ios: {
-  //                 allowAlert: true,
-  //                 allowBadge: true,
-  //                 allowSound: true
-  //               }
-  //             })
-  //           } else {
-  //             // Для Android - простой запрос
-  //             return await Notifications.requestPermissionsAsync()
-  //           }
-  //         }
-
-  //         // Использование:
-  //         const result = await requestNotificationPermission()
-
-  //         console.log(`Новый статус разрешений: ${newStatus}, granted: ${newGranted}`)
-
-  //         setNotificationPermission(newGranted)
-
-  //         if (newGranted) {
-  //           console.log("Разрешения получены, инициализируем AlertManager")
-  //           AlertManager.initialize(dispatch)
-  //           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-  //         } else {
-  //           console.log("Пользователь отказал в разрешениях")
-  //           // Показываем информационное сообщение о важности уведомлений
-  //           Alert.alert(
-  //             "🔔 Notifications are disabled",
-  //             "You can enable notifications in your device settings to receive alerts when alerts are triggered.",
-  //             [
-  //               { text: "Later", style: "cancel" },
-  //               {
-  //                 text: "Settings",
-  //                 onPress: () => {
-  //                   if (Platform.OS === "ios") {
-  //                     // Для iOS можно открыть настройки
-  //                     Linking.openURL("app-settings:")
-  //                   } else {
-  //                     // Для Android можно попробовать открыть настройки уведомлений
-  //                     Linking.openSettings()
-  //                   }
-  //                 }
-  //               }
-  //             ]
-  //           )
-  //         }
-  //       } else {
-  //         // Уже разрешено
-  //         if (!notificationPermission) setNotificationPermission(true)
-  //         console.log("Уведомления уже разрешены")
-  //       }
-
-  //       // 3. Все равно открываем модалку алерта
-  //       setSelectedCoinForAlert(coin)
-  //       setAlertModalVisible(true)
-  //     } catch (error) {
-  //       console.error("Ошибка при запросе разрешений:", error)
-  //       // В случае ошибки все равно открываем модалку
-  //       setSelectedCoinForAlert(coin)
-  //       setAlertModalVisible(true)
-  //     }
-  //   },
-  //   [dispatch, notificationPermission]
-  // )
-
+  // Функция открытия модалки алерта
   const openAlertModal = useCallback(
     async (coin) => {
       console.log(`Открытие алерта для: ${coin.name}`)
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
 
+      const openModal = () => {
+        setSelectedCoinForAlert(coin)
+        setAlertModalVisible(true)
+      }
+
       try {
-        // 1. Проверяем текущий статус
         const { granted, status, canAskAgain } = await Notifications.getPermissionsAsync()
-        console.log(
-          `Текущий статус: ${status}, granted: ${granted}, canAskAgain: ${canAskAgain}`
-        )
 
-        // Функция для открытия модалки алерта
-        const openAlertModalWindow = () => {
-          setSelectedCoinForAlert(coin)
-          setAlertModalVisible(true)
-        }
-
-        // Если разрешения уже есть
         if (granted) {
           if (!notificationPermission) {
             setNotificationPermission(true)
           }
-          console.log("Уведомления уже разрешены")
-          openAlertModalWindow()
+
+          if (!fcmToken && Platform.OS !== "web") {
+            try {
+              const token = await NotificationService.getFCMToken()
+              if (token) {
+                setFcmToken(token)
+                console.log("FCM Token получен при создании алерта")
+
+                // Инициализация серверной синхронизации
+                ServerSyncService.initialize(token)
+              }
+            } catch (tokenError) {
+              console.warn("Не удалось получить FCM токен:", tokenError)
+            }
+          }
+
+          openModal()
           return
         }
 
-        // 2. КРИТИЧЕСКИ ВАЖНЫЙ БЛОК ДЛЯ ANDROID 8+
-        let androidChannelCreated = false
-        if (Platform.OS === "android") {
-          try {
-            // Проверяем, существует ли уже канал
-            const channels = await Notifications.getNotificationChannelsAsync?.()
-            const hasChannel = channels?.some((ch) => ch.id === "price_alerts")
-
-            if (!hasChannel) {
-              console.log("Создаем канал уведомлений для Android...")
-              await Notifications.setNotificationChannelAsync("price_alerts", {
-                name: "Price Alerts",
-                importance: Notifications.AndroidImportance.HIGH,
-                vibrationPattern: [0, 250, 250, 250],
-                lightColor: "#FF231F7C",
-                enableLights: true,
-                enableVibrate: true,
-                showBadge: true,
-                bypassDnd: false // Более безопасный вариант
-              })
-              androidChannelCreated = true
-              console.log("Канал 'price_alerts' успешно создан")
-            } else {
-              console.log("Канал 'price_alerts' уже существует")
-              androidChannelCreated = true
-            }
-          } catch (channelError) {
-            console.warn("Не удалось настроить канал уведомлений:", channelError)
-            // Продолжаем без канала (для Android 7 и ниже это нормально)
-          }
-        }
-
-        // 3. Запрашиваем разрешения с правильной конфигурацией
-        let result
-        if (Platform.OS === "android") {
-          // Для Android - простой запрос, без дополнительных параметров
-          result = await Notifications.requestPermissionsAsync()
-        } else {
-          // Для iOS - с настройками
-          result = await Notifications.requestPermissionsAsync({
-            ios: {
-              allowAlert: true,
-              allowBadge: true,
-              allowSound: true,
-              allowAnnouncements: true
-            }
-          })
-        }
-
-        const {
-          granted: newGranted,
-          status: newStatus,
-          canAskAgain: newCanAskAgain
-        } = result
-        console.log(
-          `Результат запроса: ${newStatus}, granted: ${newGranted}, canAskAgain: ${newCanAskAgain}`
-        )
-
-        // 4. Обновляем состояние и обрабатываем результат
-        setNotificationPermission(newGranted)
-
-        if (newGranted) {
-          console.log("Разрешения получены, инициализируем AlertManager")
-          AlertManager.initialize(dispatch)
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-        } else {
-          console.log("Пользователь отказал в разрешениях")
-
-          // ОСОБАЯ ЛОГИКА ДЛЯ ANDROID 13+ (API 33+)
-          if (Platform.OS === "android" && Platform.Version >= 33) {
-            if (newCanAskAgain === false) {
-              // Пользователь выбрал "Don't ask again"
-              Alert.alert(
-                "🔔 Уведомления отключены",
-                "Разрешите уведомления в настройках приложения, чтобы получать алерты о ценах.",
-                [
-                  {
-                    text: "Продолжить без уведомлений",
-                    style: "cancel",
-                    onPress: openAlertModalWindow
-                  },
-                  {
-                    text: "Открыть настройки",
-                    onPress: () => {
-                      Linking.openSettings()
-                      // Откладываем открытие модалки, чтобы пользователь увидел переход
-                      setTimeout(openAlertModalWindow, 1500)
+        Alert.alert(
+          "🔔 Price Alerts",
+          "Enable notifications to receive alerts when prices reach your targets. This works even when the app is closed.",
+          [
+            {
+              text: "Not Now",
+              style: "cancel",
+              onPress: () => {
+                console.log("User declined notifications")
+                Alert.alert(
+                  "Notifications Disabled",
+                  "Alert will be saved locally, but you won't receive push notifications when it triggers.",
+                  [{ text: "OK", onPress: openModal }]
+                )
+              }
+            },
+            {
+              text: "Enable",
+              onPress: async () => {
+                try {
+                  const requestNotificationPermission = async () => {
+                    if (Platform.OS === "ios") {
+                      return await Notifications.requestPermissionsAsync({
+                        ios: {
+                          allowAlert: true,
+                          allowBadge: true,
+                          allowSound: true,
+                          allowAnnouncements: true
+                        }
+                      })
+                    } else {
+                      return await Notifications.requestPermissionsAsync()
                     }
                   }
-                ]
-              )
-              return // Не открываем модалку сразу
-            }
-          }
 
-          // Для других случаев (Android <13, iOS, или можно спрашивать снова)
-          Alert.alert(
-            "🔔 Уведомления не разрешены",
-            "Вы сможете получать уведомления о ценах, если разрешите их в настройках.",
-            [
-              {
-                text: "Продолжить",
-                style: "default",
-                onPress: openAlertModalWindow
-              },
-              {
-                text: "Настройки",
-                onPress: () => {
-                  Linking.openSettings()
-                  setTimeout(openAlertModalWindow, 1500)
+                  const result = await requestNotificationPermission()
+                  const { granted: newGranted } = result
+
+                  setNotificationPermission(newGranted)
+
+                  if (newGranted) {
+                    AlertManager.initialize(dispatch)
+
+                    if (Platform.OS !== "web") {
+                      try {
+                        const token = await NotificationService.getFCMToken()
+                        if (token) {
+                          setFcmToken(token)
+                          console.log("FCM Token получен после разрешения")
+                          ServerSyncService.initialize(token)
+                        }
+                      } catch (tokenError) {
+                        console.warn("Не удалось получить FCM токен:", tokenError)
+                      }
+                    }
+
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+
+                    Alert.alert(
+                      "✓ Notifications Enabled",
+                      "You'll receive push notifications when your price alerts trigger, even when the app is closed.",
+                      [{ text: "Great!" }]
+                    )
+                  }
+
+                  openModal()
+                } catch (error) {
+                  console.error("Ошибка запроса разрешений:", error)
+                  openModal()
                 }
               }
-            ]
-          )
-          return // Не открываем модалку сразу, ждем выбора в Alert
-        }
-
-        // 5. Если разрешения получены, открываем модалку
-        openAlertModalWindow()
+            }
+          ]
+        )
       } catch (error) {
-        console.error("Ошибка при запросе разрешений:", error)
-        // В случае ошибки открываем модалку без разрешений
-        setSelectedCoinForAlert(coin)
-        setAlertModalVisible(true)
+        console.error("Ошибка при открытии алерта:", error)
+        openModal()
       }
     },
-    [dispatch, notificationPermission]
+    [dispatch, notificationPermission, fcmToken]
   )
 
+  // Обработчик сохранения алерта
   const handleSaveAlert = useCallback(
-    (alertData) => {
+    async (alertData) => {
       console.log(`Сохранение алерта: ${alertData.coinName} @ $${alertData.targetPrice}`)
 
-      // Получаем текущую цену монеты
       const currentCoinPrice = alertData.currentPrice || 0
 
-      // Создаем payload с currentPrice
       const payload = {
         ...alertData,
-        currentPrice: currentCoinPrice
+        currentPrice: currentCoinPrice,
+        fcmToken: fcmToken,
+        syncStatus: fcmToken ? "pending_sync" : "local_only",
+        source: "local"
       }
 
       console.log(`Начальная цена для прогресса: $${currentCoinPrice}`)
+      console.log(`FCM синхронизация: ${fcmToken ? "Включена" : "Не доступна"}`)
 
-      // Сохраняем алерт с payload
+      // Сохраняем алерт в Redux
       dispatch(addPriceAlert(payload))
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
 
-      // Показываем соответствующее сообщение
-      if (notificationPermission) {
+      // Если есть FCM токен и сервер доступен, синхронизируем
+      if (fcmToken && notificationPermission) {
+        const serverAvailable = serverStatus?.serverAvailable || false
+
+        if (serverAvailable) {
+          try {
+            // Синхронизируем все алерты с сервером
+            const syncedAlerts = [...priceAlerts, payload].filter(
+              (a) => a.isActive && !a.triggeredAt
+            )
+            await ServerSyncService.syncAlertsWithServer(syncedAlerts)
+
+            Alert.alert(
+              "✅ Alert Set with Server Sync!",
+              `Alert synced with server. You'll receive push notifications when ${alertData.coinSymbol} reaches $${alertData.targetPrice}, even when the app is closed.`,
+              [{ text: "Great!" }]
+            )
+          } catch (syncError) {
+            console.warn("Не удалось синхронизировать с сервером:", syncError)
+            Alert.alert(
+              "⚠️ Alert Saved Locally",
+              `Alert saved but server sync failed. It will work while app is open.`,
+              [{ text: "OK" }]
+            )
+          }
+        } else {
+          Alert.alert(
+            "✅ Alert Saved Locally",
+            `Alert saved. Server is unavailable. You'll receive notifications when ${alertData.coinSymbol} reaches $${alertData.targetPrice} while the app is open.`,
+            [{ text: "OK" }]
+          )
+        }
+      } else if (notificationPermission) {
         Alert.alert(
-          "✅ Alert was set!",
-          `You will receive a notification when ${alertData.coinSymbol} reaches $${alertData.targetPrice}`,
-          [{ text: "Great" }]
+          "✅ Alert Set Locally",
+          `Alert saved. You'll receive notifications when ${alertData.coinSymbol} reaches $${alertData.targetPrice} while the app is open.`,
+          [{ text: "OK" }]
         )
       } else {
         Alert.alert(
-          "Notifications are disabled",
-          "The alert is saved, but you will not receive a notification when it is triggered.",
-          [{ text: "Ok" }]
+          "✅ Alert Saved Locally",
+          "Notifications are disabled. The alert will only work while the app is open.",
+          [{ text: "OK" }]
         )
       }
     },
-    [dispatch, notificationPermission]
+    [dispatch, notificationPermission, fcmToken, priceAlerts, serverStatus]
   )
-
-  // // Функция для удаления алерта
-  // const handleDeleteAlert = useCallback(
-  //   (alertId) => {
-  //     console.log(`Удаление алерта: ${alertId}`)
-  //     dispatch(deletePriceAlert(alertId))
-  //     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-  //   },
-  //   [dispatch]
-  // )
-
-  // // Функция для отметки алерта как прочитанного
-  // const handleMarkAlertAsRead = useCallback(
-  //   (alertId) => {
-  //     console.log(`Отметка алерта как прочитанного: ${alertId}`)
-  //     dispatch(markAlertAsRead(alertId))
-  //   },
-  //   [dispatch]
-  // )
 
   // Удаление монеты из избранного
   const removeFromFav = useCallback(
     (coin) => {
       console.log(`\n ==== УДАЛЕНИЕ МОНЕТЫ ====`)
-      // console.log(`Монета: ${coin.name} (${coin.symbol.toUpperCase()})`)
-      // console.log(`Цена: $${coin.current_price || 0}`)
-      // console.log(`Ранг: #${coin.market_cap_rank || "?"}`)
+      console.log(`Монета: ${coin.name} (${coin.symbol.toUpperCase()})`)
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
       setRemovingCoinId(coin.id)
@@ -571,6 +531,11 @@ const Favorite = () => {
       const coinAlerts = priceAlerts.filter((alert) => alert.coinId === coin.id)
       coinAlerts.forEach((alert) => {
         dispatch(deletePriceAlert(alert.id))
+
+        // Удаляем алерт с сервера если есть serverId
+        if (alert.serverId && fcmToken) {
+          ServerSyncService.deleteAlertFromServer(alert.serverId)
+        }
       })
 
       if (coinAlerts.length > 0) {
@@ -584,7 +549,7 @@ const Favorite = () => {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       }, 1500)
     },
-    [dispatch, priceAlerts]
+    [dispatch, priceAlerts, fcmToken]
   )
 
   // Открытие графика
@@ -604,7 +569,6 @@ const Favorite = () => {
   // Открытие формы ввода количества
   const openAmountInput = (coin) => {
     console.log(`Открытие формы ввода количества: ${coin.name}`)
-    console.log(`Текущее количество: ${userAssets[coin.id] || 0}`)
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     setSelectedCoinForInput(coin)
     setInputModalVisible(true)
@@ -614,14 +578,7 @@ const Favorite = () => {
   const saveAmount = () => {
     if (selectedCoinForInput && amountInputRef.current) {
       let text = amountInputRef.current.replace(/,/g, ".")
-
-      console.log(`\n ==== СОХРАНЕНИЕ КОЛИЧЕСТВА ====`)
-      console.log(`Монета: ${selectedCoinForInput.name}`)
-      console.log(`Введенное значение: ${amountInputRef.current}`)
-      console.log(`Обработанное значение: ${text}`)
-
       const amount = parseFloat(text) || 0
-      console.log(`Сохраняемое количество: ${amount}`)
 
       dispatch(
         updateUserAsset({
@@ -630,14 +587,30 @@ const Favorite = () => {
         })
       )
 
-      console.log(`Количество сохранено`)
-      console.log(`==========================\n`)
-
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     }
     setInputModalVisible(false)
     setSelectedCoinForInput(null)
     amountInputRef.current = ""
+  }
+
+  // Функция для тестирования сервера
+  const testServerConnection = async () => {
+    try {
+      const result = await ServerSyncService.testConnection()
+
+      if (result.success) {
+        Alert.alert(
+          "✅ Сервер доступен",
+          `Ping: ${result.ping}ms\nStatus: ${result.status}\nTimestamp: ${result.timestamp}`,
+          [{ text: "OK" }]
+        )
+      } else {
+        Alert.alert("Сервер недоступен", `Error: ${result.error}`, [{ text: "OK" }])
+      }
+    } catch (error) {
+      Alert.alert("Ошибка тестирования", error.message, [{ text: "OK" }])
+    }
   }
 
   // Компонент карточки монеты
@@ -650,7 +623,6 @@ const Favorite = () => {
     const userAmount = (userAssets && userAssets[item.id]) || 0
     const userValue = userAmount * (item.current_price || 0)
 
-    // Получаем алерты для этой монеты
     const coinAlerts = priceAlerts.filter(
       (alert) => alert.coinId === item.id && alert.isActive && !alert.triggeredAt
     )
@@ -693,7 +665,7 @@ const Favorite = () => {
                 <Text style={styles.coinSymbol}>{item.symbol?.toUpperCase()}</Text>
               </View>
 
-              {/* Правая часть - алерты сверху */}
+              {/* Правая часть - алерты */}
               <TouchableOpacity
                 onPress={(e) => {
                   e.stopPropagation()
@@ -705,13 +677,20 @@ const Favorite = () => {
                 <View
                   style={[
                     styles.alertButton,
-                    hasActiveAlerts && styles.alertButtonActive
+                    hasActiveAlerts && styles.alertButtonActive,
+                    !notificationPermission && styles.alertButtonDisabled
                   ]}
                 >
                   <Ionicons
                     name={hasActiveAlerts ? "notifications" : "notifications-outline"}
                     size={16}
-                    color={hasActiveAlerts ? "#D4AF37" : "rgba(255,255,255,0.6)"}
+                    color={
+                      hasActiveAlerts
+                        ? "#D4AF37"
+                        : !notificationPermission
+                        ? "#666"
+                        : "rgba(255,255,255,0.6)"
+                    }
                   />
 
                   {/* Бейдж с количеством алертов */}
@@ -723,7 +702,6 @@ const Favorite = () => {
                 </View>
               </TouchableOpacity>
             </View>
-
             {/* Средняя строка - цена и сумма пользователя */}
             <View style={styles.middleRow}>
               {/* Левая часть - цена */}
@@ -784,7 +762,6 @@ const Favorite = () => {
                 )}
               </View>
             </View>
-
             {/* Нижняя часть - кнопки действий */}
             <View style={styles.bottomActions}>
               {/* Кнопка Add/Edit */}
@@ -861,7 +838,7 @@ const Favorite = () => {
       colors={["#0A0A0F", "#121218", "#0A0A0F"]}
       style={styles.premiumContainer}
     >
-      {/* Заголовок с Portfolio справа */}
+      {/* Заголовок с Portfolio */}
       <FavoriteHeader
         stats={stats}
         lastUpdateTime={lastUpdateTime}
@@ -870,23 +847,80 @@ const Favorite = () => {
         totalPortfolioValue={totalPortfolioValue}
         isUpdating={isUpdating}
         handleManualUpdate={handleManualUpdate}
+        fcmToken={fcmToken}
+        testFCMNotification={testServerConnection}
+        serverStatus={serverStatus}
       />
-      {/*  Панель header-a с индикаторами */}
+
+      {/* Панель статистики */}
       {coinData.length > 0 && (
         <FavoriteStatsPanel
           priceAlerts={priceAlerts}
           stats={stats}
           unreadAlertsCount={unreadAlertsCount}
+          notificationPermission={notificationPermission}
+          fcmToken={fcmToken}
+          serverStatus={serverStatus}
         />
       )}
+
       {/* Информация о статусе обновления */}
       {isUpdating && (
         <View style={styles.updateStatus}>
-          <Text style={styles.updateStatusText}>Обновление цен...</Text>
+          <Text style={styles.updateStatusText}>Updating prices...</Text>
         </View>
       )}
+
+      {/* Индикатор состояния FCM и сервера */}
+      {fcmToken && (
+        <TouchableOpacity
+          style={[
+            styles.fcmIndicator,
+            !serverStatus?.serverAvailable && styles.fcmIndicatorOffline
+          ]}
+          onPress={testServerConnection}
+          activeOpacity={0.7}
+        >
+          <LinearGradient
+            colors={
+              serverStatus?.serverAvailable
+                ? ["rgba(76, 175, 80, 0.15)", "rgba(56, 142, 60, 0.08)"]
+                : ["rgba(255, 152, 0, 0.15)", "rgba(245, 124, 0, 0.08)"]
+            }
+            style={styles.fcmIndicatorGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          >
+            <View style={styles.fcmIndicatorContent}>
+              <View
+                style={[
+                  styles.fcmStatusDot,
+                  serverStatus?.serverAvailable
+                    ? styles.fcmStatusDotOnline
+                    : styles.fcmStatusDotOffline
+                ]}
+              />
+              <Text style={styles.fcmIndicatorText}>
+                {serverStatus?.serverAvailable ? "Сервер онлайн" : "Сервер оффлайн"}
+              </Text>
+              <Ionicons
+                name={serverStatus?.serverAvailable ? "wifi" : "cloud-offline-outline"}
+                size={12}
+                color={serverStatus?.serverAvailable ? "#4CAF50" : "#FF9800"}
+                style={styles.fcmIndicatorIcon}
+              />
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
+
+      {/* Пустое состояние или список */}
       {coinData.length === 0 ? (
-        <EmptyState notificationPermission={notificationPermission} />
+        <EmptyState
+          notificationPermission={notificationPermission}
+          fcmToken={fcmToken}
+          serverAvailable={serverStatus?.serverAvailable}
+        />
       ) : (
         <FlatList
           data={coinData}
@@ -900,6 +934,8 @@ const Favorite = () => {
           windowSize={5}
         />
       )}
+
+      {/* Модалка ввода количества */}
       <AmountInputModal
         inputModalVisible={inputModalVisible}
         setInputModalVisible={setInputModalVisible}
@@ -908,6 +944,7 @@ const Favorite = () => {
         saveAmount={saveAmount}
         amountInputRef={amountInputRef}
       />
+
       {/* Модалка алерта */}
       {selectedCoinForAlert && (
         <AlertModal
@@ -920,8 +957,11 @@ const Favorite = () => {
           coin={selectedCoinForAlert}
           currentPrice={selectedCoinForAlert.current_price || 0}
           notificationPermission={notificationPermission}
+          fcmToken={fcmToken}
+          serverAvailable={serverStatus?.serverAvailable}
         />
       )}
+
       {/* Модалка с графиком */}
       <ModalFavorite
         visible={isModalVisible}

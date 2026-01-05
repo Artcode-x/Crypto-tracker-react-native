@@ -159,5 +159,199 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#000"
+  },
+
+  notificationStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginTop: 8,
+    gap: 8
+  },
+
+  notificationStatus_disabled: {
+    backgroundColor: "rgba(244, 67, 54, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(244, 67, 54, 0.3)"
+  },
+
+  notificationStatus_fcm_enabled: {
+    backgroundColor: "rgba(76, 175, 80, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(76, 175, 80, 0.3)"
+  },
+
+  notificationStatus_local_only: {
+    backgroundColor: "rgba(255, 152, 0, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 152, 0, 0.3)"
+  },
+
+  notificationStatusText: {
+    fontSize: 12,
+    fontWeight: "500",
+    flex: 1
+  },
+
+  priceDifferenceSection: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 4
+  },
+
+  priceDifferenceGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 8
+  },
+
+  priceDifferenceText: {
+    fontSize: 13,
+    fontWeight: "600"
+  },
+
+  percentageText: {
+    fontSize: 11,
+    opacity: 0.8
+  },
+
+  coinHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4
+  },
+
+  priceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8
+  },
+
+  currentPriceLabel: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.6)"
+  },
+
+  rankBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 215, 0, 0.1)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    gap: 2
+  },
+
+  rankText: {
+    fontSize: 10,
+    color: "#FFD700",
+    fontWeight: "600"
+  },
+
+  currencyContainer: {
+    paddingHorizontal: 12,
+    justifyContent: "center"
+  },
+
+  clearButton: {
+    paddingHorizontal: 12,
+    justifyContent: "center"
+  },
+
+  quickSuggestions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+    gap: 8
+  },
+
+  suggestionButton: {
+    flex: 1,
+    paddingVertical: 6,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: 6,
+    alignItems: "center"
+  },
+
+  suggestionText: {
+    fontSize: 10,
+    color: "#D4AF37",
+    fontWeight: "500"
+  },
+
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8
+  },
+
+  activeIndicator: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    backgroundColor: "#D4AF37",
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+
+  previewGradient: {
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 6
+  },
+
+  previewCoin: {
+    color: "#D4AF37",
+    fontWeight: "600"
+  },
+
+  previewCondition: {
+    fontWeight: "600"
+  },
+
+  previewPrice: {
+    color: "#FFF",
+    fontWeight: "700"
+  },
+
+  previewInfo: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.1)"
+  },
+
+  previewInfoItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4
+  },
+
+  previewInfoText: {
+    fontSize: 10,
+    color: "rgba(255,255,255,0.6)"
+  },
+
+  closeButton: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    zIndex: 10
+  },
+
+  saveButtonTextLocal: {
+    color: "#000"
   }
 })

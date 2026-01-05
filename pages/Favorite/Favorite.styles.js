@@ -283,5 +283,205 @@ export const styles = StyleSheet.create({
   removeButtonGradient: {
     borderColor: "rgba(255, 107, 107, 0.25)",
     backgroundColor: "rgba(255, 107, 107, 0.08)"
+  },
+  //
+
+  // ===== СТИЛИ ДЛЯ ИНДИКАТОРА СЕРВЕРА =====
+
+  // Вариант 1
+  fcmIndicator: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 4,
+    borderRadius: 12,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    ...(isIOS
+      ? {
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.1,
+          shadowRadius: 2
+        }
+      : {
+          elevation: 1
+        })
+  },
+
+  fcmIndicatorOffline: {
+    borderColor: "rgba(255, 152, 0, 0.3)"
+  },
+
+  fcmIndicatorGradient: {
+    paddingVertical: 8,
+    paddingHorizontal: 12
+  },
+
+  fcmIndicatorContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8
+  },
+
+  fcmStatusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4
+  },
+
+  fcmStatusDotOnline: {
+    backgroundColor: "#4CAF50",
+    ...(isIOS
+      ? {
+          shadowColor: "#4CAF50",
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.5,
+          shadowRadius: 2
+        }
+      : {})
+  },
+
+  fcmStatusDotOffline: {
+    backgroundColor: "#FF9800",
+    ...(isIOS
+      ? {
+          shadowColor: "#FF9800",
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.5,
+          shadowRadius: 2
+        }
+      : {})
+  },
+
+  fcmIndicatorText: {
+    color: "#FFF",
+    fontSize: 12,
+    fontWeight: "500",
+    flex: 1,
+    textAlign: "center"
+  },
+
+  fcmIndicatorIcon: {
+    marginLeft: "auto"
+  },
+
+  // Вариант 2
+  serverStatusContainer: {
+    alignSelf: "center",
+    marginVertical: 8
+  },
+
+  serverStatusBadge: {
+    borderRadius: 20,
+    overflow: "hidden",
+    ...(isIOS
+      ? {
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.2,
+          shadowRadius: 3
+        }
+      : {
+          elevation: 3
+        })
+  },
+
+  serverStatusBadgeOnline: {
+    borderWidth: 1,
+    borderColor: "rgba(76, 175, 80, 0.3)"
+  },
+
+  serverStatusBadgeOffline: {
+    borderWidth: 1,
+    borderColor: "rgba(255, 152, 0, 0.3)"
+  },
+
+  serverStatusGradient: {
+    paddingHorizontal: 16,
+    paddingVertical: 6
+  },
+
+  serverStatusContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6
+  },
+
+  serverStatusIndicator: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)"
+  },
+
+  serverStatusIndicatorOnline: {
+    backgroundColor: "#4CAF50"
+  },
+
+  serverStatusIndicatorOffline: {
+    backgroundColor: "#FF9800"
+  },
+
+  serverStatusText: {
+    color: "#FFF",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.5
+  },
+
+  // Вариант для FavoriteHeader
+  headerServerStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    gap: 6
+  },
+
+  headerServerDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3
+  },
+
+  headerServerDotOnline: {
+    backgroundColor: "#4CAF50",
+    ...(isIOS
+      ? {
+          shadowColor: "#4CAF50",
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.8,
+          shadowRadius: 2
+        }
+      : {})
+  },
+
+  headerServerDotOffline: {
+    backgroundColor: "#FF9800",
+    ...(isIOS
+      ? {
+          shadowColor: "#FF9800",
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.8,
+          shadowRadius: 2
+        }
+      : {})
+  },
+
+  headerServerText: {
+    color: "rgba(255, 255, 255, 0.8)",
+    fontSize: 10,
+    fontWeight: "600"
   }
 })

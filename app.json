@@ -18,17 +18,18 @@
         {
           "icon": "./assets/adaptive-icon.png",
           "color": "#D4AF37",
-          "iosDisplayInForeground": true
+          "iosDisplayInForeground": true,
+          "defaultChannel": "price-alerts"
         }
-      ],
-      "expo-background-fetch"
+      ]
     ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.crypto.artcode",
       "buildNumber": "1",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
-        "UIBackgroundModes": ["fetch", "remote-notification"],
+        "UIBackgroundModes": ["remote-notification"], // для FCM
         "NSUserNotificationsUsageDescription": "This app uses notifications to send price alerts.",
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
@@ -43,14 +44,15 @@
       },
       "package": "com.crypto.artcode",
       "versionCode": 1,
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
         "WAKE_LOCK",
         "POST_NOTIFICATIONS",
-        "FOREGROUND_SERVICE",
         "android.permission.RECEIVE_BOOT_COMPLETED",
-        "android.permission.WAKE_LOCK"
+        "android.permission.WAKE_LOCK",
+        "com.google.android.c2dm.permission.RECEIVE" // для FCM
       ],
       "useNextNotificationsApi": true,
       "allowBackup": true

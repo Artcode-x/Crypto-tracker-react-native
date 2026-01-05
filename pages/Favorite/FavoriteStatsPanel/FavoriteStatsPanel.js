@@ -2,11 +2,8 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
 import { TouchableOpacity, View, Text } from "react-native"
 import { styles } from "./FavoriteStatsPanel.styles"
-import AlertManager from "../../../services/AlertManager"
 
 const FavoriteStatsPanel = ({ priceAlerts, stats, unreadAlertsCount }) => {
-  const alertStats = AlertManager.getAlertStats(priceAlerts)
-
   return (
     <View style={styles.statsPanel}>
       <LinearGradient
@@ -37,15 +34,15 @@ const FavoriteStatsPanel = ({ priceAlerts, stats, unreadAlertsCount }) => {
             onPress={() => {
               // Показываем информацию об алертах
               console.log("Статистика алертов:")
-              console.log(`   Всего: ${alertStats.total}`)
-              console.log(`   Активных: ${alertStats.active}`)
-              console.log(`   Сработавших: ${alertStats.triggered}`)
-              console.log(`   Непрочитанных: ${alertStats.unread}`)
+              console.log(`   Всего: ${priceAlerts.length}`)
+              console.log(`   Активных: ${stats.activeAlerts || 0}`)
+              console.log(`   Сработавших: ${stats.triggeredAlerts || 0}`)
+              console.log(`   Непрочитанных: ${unreadAlertsCount}`)
             }}
           >
             <Ionicons name='notifications' size={14} color='#FF6B6B' />
             <View style={styles.alertBadgeContainer}>
-              <Text style={styles.statNumberCompact}>{stats.activeAlerts}</Text>
+              <Text style={styles.statNumberCompact}>{stats.activeAlerts || 0}</Text>
               {unreadAlertsCount > 0 && (
                 <View style={styles.unreadBadge}>
                   <Text style={styles.unreadBadgeText}>{unreadAlertsCount}</Text>

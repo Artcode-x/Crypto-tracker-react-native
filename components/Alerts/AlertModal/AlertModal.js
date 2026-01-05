@@ -22,7 +22,8 @@ const AlertModal = ({
   onSave,
   coin,
   currentPrice,
-  notificationPermission // ДОБАВЛЕНО: получаем статус разрешений
+  notificationPermission,
+  fcmToken = null
 }) => {
   const [targetPrice, setTargetPrice] = useState("")
   const [condition, setCondition] = useState("above")
@@ -60,7 +61,10 @@ const AlertModal = ({
       coinSymbol: coin.symbol,
       targetPrice: price,
       currentPrice: currentPrice,
-      condition: condition
+      condition: condition,
+      // Добавление информации о FCM для синхронизации с сервером
+      fcmToken: fcmToken,
+      syncStatus: fcmToken && notificationPermission ? "pending" : "local_only"
     })
 
     setTargetPrice("")
@@ -74,6 +78,36 @@ const AlertModal = ({
     Keyboard.dismiss()
     onClose()
   }
+
+  // Определяем тип уведомлений для отображения
+  const getNotificationType = () => {
+    if (!notificationPermission) {
+      return {
+        icon: "notifications-off",
+        color: "#FF6B6B",
+        text: "Notifications disabled",
+        type: "disabled"
+      }
+    }
+
+    if (fcmToken) {
+      return {
+        icon: "cloud",
+        color: "#4CAF50",
+        text: "Push notifications enabled",
+        type: "fcm"
+      }
+    }
+
+    return {
+      icon: "notifications",
+      color: "#FF9800",
+      text: "Local notifications",
+      type: "local"
+    }
+  }
+
+  const notificationType = getNotificationType()
 
   return (
     <Modal
@@ -103,9 +137,9 @@ const AlertModal = ({
                     <View style={styles.modalHeader}>
                       <View style={styles.coinHeader}>
                         <Text style={styles.coinName}>{coin.name}</Text>
-                        <Text style={styles.coinSymbol}>
+                        {/* <Text style={styles.coinSymbol}>
                           {coin.symbol?.toUpperCase()}
-                        </Text>
+                        </Text> */}
                       </View>
                       <Text style={styles.currentPrice}>
                         Current: $
@@ -116,14 +150,30 @@ const AlertModal = ({
                       </Text>
 
                       {/* Индикатор статуса уведомлений */}
-                      {!notificationPermission && (
-                        <View style={styles.notificationWarning}>
-                          <Ionicons name='notifications-off' size={16} color='#FF6B6B' />
-                          <Text style={styles.notificationWarningText}>
-                            Notifications disabled
-                          </Text>
-                        </View>
-                      )}
+                      <View
+                        style={[
+                          styles.notificationStatus,
+                          notificationType.type === "disabled" &&
+                            styles.notificationStatusDisabled,
+                          notificationType.type === "fcm" && styles.notificationStatusFCM,
+                          notificationType.type === "local" &&
+                            styles.notificationStatusLocal
+                        ]}
+                      >
+                        <Ionicons
+                          name={notificationType.icon}
+                          size={14}
+                          color={notificationType.color}
+                        />
+                        <Text
+                          style={[
+                            styles.notificationStatusText,
+                            { color: notificationType.color }
+                          ]}
+                        >
+                          {notificationType.text}
+                        </Text>
+                      </View>
                     </View>
 
                     {/* Условие алерта */}
@@ -228,11 +278,28 @@ const AlertModal = ({
                     {/* Предварительный просмотр */}
                     <View style={styles.previewSection}>
                       <Text style={styles.previewTitle}>Alert Preview:</Text>
-                      <Text style={styles.previewText}>
-                        {`Notify me when ${coin.symbol?.toUpperCase()} price ${
-                          condition === "above" ? "rises above" : "falls below"
-                        } $${targetPrice || "0.00"}`}
-                      </Text>
+                      <View style={styles.previewContainer}>
+                        <Text style={styles.previewText}>
+                          {`Notify me when ${coin.symbol?.toUpperCase()} price ${
+                            condition === "above" ? "rises above" : "falls below"
+                          } $${targetPrice || "0.00"}`}
+                        </Text>
+                        {/* {notificationType.type === "fcm" && (
+                          <Text style={styles.previewFCMInfo}>
+                            (Push notification - works even when app is closed)
+                          </Text>
+                        )} */}
+                        {/* {notificationType.type === "local" && (
+                          <Text style={styles.previewLocalInfo}>
+                            (Local notification - app must be open)
+                          </Text>
+                        )}
+                        {notificationType.type === "disabled" && (
+                          <Text style={styles.previewDisabledInfo}>
+                            (Alert saved locally only - no notifications)
+                          </Text>
+                        )} */}
+                      </View>
                     </View>
 
                     {/* Кнопки действий */}
@@ -259,20 +326,43 @@ const AlertModal = ({
                         disabled={!targetPrice}
                       >
                         <LinearGradient
-                          colors={["#D4AF37", "#B3791F"]}
+                          colors={
+                            fcmToken && notificationPermission
+                              ? ["#4CAF50", "#2E7D32"] // Зеленый для FCM
+                              : notificationPermission
+                              ? ["#D4AF37", "#B3791F"] // Золотой для локальных
+                              : ["#666", "#444"] // Серый для отключенных
+                          }
                           style={styles.saveButtonGradient}
                         >
                           <Ionicons
                             name={
-                              notificationPermission
+                              fcmToken && notificationPermission
+                                ? "cloud" // Облако для FCM
+                                : notificationPermission
                                 ? "notifications-outline"
                                 : "notifications-off"
                             }
                             size={20}
-                            color='#000'
+                            color={
+                              fcmToken && notificationPermission
+                                ? "#FFF" // Белый для FCM
+                                : "#000"
+                            }
                           />
-                          <Text style={styles.saveButtonText}>
-                            {notificationPermission ? "Set Alert" : "Save Alert"}
+                          <Text
+                            style={[
+                              styles.saveButtonText,
+                              fcmToken &&
+                                notificationPermission &&
+                                styles.saveButtonTextFCM
+                            ]}
+                          >
+                            {fcmToken && notificationPermission
+                              ? "Set Push Alert"
+                              : notificationPermission
+                              ? "Set Alert"
+                              : "Save Locally"}
                           </Text>
                         </LinearGradient>
                       </TouchableOpacity>

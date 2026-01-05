@@ -1,33 +1,32 @@
-import { Provider, useDispatch } from "react-redux"
+import { Provider, useDispatch, useSelector } from "react-redux"
 import { AppRoute } from "./components/AppRoute/AppRoute"
 import store from "./store/store"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { useEffect, useState } from "react"
 import * as Notifications from "expo-notifications"
 import NotificationService from "./services/NotificationService"
-import {
-  registerBackgroundTask,
-  unregisterBackgroundTask
-} from "./services/BackgroundService"
+import ServerSyncService from "./services/ServerSyncService"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { loadAlerts, markAlertAsRead } from "./store/alertsSlice"
+import { loadAlerts, markAlertAsRead, triggerAlert } from "./store/alertsSlice"
+import { AppState } from "react-native"
+import { priceAlertsSelector } from "./store/alertsSelectors"
 
-// Обертка для доступа к dispatch внутри App
 function AppContent() {
   const dispatch = useDispatch()
   const [isReady, setIsReady] = useState(false)
-  const [notificationSubscriptions, setNotificationSubscriptions] = useState(null)
+  const [appState, setAppState] = useState(AppState.currentState)
+  const priceAlerts = useSelector(priceAlertsSelector)
 
   useEffect(() => {
     const initializeApp = async () => {
       try {
+        console.log("Инициализация приложения...")
+
+        // 1. Загрузка алертов из AsyncStorage
         try {
           const storedAlertsJson = await AsyncStorage.getItem("priceAlerts")
-
           if (storedAlertsJson) {
             const storedAlerts = JSON.parse(storedAlertsJson)
-
-            // Валидация и очистка данных
             const validAlerts = storedAlerts.filter(
               (alert) =>
                 alert &&
@@ -45,94 +44,116 @@ function AppContent() {
                   unreadCount: validAlerts.filter((alert) => !alert.isRead).length
                 })
               )
-
-              console.log("Алерты успешно загружены в Redux")
-            } else {
-              console.log("В AsyncStorage нет валидных алертов")
+              console.log(`Загружено ${validAlerts.length} алертов`)
             }
-          } else {
-            console.log("AsyncStorage не содержит алертов")
           }
         } catch (storageError) {
-          console.error("Ошибка при загрузке алертов из AsyncStorage:", storageError)
+          console.error("Ошибка загрузки алертов:", storageError)
         }
 
-        const { granted } = await Notifications.getPermissionsAsync()
+        // 2. Инициализация службы уведомлений
+        const notificationInitialized = await NotificationService.initialize()
 
-        // 3. Регистрируем фоновую задачу
+        if (notificationInitialized) {
+          // 3. Запрос разрешений
+          const permissionGranted = await NotificationService.requestPermissions()
 
-        try {
-          await registerBackgroundTask()
-          console.log("Фоновая задача зарегистрирована")
-        } catch (bgError) {
-          console.error("Ошибка регистрации фоновой задачи:", bgError)
-        }
+          if (permissionGranted) {
+            // 4. Регистрируемся для push-уведомлений
+            const fcmToken = await NotificationService.registerForPushNotificationsAsync()
 
-        // 4. Настраиваем обработчики уведомлений (если разрешено)
-        if (granted) {
-          // Устанавливаем настройки для уведомлений
-          await Notifications.setNotificationHandler({
-            handleNotification: async () => ({
-              shouldShowAlert: true,
-              shouldPlaySound: true,
-              shouldSetBadge: true
-            })
-          })
+            if (fcmToken) {
+              // 5. Инициализируем синхронизацию с сервером
+              ServerSyncService.initialize(fcmToken)
 
-          // Регистрируем обработчики
-          const subscriptions = NotificationService.registerNotificationHandlers(
-            (notification) => {
-              console.log("Уведомление получено в приложении:", {
-                id: notification.request.identifier,
-                title: notification.request.content.title,
-                data: notification.request.content.data
-              })
-            },
-            async (response) => {
-              const data = response.notification.request.content.data
+              // 6. Регистрируем обработчики уведомлений
+              NotificationService.registerNotificationHandlers(
+                // Обработчик получения уведомления
+                (notification) => {
+                  console.log("Уведомление получено:", {
+                    source: notification.request.content.data?.source || "local",
+                    data: notification.request.content.data
+                  })
 
-              if (data.type === "price-alert" && data.alertId) {
-                dispatch(markAlertAsRead(data.alertId))
-              }
+                  // Если уведомление от FCM сервера
+                  const data = notification.request.content.data
+                  if (data?.type === "price-alert" && data.alertId) {
+                    // Создаем локальный алерт если его нет
+                    if (!priceAlerts.find((a) => a.id === data.alertId)) {
+                      const serverAlert = {
+                        id: data.alertId,
+                        coinId: data.coinId,
+                        coinName: data.coinName,
+                        coinSymbol: data.coinSymbol,
+                        targetPrice: parseFloat(data.targetPrice),
+                        currentPrice: parseFloat(data.currentPrice),
+                        condition: data.condition,
+                        isActive: false,
+                        isRead: false,
+                        triggeredAt: data.triggeredAt,
+                        createdAt: new Date().toISOString(),
+                        createdPrice: parseFloat(data.currentPrice),
+                        source: "server"
+                      }
+                    }
+                  }
+                },
+                // Обработчик нажатия на уведомление
+                async (response) => {
+                  const data = response.notification.request.content.data
+                  console.log("Нажатие на уведомление:", data)
+
+                  if (data.type === "price-alert" && data.alertId) {
+                    dispatch(markAlertAsRead(data.alertId))
+
+                    // Если уведомление от сервера, помечаем алерт как сработавший
+                    if (data.source === "server") {
+                      dispatch(
+                        triggerAlert({
+                          id: data.alertId,
+                          currentPrice: parseFloat(data.currentPrice)
+                        })
+                      )
+                    }
+                  }
+                }
+              )
             }
-          )
-
-          setNotificationSubscriptions(subscriptions)
-          // console.log("Обработчики уведомлений настроены")
+          }
         }
-
-        // 5. Приложение готово к отображению
 
         setIsReady(true)
+        console.log("Приложение инициализировано")
       } catch (error) {
-        console.error("Критическая ошибка инициализации приложения:", error)
-
+        console.error("Ошибка инициализации:", error)
         setIsReady(true)
       }
     }
 
-    // Запускаем инициализацию
     initializeApp()
 
-    // Функция очистки при размонтировании
-    return () => {
-      // Удаляем подписки на уведомления
-      if (notificationSubscriptions) {
-        try {
-          NotificationService.removeNotificationHandlers(notificationSubscriptions)
-        } catch (error) {
-          console.error("Ошибка при удалении подписок:", error)
-        }
+    // Слушатель изменения состояния приложения
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      console.log(`Состояние приложения: ${appState} → ${nextAppState}`)
+      setAppState(nextAppState)
+
+      // При сворачивании приложения синхронизируем алерты с сервером
+      if (nextAppState === "background" || nextAppState === "inactive") {
+        console.log("Синхронизация алертов с сервером...")
+        ServerSyncService.syncAlertsWithServer(priceAlerts)
       }
 
-      // Отменяем фоновую задачу
-      unregisterBackgroundTask().catch((error) => {
-        console.error("Ошибка при отмене фоновой задачи:", error)
-      })
+      // При возвращении в активное состояние проверяем алерты
+      if (appState.match(/inactive|background/) && nextAppState === "active") {
+        console.log("Проверка алертов после возвращения")
+      }
+    })
+
+    return () => {
+      subscription.remove()
     }
   }, [dispatch])
 
-  // Не показываем приложение до завершения инициализации
   if (!isReady) {
     return null
   }
@@ -145,8 +166,6 @@ function AppContent() {
 }
 
 export default function App() {
-  // console.log("Приложение запускается...")
-
   return (
     <Provider store={store}>
       <AppContent />

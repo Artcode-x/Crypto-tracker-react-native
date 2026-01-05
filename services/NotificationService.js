@@ -1,12 +1,13 @@
 import * as Notifications from "expo-notifications"
 import * as Device from "expo-device"
-import { Platform } from "react-native"
+import { Platform, AppState } from "react-native"
+import * as Application from "expo-application"
 
 class NotificationService {
-  // Инициализация уведомлений
+  // Инициализация уведомлений с поддержкой FCM
   static async initialize() {
     try {
-      console.log("Инициализация NotificationService...")
+      console.log("Инициализация NotificationService с FCM...")
 
       // Настройка обработчика уведомлений
       await Notifications.setNotificationHandler({
@@ -20,10 +21,10 @@ class NotificationService {
 
       // Настройка канала для Android
       if (Platform.OS === "android") {
-        await this.setupAndroidChannel()
+        await this.setupAndroidChannels()
       }
 
-      console.log("NotificationService инициализирован")
+      console.log("NotificationService инициализирован с FCM поддержкой")
       return true
     } catch (error) {
       console.error("Ошибка инициализации NotificationService:", error)
@@ -31,37 +32,53 @@ class NotificationService {
     }
   }
 
-  // Настройка канала для Android
-  static async setupAndroidChannel() {
+  // Настройка каналов для Android
+  static async setupAndroidChannels() {
     try {
+      // Основной канал для price alerts
       await Notifications.setNotificationChannelAsync("price-alerts", {
         name: "Price Alerts",
-        importance: Notifications.AndroidImportance.HIGH,
+        importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: "#D4AF37",
+        lightColor: "#FF231F7C",
         lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
         bypassDnd: true,
         sound: "default",
         enableVibrate: true,
         showBadge: true
       })
-      console.log("Android канал 'price-alerts' настроен")
+
+      // Канал для FCM push уведомлений
+      await Notifications.setNotificationChannelAsync("fcm-push", {
+        name: "Push Notifications",
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 500, 250, 500],
+        lightColor: "#D4AF37",
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+        bypassDnd: true,
+        sound: "default",
+        enableLights: true,
+        enableVibrate: true,
+        showBadge: true
+      })
+
+      console.log("Android каналы настроены")
     } catch (error) {
-      console.error("Ошибка настройки Android канала:", error)
+      console.error("Ошибка настройки Android каналов:", error)
     }
   }
 
-  // Запрос разрешений на уведомления
+  // Запрос разрешений на уведомления (с FCM)
   static async requestPermissions() {
     try {
       console.log("Запрос разрешений на уведомления...")
 
       // Проверка, является ли устройство физическим
       if (!Device.isDevice) {
-        console.log("⚠️ Эмулятор/симулятор, уведомления могут работать ограниченно")
+        console.log("Эмулятор/симулятор, FCM может работать ограниченно")
       }
 
-      let permissions = {
+      const permissions = {
         ios: {
           allowAlert: true,
           allowBadge: true,
@@ -81,19 +98,7 @@ class NotificationService {
         finalStatus = status
       }
 
-      // Для iOS: запрос на критические уведомления
-      if (Platform.OS === "ios" && finalStatus === "granted") {
-        try {
-          await Notifications.requestPermissionsAsync({
-            ios: {
-              allowCriticalAlerts: true
-            }
-          })
-        } catch (iosError) {
-          console.log("Критические уведомления не доступны на этой версии iOS")
-        }
-      }
-
+      console.log(`Результат разрешений: ${finalStatus}`)
       return finalStatus === "granted"
     } catch (error) {
       console.error("Ошибка запроса разрешений:", error)
@@ -101,32 +106,200 @@ class NotificationService {
     }
   }
 
-  // Проверка текущих разрешений
-  static async checkPermissions() {
+  // Регистрация для push-уведомлений через FCM
+  static async registerForPushNotificationsAsync() {
     try {
-      const { granted, status, expires } = await Notifications.getPermissionsAsync()
+      console.log("Регистрация для push-уведомлений...")
 
-      return { granted, status, expires }
+      // Проверяем, что устройство физическое
+      if (!Device.isDevice) {
+        console.warn("Физическое устройство требуется для push-уведомлений")
+        return null
+      }
+
+      // Проверяем разрешения
+      const granted = await this.requestPermissions()
+      if (!granted) {
+        console.warn("Разрешения на уведомления не получены")
+        return null
+      }
+
+      // Получаем FCM/Expo push токен
+      const token = await this.getDevicePushToken()
+
+      if (token) {
+        console.log("Успешно зарегистрирован для push-уведомлений")
+        console.log(
+          `Тип токена: ${token.startsWith("ExponentPushToken") ? "Expo" : "Native"}`
+        )
+        console.log(`Token: ${token.substring(0, 30)}${token.length > 30 ? "..." : ""}`)
+
+        // Определение типа токена
+        const tokenType = this.detectTokenType(token)
+        console.log(`Определен тип токена: ${tokenType}`)
+      } else {
+        console.warn("Не удалось получить push токен")
+      }
+
+      return token
     } catch (error) {
-      console.error("Ошибка проверки разрешений:", error)
-      return { granted: false, error: error.message }
+      console.error("Ошибка регистрации для push-уведомлений:", error)
+      return null
     }
   }
 
-  // Отправка уведомления о сработавшем алерте
+  // Получение токена устройства для push-уведомлений
+  static async getDevicePushToken() {
+    try {
+      // Попытка получить нативный FCM токен
+      let token = await this.getNativeFCMToken()
+
+      // Если не удалось получить нативный токен, используем Expo токен
+      if (!token) {
+        console.log("Нативный токен не получен, используем Expo токен")
+        token = await this.getExpoToken()
+      }
+
+      if (token) {
+        console.log("Push Token получен успешно")
+        return token
+      } else {
+        console.error("Не удалось получить ни один тип токена")
+        return null
+      }
+    } catch (error) {
+      console.error("Ошибка получения push токена:", error)
+      // Fallback на Expo токен
+      try {
+        const expoToken = await this.getExpoToken()
+        return expoToken
+      } catch (expoError) {
+        console.error("Ошибка получения Expo токена:", expoError)
+        return null
+      }
+    }
+  }
+
+  // Попытка получить нативный FCM токен
+  static async getNativeFCMToken() {
+    try {
+      console.log("Попытка получить нативный FCM токен...")
+
+      // Способ 1: Используем getDevicePushTokenAsync для нативного токена
+      // Этот метод возвращает нативный токен в development/production builds
+      if (Device.isDevice) {
+        const devicePushToken = await Notifications.getDevicePushTokenAsync({
+          development: __DEV__ // true для development builds
+        })
+
+        console.log("DevicePushToken получен:", {
+          type: devicePushToken.type,
+          dataLength: devicePushToken.data?.length || 0
+        })
+
+        // Для Android в development/production builds это будет FCM токен
+        if (Platform.OS === "android") {
+          if (devicePushToken.type === "fcm" || devicePushToken.type === "android") {
+            console.log("Получен нативный FCM токен для Android")
+            return devicePushToken.data
+          }
+        }
+
+        // Для iOS это будет APNS токен
+        if (Platform.OS === "ios") {
+          if (devicePushToken.type === "apns") {
+            console.log("Получен нативный APNS токен для iOS")
+            return devicePushToken.data
+          }
+        }
+      }
+
+      console.log("Нативный токен не доступен, возможно это Expo Go")
+      return null
+    } catch (error) {
+      console.error("Ошибка получения нативного токена:", error)
+      return null
+    }
+  }
+
+  // Получение Expo токена (fallback)
+  static async getExpoToken() {
+    try {
+      const expoToken = await Notifications.getExpoPushTokenAsync({
+        projectId: "8a1401d1-7ebd-4be4-b520-7b18ad4517ba"
+      })
+
+      console.log("Expo Push Token получен")
+      return expoToken.data
+    } catch (error) {
+      console.error("Ошибка получения Expo токена:", error)
+      return null
+    }
+  }
+
+  // Определение типа токена
+  static detectTokenType(token) {
+    if (!token) return "unknown"
+
+    if (token.startsWith("ExponentPushToken[")) {
+      return "expo"
+    } else if (token.startsWith("APA91") || token.startsWith("f") || token.length > 100) {
+      return "fcm"
+    } else if (token.length === 64) {
+      return "apns"
+    } else {
+      return "unknown"
+    }
+  }
+
+  // Получение FCM токена (основной метод)
+  static async getFCMToken() {
+    try {
+      const token = await this.getDevicePushToken()
+
+      if (token) {
+        const tokenType = this.detectTokenType(token)
+
+        if (tokenType === "expo") {
+          console.log(
+            "Получен Expo токен. Для FCM токена требуется development/production build."
+          )
+          console.log("Запустите: eas build --profile development --platform android")
+        } else if (tokenType === "fcm") {
+          console.log("Получен чистый FCM токен!")
+        }
+      }
+
+      return token
+    } catch (error) {
+      console.error("Ошибка получения FCM токена:", error)
+      return null
+    }
+  }
+
+  // Проверка, является ли токен валидным FCM токеном
+  static isValidFCMToken(token) {
+    if (!token) return false
+
+    const tokenType = this.detectTokenType(token)
+    return tokenType === "fcm" && token.length > 100
+  }
+
+  // Отправка локального уведомления о сработавшем алерте
   static async sendPriceAlertNotification(alert) {
     try {
       if (!alert || !alert.coinName || !alert.coinSymbol) {
-        console.warn("⚠️ Некорректные данные алерта для уведомления")
+        console.warn("Некорректные данные алерта для уведомления")
         return false
       }
 
       const conditionText = alert.condition === "above" ? "rose above" : "fell below"
-      const directionText = alert.condition === "above" ? "выше" : "ниже"
 
       // Текст уведомления
       const title = `💰 ${alert.coinSymbol.toUpperCase()} Alert!`
-      const body = `${alert.coinName} ${conditionText} $${alert.targetPrice}. Current: $${alert.currentPrice}`
+      const body = `${alert.coinName} ${conditionText} $${alert.targetPrice.toFixed(
+        2
+      )}. Current: $${alert.currentPrice.toFixed(2)}`
 
       // Данные для уведомления
       const notificationData = {
@@ -138,8 +311,13 @@ class NotificationService {
         targetPrice: alert.targetPrice,
         currentPrice: alert.currentPrice,
         condition: alert.condition,
-        triggeredAt: new Date().toISOString()
+        triggeredAt: new Date().toISOString(),
+        source: "local"
       }
+
+      // Проверяем состояние приложения
+      const appState = AppState.currentState
+      const isAppActive = appState === "active"
 
       // Планируем уведомление
       const notificationId = await Notifications.scheduleNotificationAsync({
@@ -151,31 +329,161 @@ class NotificationService {
           badge: 1,
           color: "#D4AF37",
           // iOS specific
-          // subtitle: "Price Alert Triggered",
+          subtitle: "Price Alert Triggered",
           launchImageName: "adaptive-icon",
           // Android specific
-          priority: Notifications.AndroidNotificationPriority.HIGH,
+          priority: isAppActive
+            ? Notifications.AndroidNotificationPriority.HIGH
+            : Notifications.AndroidNotificationPriority.MAX,
           vibrate: [0, 250, 250, 250],
           autoDismiss: false,
-          sticky: true
+          sticky: !isAppActive,
+          channelId: "price-alerts"
         },
-        trigger: null // Немедленное уведомление
+        trigger: null
       })
 
       // Увеличиваем счетчик бейджей
       await this.incrementBadgeCount()
 
+      console.log(`Локальное уведомление отправлено: ${notificationId}`)
       return true
     } catch (error) {
-      console.error(`Ошибка отправки уведомления для алерта ${alert?.id}:`, error)
+      console.error(
+        `Ошибка отправки локального уведомления для алерта ${alert?.id}:`,
+        error
+      )
       return false
+    }
+  }
+
+  // Обработка входящих push-уведомлений от FCM
+  static async handleIncomingPushNotification(notification) {
+    try {
+      if (!notification) {
+        console.warn("Пустое уведомление")
+        return { handled: false }
+      }
+
+      console.log("Входящее push-уведомление:", {
+        origin: notification.origin,
+        data: notification.data,
+        title: notification.title,
+        body: notification.body
+      })
+
+      const { data, title, body } = notification
+
+      // Проверяем, является ли уведомление алертом о цене
+      if (data?.type === "price-alert") {
+        console.log("Обработка price-alert:", data)
+
+        // Создаем локальное уведомление для отображения
+        await this.showLocalNotificationFromFCM({
+          title: title || `💰 ${data.coinSymbol?.toUpperCase() || "Crypto"} Alert!`,
+          body: body || "Price alert triggered",
+          data: data
+        })
+
+        return {
+          handled: true,
+          type: "price-alert",
+          alertId: data.alertId
+        }
+      }
+
+      return { handled: false }
+    } catch (error) {
+      console.error("Ошибка обработки push-уведомления:", error)
+      return { handled: false, error: error.message }
+    }
+  }
+
+  // Показать локальное уведомление из FCM уведомления
+  static async showLocalNotificationFromFCM(pushNotification) {
+    try {
+      const { title, body, data } = pushNotification
+      const appState = AppState.currentState
+      const isAppActive = appState === "active"
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: title || "Crypto Alert",
+          body: body || "Push notification received",
+          data: {
+            ...data,
+            source: "fcm"
+          },
+          sound: true,
+          badge: 1,
+          priority: isAppActive
+            ? Notifications.AndroidNotificationPriority.HIGH
+            : Notifications.AndroidNotificationPriority.MAX,
+          channelId: "fcm-push"
+        },
+        trigger: null
+      })
+
+      console.log("Локальное уведомление из FCM показано")
+    } catch (error) {
+      console.error("Ошибка показа локального уведомления из FCM:", error)
+    }
+  }
+
+  // Регистрация обработчиков уведомлений
+  static registerNotificationHandlers(onReceived, onResponse) {
+    console.log("Регистрация обработчиков уведомлений...")
+
+    const subscriptions = []
+
+    // Обработчик получения уведомления
+    if (onReceived) {
+      const receivedSubscription = Notifications.addNotificationReceivedListener(
+        (notification) => {
+          console.log("Уведомление получено в приложении:", {
+            id: notification.request.identifier,
+            source: notification.request.content.data?.source || "local"
+          })
+
+          onReceived(notification)
+        }
+      )
+      subscriptions.push(receivedSubscription)
+    }
+
+    // Обработчик нажатия на уведомление
+    if (onResponse) {
+      const responseSubscription = Notifications.addNotificationResponseReceivedListener(
+        (response) => {
+          console.log("Нажатие на уведомление")
+
+          onResponse(response)
+        }
+      )
+      subscriptions.push(responseSubscription)
+    }
+
+    console.log(`${subscriptions.length} обработчиков зарегистрировано`)
+    return subscriptions
+  }
+
+  // ===== БАЗОВЫЕ МЕТОДЫ =====
+
+  // Проверка текущих разрешений
+  static async checkPermissions() {
+    try {
+      const { granted, status, expires } = await Notifications.getPermissionsAsync()
+      return { granted, status, expires }
+    } catch (error) {
+      console.error("Ошибка проверки разрешений:", error)
+      return { granted: false, error: error.message }
     }
   }
 
   // Отправка тестового уведомления
   static async sendTestNotification() {
     try {
-      console.log("🧪 Отправка тестового уведомления...")
+      console.log("Отправка тестового уведомления...")
 
       const testAlert = {
         id: "test-" + Date.now(),
@@ -199,7 +507,6 @@ class NotificationService {
     try {
       if (Platform.OS === "ios" || Platform.OS === "android") {
         await Notifications.setBadgeCountAsync(count)
-
         return true
       }
       return false
@@ -216,7 +523,6 @@ class NotificationService {
         const currentBadgeCount = await Notifications.getBadgeCountAsync()
         const newBadgeCount = (currentBadgeCount || 0) + 1
         await Notifications.setBadgeCountAsync(newBadgeCount)
-
         return newBadgeCount
       }
       return 0
@@ -230,7 +536,6 @@ class NotificationService {
   static async resetBadgeCount() {
     try {
       await Notifications.setBadgeCountAsync(0)
-
       return true
     } catch (error) {
       console.error("Ошибка сброса счетчика бейджей:", error)
@@ -242,7 +547,6 @@ class NotificationService {
   static async getBadgeCount() {
     try {
       const count = await Notifications.getBadgeCountAsync()
-
       return count || 0
     } catch (error) {
       console.error("Ошибка получения количества бейджей:", error)
@@ -250,49 +554,11 @@ class NotificationService {
     }
   }
 
-  // Регистрация обработчиков уведомлений
-  static registerNotificationHandlers(onReceived, onResponse) {
-    console.log("Регистрация обработчиков уведомлений...")
-
-    const subscriptions = []
-
-    // Обработчик получения уведомления
-    if (onReceived) {
-      const receivedSubscription =
-        Notifications.addNotificationReceivedListener(onReceived)
-      subscriptions.push(receivedSubscription)
-      console.log("Обработчик получения уведомления зарегистрирован")
-    }
-
-    // Обработчик нажатия на уведомление
-    if (onResponse) {
-      const responseSubscription =
-        Notifications.addNotificationResponseReceivedListener(onResponse)
-      subscriptions.push(responseSubscription)
-      console.log("Обработчик нажатия на уведомление зарегистрирован")
-    }
-
-    // Обработчик для отладки (всегда добавляем)
-    const debugSubscription = Notifications.addNotificationReceivedListener(
-      (notification) => {
-        console.log("Уведомление получено (отладка):", {
-          id: notification.request.identifier,
-          title: notification.request.content.title,
-          data: notification.request.content.data,
-          date: new Date().toISOString()
-        })
-      }
-    )
-    subscriptions.push(debugSubscription)
-
-    return subscriptions
-  }
-
   // Удаление обработчиков уведомлений
   static removeNotificationHandlers(subscriptions) {
     try {
       if (!subscriptions || !Array.isArray(subscriptions)) {
-        console.warn("⚠️ Нет подписок для удаления")
+        console.warn("Нет подписок для удаления")
         return false
       }
 
@@ -314,7 +580,6 @@ class NotificationService {
   static async getAllScheduledNotifications() {
     try {
       const notifications = await Notifications.getAllScheduledNotificationsAsync()
-
       return notifications
     } catch (error) {
       console.error("Ошибка получения запланированных уведомлений:", error)
@@ -326,59 +591,10 @@ class NotificationService {
   static async cancelAllNotifications() {
     try {
       await Notifications.cancelAllScheduledNotificationsAsync()
-
       return true
     } catch (error) {
       console.error("Ошибка отмены уведомлений:", error)
       return false
-    }
-  }
-
-  // Отмена конкретного уведомления
-  static async cancelNotification(notificationId) {
-    try {
-      await Notifications.cancelScheduledNotificationAsync(notificationId)
-
-      return true
-    } catch (error) {
-      console.error(`Ошибка отмены уведомления ${notificationId}:`, error)
-      return false
-    }
-  }
-
-  // Получение последнего ответа на уведомление
-  static async getLastNotificationResponse() {
-    try {
-      const response = await Notifications.getLastNotificationResponseAsync()
-      if (response) {
-        console.log("Последний ответ на уведомление:", {
-          id: response.notification.request.identifier,
-          action: response.actionIdentifier,
-          data: response.notification.request.content.data,
-          date: response.notification.date
-        })
-      } else {
-        console.log("Нет последнего ответа на уведомление")
-      }
-      return response
-    } catch (error) {
-      console.error("Ошибка получения последнего ответа:", error)
-      return null
-    }
-  }
-
-  // Получение токена устройства для push-уведомлений
-  static async getDevicePushToken() {
-    try {
-      // Для Expo Go
-      const token = await Notifications.getExpoPushTokenAsync({
-        projectId: "8a1401d1-7ebd-4be4-b520-7b18ad4517ba"
-      })
-
-      return token
-    } catch (error) {
-      console.error("Ошибка получения токена устройства:", error)
-      return null
     }
   }
 
@@ -388,13 +604,11 @@ class NotificationService {
       const permissions = await this.checkPermissions()
       const badgeCount = await this.getBadgeCount()
       const scheduledNotifications = await this.getAllScheduledNotifications()
-      const lastResponse = await this.getLastNotificationResponse()
 
       return {
         permissions,
         badgeCount,
         scheduledNotificationsCount: scheduledNotifications.length,
-        lastResponse: lastResponse ? true : false,
         platform: Platform.OS,
         device: Device.isDevice ? "Физическое устройство" : "Эмулятор",
         timestamp: new Date().toISOString()
@@ -408,40 +622,38 @@ class NotificationService {
     }
   }
 
-  // Тестирование всей системы уведомлений
+  // Полная проверка системы уведомлений
   static async testFullNotificationSystem() {
-    console.log(" ===== ПОЛНОЕ ТЕСТИРОВАНИЕ СИСТЕМЫ УВЕДОМЛЕНИЙ =====")
+    console.log("ПОЛНОЕ ТЕСТИРОВАНИЕ СИСТЕМЫ УВЕДОМЛЕНИЙ")
 
     try {
       // 1. Проверка разрешений
       console.log("1. Проверка разрешений...")
       const permissions = await this.checkPermissions()
 
-      // 2. Запрос разрешений если нужно
-      if (!permissions.granted) {
-        console.log("2. Запрос разрешений...")
-        await this.requestPermissions()
-      }
+      // 2. Регистрация
+      console.log("2. Регистрация для push-уведомлений...")
+      const token = await this.registerForPushNotificationsAsync()
+      const tokenType = token ? this.detectTokenType(token) : "none"
 
       // 3. Отправка тестового уведомления
       console.log("3. Отправка тестового уведомления...")
       const testResult = await this.sendTestNotification()
 
-      // 4. Проверка бейджей
-      console.log("4. Проверка системы бейджей...")
-      await this.incrementBadgeCount()
-      const badgeCount = await this.getBadgeCount()
-
-      // 5. Получение статуса
-      console.log("5. Получение общего статуса...")
+      // 4. Проверка статуса
+      console.log("4. Получение общего статуса...")
       const status = await this.getNotificationStatus()
 
       return {
         success: true,
         permissions: permissions.granted,
+        tokenType: tokenType,
+        token: token ? `${token.substring(0, 20)}...` : null,
         testNotificationSent: testResult,
-        badgeCount,
-        status
+        status: {
+          ...status,
+          tokenRegistered: !!token
+        }
       }
     } catch (error) {
       console.error("Ошибка тестирования системы уведомлений:", error)

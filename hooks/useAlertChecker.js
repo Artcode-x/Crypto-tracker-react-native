@@ -12,7 +12,7 @@ export const useAlertChecker = (coinData, checkInterval = 60000) => {
     // Инициализация AlertManager
     AlertManager.initialize(dispatch)
 
-    // Функция для проверки алертов
+    // Функция для проверки алертов (только при активном приложении)
     const checkAlerts = () => {
       if (coinData.length > 0 && priceAlerts.length > 0) {
         const activeAlerts = priceAlerts.filter(
@@ -20,7 +20,7 @@ export const useAlertChecker = (coinData, checkInterval = 60000) => {
         )
 
         if (activeAlerts.length > 0) {
-          console.log(`Periodic check: ${activeAlerts.length} active alerts`)
+          console.log(`Checking ${activeAlerts.length} active alerts`)
           AlertManager.checkAlerts(activeAlerts, coinData)
         }
       }
@@ -29,10 +29,10 @@ export const useAlertChecker = (coinData, checkInterval = 60000) => {
     // Проверка сразу при монтировании
     checkAlerts()
 
-    // Уст-ка переодической проверки
+    // Установка интервала проверки (только когда приложение активно)
     intervalRef.current = setInterval(checkAlerts, checkInterval)
 
-    // Очистка интервала при размонтировании
+    // Очистка
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
