@@ -1,27 +1,27 @@
 import { Platform, StyleSheet } from "react-native"
+import { RFValue } from "react-native-responsive-fontsize"
 
 export const styles = StyleSheet.create({
   statsPanel: {
-    paddingHorizontal: 16,
-    // marginBottom: 12
-    marginBottom: 1
+    paddingHorizontal: 12,
+    marginBottom: 3
   },
 
   statsGradient: {
-    borderRadius: 12,
-    padding: 9,
-    borderWidth: 1,
+    borderRadius: 8,
+    padding: Platform.OS === "android" ? 3 : 5,
+    borderWidth: 0.8,
     borderColor: "rgba(212, 175, 55, 0.15)",
-    backgroundColor: "rgba(26, 26, 26, 0.8)",
+    backgroundColor: "rgba(26, 26, 26, 0.9)",
     ...Platform.select({
       ios: {
         shadowColor: "#D4AF37",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4
+        shadowOffset: { width: 0, height: 0.5 },
+        shadowOpacity: 0.08,
+        shadowRadius: 2
       },
       android: {
-        elevation: 3
+        elevation: 1
       }
     })
   },
@@ -29,32 +29,41 @@ export const styles = StyleSheet.create({
   compactStats: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center"
+    alignItems: "center",
+    minHeight: 28
   },
 
   statItemCompact: {
     alignItems: "center",
-    flex: 1
+    flex: 1,
+    gap: 2,
+    paddingVertical: 2
   },
 
   statNumberCompact: {
-    fontSize: 13,
-    fontWeight: "700",
+    paddingTop: 4,
+    fontSize: Platform.OS === "android" ? RFValue(13) : RFValue(11),
+    fontWeight: "500",
     color: "#FFF",
-    marginTop: 4
+    marginTop: 0,
+    lineHeight: 12
   },
 
   statLabelCompact: {
-    fontSize: 9,
-    color: "rgba(255, 255, 255, 0.6)",
-    marginTop: 2
+    fontSize: Platform.OS === "android" ? RFValue(8) : RFValue(8),
+    color: "rgba(255, 255, 255, 0.7)",
+    paddingTop: 2,
+    marginTop: 0,
+    lineHeight: 8,
+    letterSpacing: -0.3
   },
 
   statDivider: {
-    width: 1,
+    width: 1.2,
     height: 24,
-    backgroundColor: "rgba(212, 175, 55, 0.2)"
+    backgroundColor: "rgba(212, 175, 55, 0.15)"
   },
+
   alertBadgeContainer: {
     position: "relative",
     alignItems: "center"
@@ -62,22 +71,23 @@ export const styles = StyleSheet.create({
 
   unreadBadge: {
     position: "absolute",
-    top: -5,
-    right: -5,
+    top: -7,
+    right: -3,
     backgroundColor: "#FF3B30",
-    borderRadius: 6,
-    minWidth: 12,
-    height: 12,
+    borderRadius: 4,
+    minWidth: 8,
+    height: 8,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: "#FFF"
   },
 
   unreadBadgeText: {
-    fontSize: 6,
+    fontSize: 4,
     color: "#FFF",
     fontWeight: "700",
-    textAlign: "center"
+    textAlign: "center",
+    lineHeight: 6
   }
 })

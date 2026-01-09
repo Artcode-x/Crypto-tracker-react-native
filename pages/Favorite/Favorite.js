@@ -871,7 +871,7 @@ const Favorite = () => {
         </View>
       )}
 
-      {/* Индикатор состояния FCM и сервера */}
+      {/* // Индикатор состояния FCM и сервера
       {fcmToken && (
         <TouchableOpacity
           style={[
@@ -912,7 +912,7 @@ const Favorite = () => {
             </View>
           </LinearGradient>
         </TouchableOpacity>
-      )}
+      )} */}
 
       {/* Пустое состояние или список */}
       {coinData.length === 0 ? (

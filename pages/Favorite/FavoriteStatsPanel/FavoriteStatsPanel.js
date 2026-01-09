@@ -12,19 +12,19 @@ const FavoriteStatsPanel = ({ priceAlerts, stats, unreadAlertsCount }) => {
       >
         <View style={styles.compactStats}>
           <View style={styles.statItemCompact}>
-            <Ionicons name='trending-up' size={14} color='#00C853' />
+            <Ionicons name='trending-up' size={12} color='#00C853' />
             <Text style={styles.statNumberCompact}>{stats.bullish}</Text>
-            <Text style={styles.statLabelCompact}>Growing</Text>
+            <Text style={styles.statLabelCompact}>Growth</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItemCompact}>
-            <Ionicons name='trending-down' size={14} color='#FF3B30' />
+            <Ionicons name='trending-down' size={12} color='#FF3B30' />
             <Text style={styles.statNumberCompact}>{stats.bearish}</Text>
-            <Text style={styles.statLabelCompact}>Declining</Text>
+            <Text style={styles.statLabelCompact}>Decline</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItemCompact}>
-            <MaterialCommunityIcons name='diamond-stone' size={14} color='#FFD700' />
+            <MaterialCommunityIcons name='diamond-stone' size={12} color='#FFD700' />
             <Text style={styles.statNumberCompact}>{stats.top10}</Text>
             <Text style={styles.statLabelCompact}>Top-10</Text>
           </View>
@@ -32,7 +32,6 @@ const FavoriteStatsPanel = ({ priceAlerts, stats, unreadAlertsCount }) => {
           <TouchableOpacity
             style={styles.statItemCompact}
             onPress={() => {
-              // Показываем информацию об алертах
               console.log("Статистика алертов:")
               console.log(`   Всего: ${priceAlerts.length}`)
               console.log(`   Активных: ${stats.activeAlerts || 0}`)
@@ -40,7 +39,7 @@ const FavoriteStatsPanel = ({ priceAlerts, stats, unreadAlertsCount }) => {
               console.log(`   Непрочитанных: ${unreadAlertsCount}`)
             }}
           >
-            <Ionicons name='notifications' size={14} color='#FF6B6B' />
+            <Ionicons name='notifications' size={12} color='#FF6B6B' />
             <View style={styles.alertBadgeContainer}>
               <Text style={styles.statNumberCompact}>{stats.activeAlerts || 0}</Text>
               {unreadAlertsCount > 0 && (

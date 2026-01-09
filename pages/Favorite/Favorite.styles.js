@@ -3,7 +3,6 @@ import { RFValue } from "react-native-responsive-fontsize"
 
 const { width } = Dimensions.get("window")
 const CARD_WIDTH = (width - 32) / 2
-const isIOS = Platform.OS === "ios"
 
 export const styles = StyleSheet.create({
   premiumContainer: {
@@ -12,34 +11,35 @@ export const styles = StyleSheet.create({
   },
 
   premiumList: {
-    paddingHorizontal: 8,
+    paddingHorizontal: Platform.OS === "android" ? 9 : 8,
     paddingBottom: 100
   },
 
   cardContainer: {
     width: CARD_WIDTH,
-    margin: 4
+    margin: Platform.OS === "android" ? 3 : 4
   },
 
   /* ===== КАРТОЧКА МОНЕТЫ ===== */
   premiumCoinCard: {
-    borderRadius: 16,
+    borderRadius: Platform.OS === "android" ? 14 : 16,
     overflow: "hidden",
-    height: 190,
-    ...(isIOS
-      ? {
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 3 },
-          shadowOpacity: 0.15,
-          shadowRadius: 6
-        }
-      : {
-          elevation: 4
-        })
+    height: Platform.OS === "android" ? 155 : 190,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.15,
+        shadowRadius: 6
+      },
+      android: {
+        elevation: 4
+      }
+    })
   },
 
   cardGradient: {
-    padding: 12,
+    padding: Platform.OS === "android" ? 10 : 12,
     flex: 1,
     justifyContent: "space-between"
   },
@@ -49,49 +49,74 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 10
+    marginBottom: Platform.OS === "android" ? 8 : 10
   },
 
   coinInfo: {
     flex: 1,
-    marginRight: 8,
+    marginRight: Platform.OS === "android" ? 6 : 8,
     minWidth: 0
   },
+
+  titleRow:
+    Platform.OS === "android"
+      ? {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 6
+        }
+      : undefined,
 
   rankRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 4
+    marginBottom: Platform.OS === "android" ? 0 : 4
   },
 
+  nameContainer:
+    Platform.OS === "android"
+      ? {
+          flex: 1,
+          minWidth: 0
+        }
+      : undefined,
+
   rankText: {
-    fontSize: 10,
+    marginBottom: Platform.OS === "android" ? 2 : 0,
+    fontSize: Platform.OS === "android" ? 8 : 10,
     color: "#D4AF37",
     fontWeight: "700",
     backgroundColor: "rgba(212, 175, 55, 0.15)",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
+    paddingHorizontal: Platform.OS === "android" ? 5 : 6,
+    paddingVertical: Platform.OS === "android" ? 1 : 2,
+    borderRadius: Platform.OS === "android" ? 6 : 8,
     borderWidth: 1,
-    borderColor: "rgba(212, 175, 55, 0.3)"
+    borderColor: "rgba(212, 175, 55, 0.3)",
+    ...(Platform.OS === "android" && {
+      minWidth: 24,
+      textAlign: "center"
+    })
   },
 
   crownIcon: {
-    marginLeft: 4
+    marginLeft: Platform.OS === "android" ? 2 : 4,
+    marginBottom: Platform.OS === "android" ? 2 : 0
   },
 
   coinName: {
-    fontSize: 13,
+    fontSize: Platform.OS === "android" ? 12 : 13,
     fontWeight: "600",
     color: "#FFF",
-    marginBottom: 2,
-    flexShrink: 1
+    marginBottom: Platform.OS === "android" ? 1 : 2,
+    flexShrink: 1,
+    includeFontPadding: false
   },
 
   coinSymbol: {
-    fontSize: 11,
+    fontSize: Platform.OS === "android" ? 10 : 11,
     color: "rgba(255, 255, 255, 0.6)",
-    fontWeight: "500"
+    fontWeight: "500",
+    includeFontPadding: false
   },
 
   alertButtonContainer: {
@@ -99,10 +124,10 @@ export const styles = StyleSheet.create({
   },
 
   alertButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 1.5,
+    width: Platform.OS === "android" ? 30 : 34,
+    height: Platform.OS === "android" ? 30 : 34,
+    borderRadius: Platform.OS === "android" ? 15 : 17,
+    borderWidth: Platform.OS === "android" ? 1.2 : 1.5,
     borderColor: "rgba(212, 175, 55, 0.3)",
     justifyContent: "center",
     alignItems: "center",
@@ -117,30 +142,31 @@ export const styles = StyleSheet.create({
 
   alertBadge: {
     position: "absolute",
-    top: -4,
-    right: -4,
+    top: Platform.OS === "android" ? -3 : -4,
+    right: Platform.OS === "android" ? -3 : -4,
     backgroundColor: "#FF3B30",
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
+    borderRadius: Platform.OS === "android" ? 7 : 8,
+    minWidth: Platform.OS === "android" ? 14 : 16,
+    height: Platform.OS === "android" ? 14 : 16,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2,
+    borderWidth: Platform.OS === "android" ? 1.5 : 2,
     borderColor: "#1A1A1A",
-    ...(isIOS
-      ? {
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.3,
-          shadowRadius: 1.5
-        }
-      : {
-          elevation: 2
-        })
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.3,
+        shadowRadius: 1.5
+      },
+      android: {
+        elevation: 2
+      }
+    })
   },
 
   alertBadgeText: {
-    fontSize: 9,
+    fontSize: Platform.OS === "android" ? 8 : 9,
     color: "#FFF",
     fontWeight: "800",
     textAlign: "center",
@@ -152,18 +178,18 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 14,
-    minHeight: 52
+    marginBottom: Platform.OS === "android" ? 10 : 14,
+    minHeight: Platform.OS === "android" ? 44 : 52
   },
 
   priceSection: {
     flex: 1,
-    marginRight: 6,
+    marginRight: Platform.OS === "android" ? 6 : 6,
     minWidth: 0
   },
 
   coinPrice: {
-    fontSize: RFValue(10.5),
+    fontSize: Platform.OS === "android" ? RFValue(10) : RFValue(10.5),
     fontWeight: "700",
     marginBottom: 4,
     flexShrink: 1,
@@ -177,16 +203,16 @@ export const styles = StyleSheet.create({
   changeBadge: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
-    minWidth: 62
+    paddingHorizontal: Platform.OS === "android" ? 5 : 6,
+    paddingVertical: Platform.OS === "android" ? 2 : 3,
+    borderRadius: Platform.OS === "android" ? 5 : 6,
+    minWidth: Platform.OS === "android" ? 58 : 62
   },
 
   changeText: {
-    fontSize: 9.5,
+    fontSize: Platform.OS === "android" ? 9 : 9.5,
     fontWeight: "700",
-    marginLeft: 3,
+    marginLeft: Platform.OS === "android" ? 2 : 3,
     flexShrink: 1,
     includeFontPadding: false
   },
@@ -199,17 +225,17 @@ export const styles = StyleSheet.create({
   },
 
   userAmount: {
-    fontSize: RFValue(10),
+    fontSize: Platform.OS === "android" ? RFValue(9.5) : RFValue(10),
     color: "#D4AF37",
     fontWeight: "700",
     textAlign: "right",
-    marginBottom: 2,
+    marginBottom: Platform.OS === "android" ? 1 : 2,
     flexShrink: 1,
     includeFontPadding: false
   },
 
   userValue: {
-    fontSize: RFValue(9.5),
+    fontSize: Platform.OS === "android" ? RFValue(9) : RFValue(9.5),
     color: "rgba(255, 255, 255, 0.9)",
     fontWeight: "600",
     textAlign: "right",
@@ -218,16 +244,16 @@ export const styles = StyleSheet.create({
   },
 
   userAmountPlaceholder: {
-    fontSize: 10,
+    fontSize: Platform.OS === "android" ? 9 : 10,
     color: "rgba(255, 255, 255, 0.3)",
     fontStyle: "italic",
     textAlign: "right",
-    marginBottom: 2,
+    marginBottom: Platform.OS === "android" ? 1 : 2,
     includeFontPadding: false
   },
 
   userValuePlaceholder: {
-    fontSize: 10,
+    fontSize: Platform.OS === "android" ? 9 : 10,
     color: "rgba(255, 255, 255, 0.3)",
     fontStyle: "italic",
     textAlign: "right",
@@ -238,8 +264,8 @@ export const styles = StyleSheet.create({
   bottomActions: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 6,
-    height: 30,
+    gap: Platform.OS === "android" ? 5 : 6,
+    height: Platform.OS === "android" ? 28 : 30,
     marginTop: "auto"
   },
 
@@ -249,18 +275,18 @@ export const styles = StyleSheet.create({
 
   actionButtonGradient: {
     flex: 1,
-    borderRadius: 8,
+    borderRadius: Platform.OS === "android" ? 6 : 8,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
-    gap: 4,
+    gap: Platform.OS === "android" ? 3 : 4,
     borderWidth: 1,
     height: "100%",
-    paddingHorizontal: 6
+    paddingHorizontal: Platform.OS === "android" ? 4 : 6
   },
 
   actionButtonText: {
-    fontSize: RFValue(9),
+    fontSize: Platform.OS === "android" ? RFValue(8.5) : RFValue(9),
     fontWeight: "600",
     includeFontPadding: false,
     flexShrink: 1
@@ -274,7 +300,6 @@ export const styles = StyleSheet.create({
     color: "#D4AF37"
   },
 
-  // Стили для градиентов
   addButtonGradient: {
     borderColor: "rgba(212, 175, 55, 0.25)",
     backgroundColor: "rgba(212, 175, 55, 0.08)"
@@ -284,11 +309,9 @@ export const styles = StyleSheet.create({
     borderColor: "rgba(255, 107, 107, 0.25)",
     backgroundColor: "rgba(255, 107, 107, 0.08)"
   },
-  //
 
   // ===== СТИЛИ ДЛЯ ИНДИКАТОРА СЕРВЕРА =====
 
-  // Вариант 1
   fcmIndicator: {
     marginHorizontal: 16,
     marginTop: 6,
@@ -297,16 +320,17 @@ export const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.1)",
-    ...(isIOS
-      ? {
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.1,
-          shadowRadius: 2
-        }
-      : {
-          elevation: 1
-        })
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2
+      },
+      android: {
+        elevation: 1
+      }
+    })
   },
 
   fcmIndicatorOffline: {
@@ -333,26 +357,26 @@ export const styles = StyleSheet.create({
 
   fcmStatusDotOnline: {
     backgroundColor: "#4CAF50",
-    ...(isIOS
-      ? {
-          shadowColor: "#4CAF50",
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.5,
-          shadowRadius: 2
-        }
-      : {})
+    ...Platform.select({
+      ios: {
+        shadowColor: "#4CAF50",
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: 2
+      }
+    })
   },
 
   fcmStatusDotOffline: {
     backgroundColor: "#FF9800",
-    ...(isIOS
-      ? {
-          shadowColor: "#FF9800",
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.5,
-          shadowRadius: 2
-        }
-      : {})
+    ...Platform.select({
+      ios: {
+        shadowColor: "#FF9800",
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: 2
+      }
+    })
   },
 
   fcmIndicatorText: {
@@ -367,7 +391,6 @@ export const styles = StyleSheet.create({
     marginLeft: "auto"
   },
 
-  // Вариант 2
   serverStatusContainer: {
     alignSelf: "center",
     marginVertical: 8
@@ -376,16 +399,17 @@ export const styles = StyleSheet.create({
   serverStatusBadge: {
     borderRadius: 20,
     overflow: "hidden",
-    ...(isIOS
-      ? {
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.2,
-          shadowRadius: 3
-        }
-      : {
-          elevation: 3
-        })
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 3
+      },
+      android: {
+        elevation: 3
+      }
+    })
   },
 
   serverStatusBadgeOnline: {
@@ -436,7 +460,6 @@ export const styles = StyleSheet.create({
     letterSpacing: 0.5
   },
 
-  // Вариант для FavoriteHeader
   headerServerStatus: {
     flexDirection: "row",
     alignItems: "center",
@@ -457,31 +480,57 @@ export const styles = StyleSheet.create({
 
   headerServerDotOnline: {
     backgroundColor: "#4CAF50",
-    ...(isIOS
-      ? {
-          shadowColor: "#4CAF50",
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.8,
-          shadowRadius: 2
-        }
-      : {})
+    ...Platform.select({
+      ios: {
+        shadowColor: "#4CAF50",
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.8,
+        shadowRadius: 2
+      }
+    })
   },
 
   headerServerDotOffline: {
     backgroundColor: "#FF9800",
-    ...(isIOS
-      ? {
-          shadowColor: "#FF9800",
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.8,
-          shadowRadius: 2
-        }
-      : {})
+    ...Platform.select({
+      ios: {
+        shadowColor: "#FF9800",
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.8,
+        shadowRadius: 2
+      }
+    })
   },
 
   headerServerText: {
     color: "rgba(255, 255, 255, 0.8)",
     fontSize: 10,
     fontWeight: "600"
+  },
+
+  updateStatus: {
+    marginTop: 6,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#D4AF37",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3
+      },
+      android: {
+        elevation: 2
+      }
+    })
+  },
+
+  updateStatusText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#D4AF37",
+    letterSpacing: 0.3,
+    marginLeft: 8
   }
 })
