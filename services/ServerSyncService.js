@@ -16,14 +16,16 @@ class ServerSyncService {
   static serverAvailable = false
   static pendingOperations = []
   static lastSyncTime = null
-  static lastRegistrationTime = 0 // время последней регистрации
+  static lastRegistrationTime = 0
+  static dispatch = null
 
   // Инициализация службы
-  static async initialize(fcmToken) {
+  static async initialize(fcmToken, dispatch = null) {
     try {
       console.log("Инициализация ServerSyncService...")
 
       this.deviceToken = fcmToken
+      this.dispatch = dispatch
       this.isInitialized = true
 
       // Проверка доступности сервера
@@ -40,7 +42,7 @@ class ServerSyncService {
       console.log("ServerSyncService инициализирован")
       return true
     } catch (error) {
-      console.warn("⚠️ Ошибка инициализации ServerSyncService:", error.message)
+      console.warn("Ошибка инициализации ServerSyncService:", error.message)
       return false
     }
   }
@@ -73,7 +75,6 @@ class ServerSyncService {
       console.log("Пропускаем регистрацию: уже регистрировали менее 30 секунд назад")
       return true
     }
-    // ★★★★★★★★★★★★★★★★★★★★★★★★★
 
     if (!this.serverAvailable) {
       console.log("Сервер недоступен, откладываем регистрацию")
@@ -101,7 +102,7 @@ class ServerSyncService {
 
       const data = await response.json()
 
-      // ★★★★ ЗАПОМИНАЕМ ВРЕМЯ РЕГИСТРАЦИИ ★★★★
+      // Запоминаем время регистрации
       this.lastRegistrationTime = Date.now()
 
       console.log("Устройство зарегистрировано на сервере")
@@ -166,11 +167,83 @@ class ServerSyncService {
     }
   }
 
+  // Синхронизация статуса алертов с сервером
+  static async syncAlertStatusFromServer(deviceToken) {
+    if (!this.serverAvailable) {
+      console.log("Сервер недоступен для синхронизации статуса")
+      return false
+    }
+
+    try {
+      console.log("Синхронизация статуса алертов с сервером...")
+
+      const response = await fetch(`${SERVER_CONFIG.BASE_URL}/get-alert-status`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          deviceToken: deviceToken,
+          timestamp: new Date().toISOString()
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success && data.triggeredAlerts && data.triggeredAlerts.length > 0) {
+        console.log(
+          `Получено ${data.triggeredAlerts.length} сработавших алертов с сервера`
+        )
+
+        // Обновление локальных алертов
+        data.triggeredAlerts.forEach((serverAlert) => {
+          console.log(
+            `Серверный алерт: ${serverAlert.coin_name} сработал в ${serverAlert.triggered_at}`
+          )
+
+          // Если есть dispatch, обновляем Redux
+          if (this.dispatch) {
+            // Импорт action-а динамически
+            import("../store/alertsSlice").then((module) => {
+              if (module.triggerAlertFromServer) {
+                this.dispatch(
+                  module.triggerAlertFromServer({
+                    alertId: serverAlert.client_id || serverAlert.server_id,
+                    serverId: serverAlert.server_id,
+                    currentPrice: parseFloat(serverAlert.current_price) || 0,
+                    triggeredAt: serverAlert.triggered_at,
+                    coinId: serverAlert.coin_id,
+                    coinName: serverAlert.coin_name,
+                    coinSymbol: serverAlert.coin_symbol,
+                    targetPrice: parseFloat(serverAlert.target_price) || 0,
+                    condition: serverAlert.alert_condition
+                  })
+                )
+              }
+            })
+          }
+        })
+
+        return true
+      }
+
+      console.log("Нет сработавших алертов на сервере")
+      return true
+    } catch (error) {
+      console.warn("Ошибка синхронизации статуса алертов:", error.message)
+      return false
+    }
+  }
+
   // Удаление алерта с сервера
-  static async deleteAlertFromServer(alertId) {
+  static async deleteAlertFromServer(alertId, serverId = null) {
     if (!this.deviceToken || !this.serverAvailable) {
       console.log("Не удалось удалить алерт, сервер недоступен")
-      this.addPendingOperation("delete", { alertId })
+      this.addPendingOperation("delete", { alertId, serverId })
       return false
     }
 
@@ -183,6 +256,7 @@ class ServerSyncService {
         body: JSON.stringify({
           deviceToken: this.deviceToken,
           alertId: alertId,
+          serverId: serverId,
           timestamp: new Date().toISOString()
         })
       })
@@ -195,7 +269,7 @@ class ServerSyncService {
       return true
     } catch (error) {
       console.warn("Не удалось удалить алерт с сервера:", error.message)
-      this.addPendingOperation("delete", { alertId })
+      this.addPendingOperation("delete", { alertId, serverId })
       return false
     }
   }
@@ -237,7 +311,7 @@ class ServerSyncService {
       retryCount: 0
     })
 
-    // Сохраняем очередь в AsyncStorage
+    // Сохранение очереди в AsyncStorage
     this.savePendingOperations()
   }
 
@@ -263,7 +337,10 @@ class ServerSyncService {
             success = await this.syncAlertsWithServer(operation.data.alerts)
             break
           case "delete":
-            success = await this.deleteAlertFromServer(operation.data.alertId)
+            success = await this.deleteAlertFromServer(
+              operation.data.alertId,
+              operation.data.serverId
+            )
             break
         }
 
@@ -283,7 +360,7 @@ class ServerSyncService {
       }
     }
 
-    // Удаляем успешные операции из очереди
+    // Удаление успешных операций из очереди
     this.pendingOperations = this.pendingOperations.filter(
       (op) => !successfulOperations.includes(op)
     )
@@ -369,12 +446,13 @@ class ServerSyncService {
     this.serverAvailable = false
     this.pendingOperations = []
     this.lastSyncTime = null
-    this.lastRegistrationTime = 0 // Сброс времени регистрации
+    this.lastRegistrationTime = 0
+    this.dispatch = null
     console.log("ServerSyncService сброшен")
   }
 }
 
-// Загружаем отложенные операции при импорте
+// Загрузка отложенных операций при импорте
 ServerSyncService.loadPendingOperations()
 
 export default ServerSyncService

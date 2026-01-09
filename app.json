@@ -11,7 +11,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "plugins": [
       [
         "expo-notifications",
@@ -29,7 +31,9 @@
       "buildNumber": "1",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"], // для FCM
+        "UIBackgroundModes": [
+          "remote-notification"
+        ],
         "NSUserNotificationsUsageDescription": "This app uses notifications to send price alerts.",
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
@@ -52,7 +56,7 @@
         "POST_NOTIFICATIONS",
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.WAKE_LOCK",
-        "com.google.android.c2dm.permission.RECEIVE" // для FCM
+        "com.google.android.c2dm.permission.RECEIVE"
       ],
       "useNextNotificationsApi": true,
       "allowBackup": true
@@ -63,9 +67,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "8a1401d1-7ebd-4be4-b520-7b18ad4517ba"
+        "projectId": "17bce65a-8071-4da7-8c28-e6fe9266673a"
       }
     },
-    "owner": "art-codes-organization"
+    "owner": "artcode-x-organization"
   }
 }

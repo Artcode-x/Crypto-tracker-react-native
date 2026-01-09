@@ -7,9 +7,73 @@ import * as Notifications from "expo-notifications"
 import NotificationService from "./services/NotificationService"
 import ServerSyncService from "./services/ServerSyncService"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { loadAlerts, markAlertAsRead, triggerAlert } from "./store/alertsSlice"
-import { AppState } from "react-native"
+import { loadAlerts, markAlertAsRead, triggerAlertFromServer } from "./store/alertsSlice"
+import { AppState, View, Text } from "react-native"
 import { priceAlertsSelector } from "./store/alertsSelectors"
+
+// Компонент для отображения ошибок
+const ErrorBoundary = ({ children }) => {
+  const [hasError, setHasError] = useState(false)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const errorHandler = (error) => {
+      console.error("Необработанная ошибка:", error)
+      setHasError(true)
+      setError(error.message || error.toString())
+    }
+
+    // Глобальный обработчик ошибок
+    const originalErrorHandler = ErrorUtils.getGlobalHandler()
+    ErrorUtils.setGlobalHandler((error, isFatal) => {
+      errorHandler(error)
+      if (originalErrorHandler) {
+        originalErrorHandler(error, isFatal)
+      }
+    })
+
+    return () => {
+      ErrorUtils.setGlobalHandler(originalErrorHandler)
+    }
+  }, [])
+
+  if (hasError) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#0A0A0F",
+          padding: 20
+        }}
+      >
+        <Text
+          style={{ fontSize: 24, color: "#FF6B6B", fontWeight: "bold", marginBottom: 20 }}
+        >
+          App Error
+        </Text>
+        <Text
+          style={{
+            fontSize: 16,
+            color: "#FFFFFF",
+            marginBottom: 10,
+            textAlign: "center"
+          }}
+        >
+          {error || "Произошла ошибка"}
+        </Text>
+        <Text
+          style={{ fontSize: 14, color: "#D4AF37", marginTop: 30, textAlign: "center" }}
+        >
+          Reload App
+        </Text>
+      </View>
+    )
+  }
+
+  return children
+}
 
 function AppContent() {
   const dispatch = useDispatch()
@@ -18,6 +82,8 @@ function AppContent() {
   const priceAlerts = useSelector(priceAlertsSelector)
 
   useEffect(() => {
+    let notificationSubscriptions = []
+
     const initializeApp = async () => {
       try {
         console.log("Инициализация приложения...")
@@ -52,80 +118,147 @@ function AppContent() {
         }
 
         // 2. Инициализация службы уведомлений
-        const notificationInitialized = await NotificationService.initialize()
+        try {
+          const notificationInitialized = await NotificationService.initialize()
+          console.log("NotificationService инициализирован")
 
-        if (notificationInitialized) {
-          // 3. Запрос разрешений
-          const permissionGranted = await NotificationService.requestPermissions()
+          if (notificationInitialized) {
+            // 3. Запрос разрешений
+            const permissionGranted = await NotificationService.requestPermissions()
+            console.log(`Разрешения: ${permissionGranted ? "granted" : "denied"}`)
 
-          if (permissionGranted) {
-            // 4. Регистрируемся для push-уведомлений
-            const fcmToken = await NotificationService.registerForPushNotificationsAsync()
+            if (permissionGranted) {
+              // 4. Регистрация для push-уведомлений
+              const fcmToken =
+                await NotificationService.registerForPushNotificationsAsync()
 
-            if (fcmToken) {
-              // 5. Инициализируем синхронизацию с сервером
-              ServerSyncService.initialize(fcmToken)
+              if (fcmToken) {
+                console.log("FCM Token получен")
 
-              // 6. Регистрируем обработчики уведомлений
-              NotificationService.registerNotificationHandlers(
-                // Обработчик получения уведомления
-                (notification) => {
-                  console.log("Уведомление получено:", {
-                    source: notification.request.content.data?.source || "local",
-                    data: notification.request.content.data
-                  })
+                // 5. Инициализация синхронизации с сервером
+                await ServerSyncService.initialize(fcmToken, dispatch)
 
-                  // Если уведомление от FCM сервера
-                  const data = notification.request.content.data
-                  if (data?.type === "price-alert" && data.alertId) {
-                    // Создаем локальный алерт если его нет
-                    if (!priceAlerts.find((a) => a.id === data.alertId)) {
-                      const serverAlert = {
-                        id: data.alertId,
-                        coinId: data.coinId,
-                        coinName: data.coinName,
-                        coinSymbol: data.coinSymbol,
-                        targetPrice: parseFloat(data.targetPrice),
-                        currentPrice: parseFloat(data.currentPrice),
-                        condition: data.condition,
-                        isActive: false,
-                        isRead: false,
-                        triggeredAt: data.triggeredAt,
-                        createdAt: new Date().toISOString(),
-                        createdPrice: parseFloat(data.currentPrice),
-                        source: "server"
+                // 6. Синхронизация статуса алертов с сервером
+                try {
+                  await ServerSyncService.syncAlertStatusFromServer(fcmToken)
+                } catch (syncError) {
+                  console.warn(
+                    "Не удалось синхронизировать статус алертов:",
+                    syncError.message
+                  )
+                }
+
+                // 7. Регистрация обработчиков уведомлений С ФИКСОМ ДЛЯ ПРЕДОТВРАЩЕНИЯ ДУБЛИРОВАНИЯ
+                notificationSubscriptions =
+                  NotificationService.registerNotificationHandlers(
+                    // Обработчик получения уведомления
+                    (notification) => {
+                      try {
+                        const data = notification.request.content.data
+                        console.log("Уведомление получено:", {
+                          source: data?.source || "local",
+                          isServerTriggered: data?.isServerTriggered,
+                          alertId: data?.alertId
+                        })
+
+                        // !! Проверяем, не от сервера ли уведомление
+                        if (data?.type === "price-alert") {
+                          // ! Если уведомление пришло от сервера - не показываем локальное
+                          if (
+                            data.source === "server" ||
+                            data.isServerTriggered === "true"
+                          ) {
+                            console.log("Уведомление от сервера - пропускаем локальное")
+                            console.log("Данные серверного уведомления:", {
+                              alertId: data.alertId,
+                              serverId: data.serverId,
+                              source: data.source,
+                              isServerTriggered: data.isServerTriggered
+                            })
+
+                            // Отметка алерта как сработавшего в Redux
+                            dispatch(
+                              triggerAlertFromServer({
+                                alertId: data.alertId || data.serverId,
+                                currentPrice: parseFloat(data.currentPrice) || 0,
+                                triggeredAt: data.triggeredAt || new Date().toISOString(),
+                                coinId: data.coinId,
+                                coinName: data.coinName,
+                                coinSymbol: data.coinSymbol,
+                                targetPrice: parseFloat(data.targetPrice) || 0,
+                                condition: data.condition
+                              })
+                            )
+
+                            return // Прерывание дальнейшей обработки
+                          }
+
+                          // Если уведомление локальное - обработка как обычно
+                          if (data?.alertId) {
+                            dispatch(markAlertAsRead(data.alertId))
+                          }
+                        }
+                      } catch (error) {
+                        console.error("Ошибка обработки уведомления:", error)
+                      }
+                    },
+                    // Обработчик нажатия на уведомление
+                    async (response) => {
+                      try {
+                        const data = response.notification.request.content.data
+                        console.log("Нажатие на уведомление:", {
+                          type: data?.type,
+                          source: data?.source,
+                          isServerTriggered: data?.isServerTriggered
+                        })
+
+                        if (
+                          data?.type === "price-alert" &&
+                          (data?.alertId || data?.serverId)
+                        ) {
+                          const alertId = data.alertId || data.serverId
+
+                          // Пометка как прочитанного вне зависимости от источника
+                          dispatch(markAlertAsRead(alertId))
+
+                          // Если уведомление от сервера, но алерт еще не помечен как сработавший
+                          if (
+                            data.source === "server" ||
+                            data.isServerTriggered === "true"
+                          ) {
+                            console.log(
+                              "Помечаем серверный алерт как сработавший при нажатии"
+                            )
+                            dispatch(
+                              triggerAlertFromServer({
+                                alertId: alertId,
+                                currentPrice: parseFloat(data.currentPrice) || 0,
+                                triggeredAt: data.triggeredAt || new Date().toISOString(),
+                                coinId: data.coinId,
+                                coinName: data.coinName,
+                                coinSymbol: data.coinSymbol,
+                                targetPrice: parseFloat(data.targetPrice) || 0,
+                                condition: data.condition
+                              })
+                            )
+                          }
+                        }
+                      } catch (error) {
+                        console.error("Ошибка обработки нажатия на уведомление:", error)
                       }
                     }
-                  }
-                },
-                // Обработчик нажатия на уведомление
-                async (response) => {
-                  const data = response.notification.request.content.data
-                  console.log("Нажатие на уведомление:", data)
-
-                  if (data.type === "price-alert" && data.alertId) {
-                    dispatch(markAlertAsRead(data.alertId))
-
-                    // Если уведомление от сервера, помечаем алерт как сработавший
-                    if (data.source === "server") {
-                      dispatch(
-                        triggerAlert({
-                          id: data.alertId,
-                          currentPrice: parseFloat(data.currentPrice)
-                        })
-                      )
-                    }
-                  }
-                }
-              )
+                  )
+              }
             }
           }
+        } catch (notificationError) {
+          console.error("Ошибка инициализации уведомлений:", notificationError)
         }
 
         setIsReady(true)
-        console.log("Приложение инициализировано")
+        console.log("Приложение инициализировано с фиксом дублирования уведомлений")
       } catch (error) {
-        console.error("Ошибка инициализации:", error)
+        console.error("Критическая ошибка инициализации:", error)
         setIsReady(true)
       }
     }
@@ -137,25 +270,38 @@ function AppContent() {
       console.log(`Состояние приложения: ${appState} → ${nextAppState}`)
       setAppState(nextAppState)
 
-      // При сворачивании приложения синхронизируем алерты с сервером
+      // При сворачивании приложения синхронизация алертов с сервером
       if (nextAppState === "background" || nextAppState === "inactive") {
         console.log("Синхронизация алертов с сервером...")
         ServerSyncService.syncAlertsWithServer(priceAlerts)
       }
 
-      // При возвращении в активное состояние проверяем алерты
-      if (appState.match(/inactive|background/) && nextAppState === "active") {
-        console.log("Проверка алертов после возвращения")
-      }
+      // Обновление состояния на сервере
+      ServerSyncService.updateAppStateOnServer(nextAppState)
     })
 
     return () => {
       subscription.remove()
+      // Удаление обработчиков уведомлений
+      if (notificationSubscriptions && notificationSubscriptions.length > 0) {
+        NotificationService.removeNotificationHandlers(notificationSubscriptions)
+      }
     }
   }, [dispatch])
 
   if (!isReady) {
-    return null
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#0A0A0F"
+        }}
+      >
+        <Text style={{ color: "#D4AF37", fontSize: 16 }}>App is loading...</Text>
+      </View>
+    )
   }
 
   return (
@@ -167,8 +313,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <Provider store={store}>
-      <AppContent />
-    </Provider>
+    <ErrorBoundary>
+      <Provider store={store}>
+        <AppContent />
+      </Provider>
+    </ErrorBoundary>
   )
 }

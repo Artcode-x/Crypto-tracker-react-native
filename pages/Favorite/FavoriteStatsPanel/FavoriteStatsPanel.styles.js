@@ -3,7 +3,8 @@ import { Platform, StyleSheet } from "react-native"
 export const styles = StyleSheet.create({
   statsPanel: {
     paddingHorizontal: 16,
-    marginBottom: 12
+    // marginBottom: 12
+    marginBottom: 1
   },
 
   statsGradient: {

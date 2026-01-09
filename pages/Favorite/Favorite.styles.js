@@ -291,7 +291,7 @@ export const styles = StyleSheet.create({
   // Вариант 1
   fcmIndicator: {
     marginHorizontal: 16,
-    marginTop: 8,
+    marginTop: 6,
     marginBottom: 4,
     borderRadius: 12,
     overflow: "hidden",
@@ -314,7 +314,7 @@ export const styles = StyleSheet.create({
   },
 
   fcmIndicatorGradient: {
-    paddingVertical: 8,
+    paddingVertical: 4,
     paddingHorizontal: 12
   },
 
