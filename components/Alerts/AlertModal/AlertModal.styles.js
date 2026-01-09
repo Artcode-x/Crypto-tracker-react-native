@@ -1,357 +1,530 @@
-import { StyleSheet, Platform, Dimensions } from "react-native"
+import { StyleSheet, Platform, Dimensions, StatusBar } from "react-native"
 
-const { width } = Dimensions.get("window")
+const { width, height } = Dimensions.get("window")
+const isSmallDevice = width < 375
+const isAndroid = Platform.OS === "android"
+const isIOS = Platform.OS === "ios"
 
 export const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
+    paddingTop: isIOS ? 20 : StatusBar.currentHeight || 0
   },
+  keyboardAvoidingView: {
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+
+  // Модалка
   modalContainer: {
-    width: width * 0.9,
-    maxWidth: 400,
-    borderRadius: 20,
-    overflow: "hidden"
+    width: isSmallDevice ? width * 0.95 : Math.min(width * 0.92, 500),
+    maxHeight: height * (isAndroid ? 0.7 : 0.8),
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8
   },
+  modalContainerAndroid: {
+    maxHeight: height * 0.65
+  },
+
   modalGradient: {
-    padding: 24
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 16
   },
-  modalHeader: {
-    alignItems: "center",
-    marginBottom: 24
+  modalGradientAndroid: {
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 12
   },
+
+  // Заголовок
+  compactHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.1)"
+  },
+
+  closeButton: {
+    paddingTop: 4,
+    marginRight: 12
+  },
+
+  compactCoinInfo: {
+    flex: 1
+  },
+
   coinHeader: {
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8
+    marginBottom: 6,
+    flexWrap: "wrap"
   },
+
   coinName: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
     color: "#FFF",
-    marginBottom: 4
+    marginRight: 8
   },
+  coinNameAndroid: {
+    fontSize: 17
+  },
+
   coinSymbol: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.6)"
+    fontSize: 13,
+    color: "rgba(255, 255, 255, 0.6)",
+    fontWeight: "500"
   },
+  coinSymbolAndroid: {
+    fontSize: 12
+  },
+
+  compactPriceInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+
+  currentPriceContainer: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+
+  currentPriceLabel: {
+    fontSize: 13,
+    color: "rgba(255, 255, 255, 0.7)",
+    marginRight: 6
+  },
+  currentPriceLabelAndroid: {
+    fontSize: 12
+  },
+
   currentPrice: {
     fontSize: 16,
     color: "#D4AF37",
-    fontWeight: "600"
+    fontWeight: "700"
   },
-  conditionSection: {
-    marginBottom: 24
-  },
-  sectionTitle: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.7)",
-    marginBottom: 12
-  },
-  conditionButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12
-  },
-  conditionButton: {
-    flex: 1,
-    borderRadius: 12,
-    overflow: "hidden"
-  },
-  conditionButtonActive: {
-    borderWidth: 2,
-    borderColor: "#D4AF37"
-  },
-  conditionButtonGradient: {
-    paddingVertical: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 12
-  },
-  conditionButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginTop: 8,
-    color: "rgba(255, 255, 255, 0.7)"
-  },
-  conditionButtonTextActive: {
-    color: "#FFF"
-  },
-  priceInputSection: {
-    marginBottom: 24
-  },
-  priceInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(212, 175, 55, 0.3)",
-    paddingHorizontal: 16
-  },
-  currencySymbol: {
-    fontSize: 20,
-    color: "#D4AF37",
-    fontWeight: "600",
-    marginRight: 8
-  },
-  priceInput: {
-    flex: 1,
-    fontSize: 20,
-    color: "#FFF",
-    paddingVertical: 16
-  },
-  errorText: {
-    color: "#FF3B30",
-    fontSize: 12,
-    marginTop: 8
-  },
-  previewSection: {
-    marginBottom: 24,
-    backgroundColor: "rgba(212, 175, 55, 0.1)",
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "rgba(212, 175, 55, 0.2)"
-  },
-  previewTitle: {
-    fontSize: 12,
-    color: "rgba(255, 255, 255, 0.6)",
-    marginBottom: 8
-  },
-  previewText: {
-    fontSize: 14,
-    color: "#FFF",
-    fontWeight: "500"
-  },
-  actionButtons: {
-    flexDirection: "row",
-    gap: 12
-  },
-  cancelButton: {
-    flex: 1,
-    borderRadius: 12,
-    overflow: "hidden"
-  },
-  cancelButtonGradient: {
-    paddingVertical: 16,
-    alignItems: "center"
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "rgba(255, 255, 255, 0.7)"
-  },
-  saveButton: {
-    flex: 1,
-    borderRadius: 12,
-    overflow: "hidden"
-  },
-  saveButtonGradient: {
-    paddingVertical: 16,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 8
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#000"
+  currentPriceAndroid: {
+    fontSize: 15
   },
 
-  notificationStatus: {
+  compactNotificationStatus: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    marginTop: 8,
-    gap: 8
-  },
-
-  notificationStatus_disabled: {
-    backgroundColor: "rgba(244, 67, 54, 0.1)",
-    borderWidth: 1,
-    borderColor: "rgba(244, 67, 54, 0.3)"
-  },
-
-  notificationStatus_fcm_enabled: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
     backgroundColor: "rgba(76, 175, 80, 0.1)",
     borderWidth: 1,
     borderColor: "rgba(76, 175, 80, 0.3)"
   },
 
-  notificationStatus_local_only: {
-    backgroundColor: "rgba(255, 152, 0, 0.1)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 152, 0, 0.3)"
+  compactNotificationText: {
+    fontSize: 11,
+    fontWeight: "600",
+    marginLeft: 4
+  },
+  compactNotificationTextAndroid: {
+    fontSize: 10
   },
 
-  notificationStatusText: {
+  // Above/Below
+  conditionSection: {
+    marginBottom: 14
+  },
+  conditionSectionAndroid: {
+    marginBottom: 12
+  },
+
+  sectionTitle: {
     fontSize: 12,
-    fontWeight: "500",
-    flex: 1
+    color: "rgba(255, 255, 255, 0.7)",
+    marginBottom: 8,
+    fontWeight: "500"
+  },
+  sectionTitleAndroid: {
+    fontSize: 11,
+    marginBottom: 6
   },
 
+  conditionButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 8
+  },
+  conditionButtonsAndroid: {
+    gap: 6
+  },
+
+  conditionButton: {
+    flex: 1,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderRadius: 10,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)"
+  },
+  conditionButtonAndroid: {
+    borderRadius: 8
+  },
+
+  conditionButtonActive: {
+    borderColor: "#D4AF37",
+    backgroundColor: "rgba(212, 175, 55, 0.1)"
+  },
+
+  conditionButtonContent: {
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  conditionButtonContentAndroid: {
+    paddingVertical: 8
+  },
+
+  conditionButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+    marginTop: 4,
+    color: "rgba(255, 255, 255, 0.7)"
+  },
+  conditionButtonTextAndroid: {
+    fontSize: 12,
+    marginTop: 3
+  },
+
+  conditionButtonTextActive: {
+    color: "#FFF"
+  },
+
+  // Ввод цены
+  priceInputSection: {
+    marginBottom: 12
+  },
+  priceInputSectionAndroid: {
+    marginBottom: 10
+  },
+
+  priceInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "rgba(212, 175, 55, 0.4)",
+    paddingHorizontal: 12,
+    height: 52
+  },
+  priceInputContainerAndroid: {
+    height: 48,
+    paddingHorizontal: 10,
+    borderRadius: 10
+  },
+
+  currencyContainer: {
+    paddingRight: 8,
+    borderRightWidth: 1,
+    borderRightColor: "rgba(255,255,255,0.1)",
+    height: "100%",
+    justifyContent: "center"
+  },
+  currencyContainerAndroid: {
+    paddingRight: 6
+  },
+
+  currencySymbol: {
+    fontSize: 20,
+    color: "#D4AF37",
+    fontWeight: "700"
+  },
+  currencySymbolAndroid: {
+    fontSize: 18
+  },
+
+  priceInput: {
+    flex: 1,
+    fontSize: 20,
+    color: "#FFF",
+    fontWeight: "600",
+    paddingHorizontal: 12,
+    paddingVertical: 0,
+    height: "100%",
+    textAlign: "center"
+  },
+  priceInputAndroid: {
+    fontSize: 18
+  },
+
+  clearButton: {
+    paddingLeft: 8,
+    height: "100%",
+    justifyContent: "center"
+  },
+  clearButtonAndroid: {
+    paddingLeft: 6
+  },
+
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 6,
+    paddingHorizontal: 4
+  },
+
+  errorText: {
+    color: "#FF6B6B",
+    fontSize: 11,
+    fontWeight: "500"
+  },
+  errorTextAndroid: {
+    fontSize: 10
+  },
+
+  // Быстрые предложения
+  quickSuggestions: {
+    marginTop: 10
+  },
+  quickSuggestionsAndroid: {
+    marginTop: 8
+  },
+
+  suggestionsScroll: {
+    flexDirection: "row"
+  },
+
+  suggestionsContent: {
+    paddingRight: 8
+  },
+
+  suggestionButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: 8,
+    alignItems: "center",
+    marginRight: 6,
+    minWidth: 65,
+    borderWidth: 1,
+    borderColor: "transparent"
+  },
+  suggestionButtonAndroid: {
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    minWidth: 60,
+    marginRight: 5,
+    borderRadius: 6
+  },
+
+  suggestionButtonActive: {
+    borderColor: "#D4AF37",
+    backgroundColor: "rgba(212, 175, 55, 0.1)"
+  },
+
+  suggestionPrice: {
+    fontSize: 12,
+    color: "#FFF",
+    fontWeight: "600",
+    marginBottom: 1
+  },
+  suggestionPriceAndroid: {
+    fontSize: 11
+  },
+
+  suggestionLabel: {
+    fontSize: 10,
+    color: "#D4AF37",
+    fontWeight: "500"
+  },
+  suggestionLabelAndroid: {
+    fontSize: 9
+  },
+
+  // Разница цены
   priceDifferenceSection: {
-    marginHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 4
+    marginBottom: 10
+  },
+  priceDifferenceSectionAndroid: {
+    marginBottom: 8
   },
 
-  priceDifferenceGradient: {
+  priceDifferenceContainer: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-    gap: 8
+    gap: 6,
+    backgroundColor: "rgba(255,255,255,0.05)"
+  },
+  priceDifferenceContainerAndroid: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6
   },
 
   priceDifferenceText: {
     fontSize: 13,
     fontWeight: "600"
   },
+  priceDifferenceTextAndroid: {
+    fontSize: 12
+  },
 
   percentageText: {
     fontSize: 11,
-    opacity: 0.8
-  },
-
-  coinHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 4
-  },
-
-  priceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8
-  },
-
-  currentPriceLabel: {
-    fontSize: 12,
-    color: "rgba(255,255,255,0.6)"
-  },
-
-  rankBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 215, 0, 0.1)",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    gap: 2
-  },
-
-  rankText: {
-    fontSize: 10,
-    color: "#FFD700",
-    fontWeight: "600"
-  },
-
-  currencyContainer: {
-    paddingHorizontal: 12,
-    justifyContent: "center"
-  },
-
-  clearButton: {
-    paddingHorizontal: 12,
-    justifyContent: "center"
-  },
-
-  quickSuggestions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 8,
-    gap: 8
-  },
-
-  suggestionButton: {
-    flex: 1,
-    paddingVertical: 6,
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 6,
-    alignItems: "center"
-  },
-
-  suggestionText: {
-    fontSize: 10,
-    color: "#D4AF37",
+    opacity: 0.8,
     fontWeight: "500"
   },
-
-  errorContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 8
+  percentageTextAndroid: {
+    fontSize: 10
   },
 
-  activeIndicator: {
-    position: "absolute",
-    top: -4,
-    right: -4,
-    backgroundColor: "#D4AF37",
-    borderRadius: 8,
-    width: 16,
-    height: 16,
-    alignItems: "center",
-    justifyContent: "center"
+  // Предварительный просмотр
+  previewSection: {
+    marginBottom: 14
+  },
+  previewSectionAndroid: {
+    marginBottom: 12
   },
 
   previewGradient: {
     padding: 12,
-    borderRadius: 8,
-    marginTop: 6
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(212, 175, 55, 0.2)"
+  },
+  previewGradientAndroid: {
+    padding: 10,
+    borderRadius: 10
+  },
+
+  previewText: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.9)",
+    lineHeight: 18,
+    textAlign: "center"
+  },
+  previewTextAndroid: {
+    fontSize: 13,
+    lineHeight: 16
   },
 
   previewCoin: {
     color: "#D4AF37",
-    fontWeight: "600"
+    fontWeight: "700"
+  },
+  previewCoinAndroid: {
+    fontSize: 13
   },
 
   previewCondition: {
-    fontWeight: "600"
+    fontWeight: "700"
+  },
+  previewConditionAndroid: {
+    fontSize: 13
   },
 
   previewPrice: {
     color: "#FFF",
-    fontWeight: "700"
+    fontWeight: "800"
+  },
+  previewPriceAndroid: {
+    fontSize: 13
   },
 
-  previewInfo: {
+  // Кнопки действий
+  actionButtons: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.1)"
+    gap: 8,
+    marginTop: 8
+  },
+  actionButtonsAndroid: {
+    gap: 6,
+    marginTop: 6
   },
 
-  previewInfoItem: {
-    flexDirection: "row",
+  cancelButton: {
+    flex: 1,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderRadius: 12,
+    overflow: "hidden",
+    height: 44
+  },
+  cancelButtonAndroid: {
+    height: 42,
+    borderRadius: 10
+  },
+
+  cancelButtonContent: {
+    paddingVertical: 12,
     alignItems: "center",
-    gap: 4
+    justifyContent: "center",
+    height: "100%"
+  },
+  cancelButtonContentAndroid: {
+    paddingVertical: 10
   },
 
-  previewInfoText: {
-    fontSize: 10,
-    color: "rgba(255,255,255,0.6)"
+  cancelButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "rgba(255, 255, 255, 0.9)"
+  },
+  cancelButtonTextAndroid: {
+    fontSize: 14
   },
 
-  closeButton: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    zIndex: 10
+  saveButton: {
+    flex: 1,
+    borderRadius: 12,
+    overflow: "hidden",
+    height: 44
+  },
+  saveButtonAndroid: {
+    height: 42,
+    borderRadius: 10
   },
 
-  saveButtonTextLocal: {
-    color: "#000"
+  saveButtonGradient: {
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 6,
+    height: "100%"
+  },
+  saveButtonGradientAndroid: {
+    paddingVertical: 10,
+    gap: 5
+  },
+
+  saveButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#FFF"
+  },
+  saveButtonTextAndroid: {
+    fontSize: 14
+  },
+
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 8
+  },
+  scrollContainerAndroid: {
+    paddingBottom: 6
   }
 })
