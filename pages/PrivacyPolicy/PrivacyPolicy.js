@@ -21,12 +21,13 @@ const PrivacyPolicy = () => {
 
   const [expandedSections, setExpandedSections] = React.useState({
     introduction: true,
+    backgroundAlerts: true,
     dataCollection: false,
     dataUsage: false,
-    dataSharing: false,
-    userRights: false,
-    security: false,
     thirdParties: false,
+    dataRetention: false,
+    userRights: true,
+    compliance: true,
     childrenPrivacy: false,
     contact: false
   })
@@ -87,21 +88,19 @@ const PrivacyPolicy = () => {
 
           <View style={styles.overviewCard}>
             <View style={styles.overviewRow}>
-              <MaterialCommunityIcons name='database' size={16} color='#4CAF50' />
-              <Text style={styles.overviewLabel}>Your Portfolio Status:</Text>
-              <Text style={styles.overviewValue}>
-                {assetsCount} active asset{assetsCount !== 1 ? "s" : ""}
-              </Text>
+              <MaterialCommunityIcons name='shield-check' size={16} color='#4CAF50' />
+              <Text style={styles.overviewLabel}>Your Data:</Text>
+              <Text style={styles.overviewValue}>Stays on Device</Text>
             </View>
             <View style={styles.overviewRow}>
-              <MaterialCommunityIcons name='chart-bar' size={16} color='#2196F3' />
-              <Text style={styles.overviewLabel}>Data Retention:</Text>
-              <Text style={styles.overviewValue}>Local storage only</Text>
+              <MaterialCommunityIcons name='hand-okay' size={16} color='#2196F3' />
+              <Text style={styles.overviewLabel}>Consent:</Text>
+              <Text style={styles.overviewValue}>Explicit & Optional</Text>
             </View>
             <View style={styles.overviewRow}>
-              <MaterialCommunityIcons name='security' size={16} color='#FFD700' />
-              <Text style={styles.overviewLabel}>Privacy Level:</Text>
-              <Text style={styles.overviewValue}>Enhanced Protection</Text>
+              <MaterialCommunityIcons name='toggle-switch' size={16} color='#FFD700' />
+              <Text style={styles.overviewLabel}>Control:</Text>
+              <Text style={styles.overviewValue}>Always Yours</Text>
             </View>
           </View>
         </LinearGradient>
@@ -124,32 +123,159 @@ const PrivacyPolicy = () => {
           {expandedSections.introduction && (
             <View style={styles.sectionContent}>
               <Text style={styles.infoText}>
-                Welcome to <Text style={styles.highlight}>Crypto-Tracker</Text> ("we,"
-                "our," or "us"). This Privacy Policy explains how we collect, use,
-                disclose, and safeguard your information when you use our mobile
-                application (the "App").
+                This Privacy Policy describes the policies of{" "}
+                <Text style={styles.highlight}>Alexander Butylev</Text> ("Developer"), the
+                individual developer of the{" "}
+                <Text style={styles.highlight}>Crypto-Tracker </Text>
+                mobile application ("App").
               </Text>
 
               <Text style={styles.infoText}>
-                We respect your privacy and are committed to protecting your personal
-                data. Please read this Privacy Policy carefully. By using the App, you
-                agree to the collection and use of information in accordance with this
-                policy.
+                I respect your privacy and am committed to protecting your information.
+                This policy explains what data is collected, how it's used, and your
+                rights.
               </Text>
 
               <View style={styles.warningBox}>
                 <MaterialCommunityIcons name='alert-circle' size={20} color='#FFD700' />
                 <Text style={styles.warningText}>
-                  <Text style={styles.bold}>Important:</Text> We do not collect personal
-                  identification information (name, email, phone number). All data stays
-                  on your device unless explicitly shared by you.
+                  <Text style={styles.bold}>Core Principle:</Text> Your cryptocurrency
+                  portfolio amounts and values are stored{" "}
+                  <Text style={styles.bold}>only on your device</Text>. The App functions
+                  entirely locally unless you explicitly opt-in for background alerts.
                 </Text>
               </View>
             </View>
           )}
         </TouchableOpacity>
 
-        {/* Секция: Сбор данных */}
+        {/* Background Alerts - NEW COMPREHENSIVE SECTION */}
+        <TouchableOpacity
+          onPress={() => toggleSection("backgroundAlerts")}
+          style={styles.sectionCard}
+        >
+          <View style={styles.sectionHeader}>
+            <MaterialCommunityIcons name='bell-ring' size={20} color='#FFD700' />
+            <Text style={styles.sectionTitle}>Background Price Alerts</Text>
+            <Ionicons
+              name={expandedSections.backgroundAlerts ? "chevron-up" : "chevron-down"}
+              size={20}
+              color='#FFD700'
+            />
+          </View>
+
+          {expandedSections.backgroundAlerts && (
+            <View style={styles.sectionContent}>
+              <Text style={styles.sectionSubtitle}>Two Alert Modes</Text>
+
+              <View style={styles.comparisonTable}>
+                <View style={styles.tableRow}>
+                  <Text style={styles.tableHeader}>Feature</Text>
+                  <Text style={styles.tableHeader}>Local Alerts (Default)</Text>
+                  <Text style={styles.tableHeader}>Background Alerts (Opt-in)</Text>
+                </View>
+
+                <View style={styles.tableRow}>
+                  <Text style={styles.tableCell}>When alerts work</Text>
+                  <Text style={styles.tableCellYes}>Only when app is open/active</Text>
+                  <Text style={styles.tableCellYes}>24/7, even when app is closed</Text>
+                </View>
+
+                <View style={styles.tableRow}>
+                  <Text style={styles.tableCell}>Data sent to server</Text>
+                  <Text style={styles.tableCellNo}>None - completely private</Text>
+                  <Text style={styles.tableCellYes}>Minimal alert config only</Text>
+                </View>
+
+                <View style={styles.tableRow}>
+                  <Text style={styles.tableCell}>Requires consent</Text>
+                  <Text style={styles.tableCellNo}>No consent needed</Text>
+                  <Text style={styles.tableCellYes}>Explicit user consent required</Text>
+                </View>
+
+                <View style={styles.tableRow}>
+                  <Text style={styles.tableCell}>User control</Text>
+                  <Text style={styles.tableCellYes}>Always available</Text>
+                  <Text style={styles.tableCellYes}>Enable/disable anytime</Text>
+                </View>
+              </View>
+
+              <Text style={styles.sectionSubtitle}>Consent Process</Text>
+              <View style={styles.dataCategory}>
+                <View style={styles.categoryHeader}>
+                  <MaterialCommunityIcons name='hand-okay' size={16} color='#4CAF50' />
+                  <Text style={styles.categoryTitle}>Step-by-Step Consent</Text>
+                </View>
+                <Text style={styles.categoryText}>
+                  1. <Text style={styles.bold}>Initial Disclosure:</Text> Clear in-app
+                  modal explains background alerts before any data transmission.
+                  {"\n"}
+                  2. <Text style={styles.bold}>Explicit Action Required:</Text> You must
+                  tap "Agree" or "Enable" - no pre-checked boxes.
+                  {"\n"}
+                  3. <Text style={styles.bold}>Persistent Control:</Text> Toggle button on
+                  Alerts page allows you to enable/disable anytime.
+                  {"\n"}
+                  4. <Text style={styles.bold}>Revocation:</Text> Disabling removes all
+                  your data from our servers immediately.
+                </Text>
+                <View style={styles.dataNote}>
+                  <MaterialCommunityIcons name='shield-check' size={12} color='#4CAF50' />
+                  <Text style={styles.noteText}>
+                    This consent process complies with Google Play's "Prominent
+                    Disclosure" requirements.
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={styles.sectionSubtitle}>
+                What Data is Transmitted (If Enabled)
+              </Text>
+              <View style={styles.dataCategory}>
+                <View style={styles.categoryHeader}>
+                  <MaterialCommunityIcons
+                    name='database-export'
+                    size={16}
+                    color='#2196F3'
+                  />
+                  <Text style={styles.categoryTitle}>Minimal Alert Configuration</Text>
+                </View>
+                <Text style={styles.categoryText}>
+                  • <Text style={styles.bold}>Coin Identifier:</Text> Public symbol like
+                  "bitcoin", "ethereum"
+                  {"\n"}• <Text style={styles.bold}>Target Price:</Text> Your specified
+                  alert threshold
+                  {"\n"}• <Text style={styles.bold}>Condition:</Text> "above" or "below"
+                  the target price
+                  {"\n"}• <Text style={styles.bold}>Device Token:</Text> Anonymous
+                  Firebase Cloud Messaging token
+                  {"\n"}• <Text style={styles.bold}>Alert ID:</Text> Random identifier for
+                  your alert
+                </Text>
+                <View style={styles.dataNote}>
+                  <MaterialCommunityIcons name='alert' size={12} color='#FF9800' />
+                  <Text style={styles.noteText}>
+                    <Text style={styles.bold}>NOT transmitted:</Text> Your portfolio
+                    amounts, transaction history, personal information, or wallet
+                    addresses.
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.warningBox}>
+                <MaterialCommunityIcons name='shield-off' size={20} color='#4CAF50' />
+                <Text style={styles.warningText}>
+                  <Text style={styles.bold}>Local-Only Mode (Default):</Text> If you
+                  decline background alerts, the app works completely offline. Price
+                  alerts only trigger when the app is actively running on your device. No
+                  data leaves your device.
+                </Text>
+              </View>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {/* Data Collection */}
         <TouchableOpacity
           onPress={() => toggleSection("dataCollection")}
           style={styles.sectionCard}
@@ -160,7 +286,7 @@ const PrivacyPolicy = () => {
               size={20}
               color='#FFD700'
             />
-            <Text style={styles.sectionTitle}>1. Information We Collect</Text>
+            <Text style={styles.sectionTitle}>1. Information Collection</Text>
             <Ionicons
               name={expandedSections.dataCollection ? "chevron-up" : "chevron-down"}
               size={20}
@@ -170,95 +296,70 @@ const PrivacyPolicy = () => {
 
           {expandedSections.dataCollection && (
             <View style={styles.sectionContent}>
-              <Text style={styles.sectionSubtitle}>
-                A. Portfolio Data (Stored Locally)
-              </Text>
+              <Text style={styles.sectionSubtitle}>A. Data Stored Locally (Always)</Text>
               <View style={styles.dataCategory}>
                 <View style={styles.categoryHeader}>
-                  <MaterialCommunityIcons name='currency-btc' size={16} color='#4CAF50' />
-                  <Text style={styles.categoryTitle}>Cryptocurrency Holdings</Text>
+                  <MaterialCommunityIcons name='cellphone' size={16} color='#4CAF50' />
+                  <Text style={styles.categoryTitle}>On Your Device Only</Text>
                 </View>
                 <Text style={styles.categoryText}>
-                  • Cryptocurrency amounts you manually enter{"\n"}• Asset prices from
-                  external APIs (CoinGecko){"\n"}• Portfolio allocation percentages{"\n"}•
-                  Historical performance calculations
+                  • Cryptocurrency amounts you enter
+                  {"\n"}• Calculated portfolio value and performance
+                  {"\n"}• Price alerts configuration (local mode)
+                  {"\n"}• App settings and preferences
+                  {"\n"}• Favorite coins list
                 </Text>
                 <View style={styles.dataNote}>
-                  <MaterialCommunityIcons name='cellphone' size={12} color='#2196F3' />
-                  <Text style={styles.noteText}>Stored locally using AsyncStorage</Text>
-                </View>
-              </View>
-
-              <Text style={styles.sectionSubtitle}>
-                B. Analytics Data (Generated On-Device)
-              </Text>
-              <View style={styles.dataCategory}>
-                <View style={styles.categoryHeader}>
-                  <MaterialCommunityIcons
-                    name='chart-timeline'
-                    size={16}
-                    color='#FF5252'
-                  />
-                  <Text style={styles.categoryTitle}>Performance Metrics</Text>
-                </View>
-                <Text style={styles.categoryText}>
-                  • Risk analysis calculations{"\n"}• Diversification scores{"\n"}•
-                  Volatility measurements{"\n"}• Performance metrics (24h, 7d, 30d, 1y)
-                </Text>
-              </View>
-
-              <Text style={styles.sectionSubtitle}>C. Alert Data</Text>
-              <View style={styles.dataCategory}>
-                <View style={styles.categoryHeader}>
-                  <MaterialCommunityIcons name='bell' size={16} color='#9C27B0' />
-                  <Text style={styles.categoryTitle}>Price Alerts</Text>
-                </View>
-                <Text style={styles.categoryText}>
-                  • Price alert configurations{"\n"}• Alert trigger conditions{"\n"}•
-                  Notification preferences{"\n"}• Alert history (triggered alerts)
-                </Text>
-              </View>
-
-              <Text style={styles.sectionSubtitle}>
-                D. Device Information (Automatic)
-              </Text>
-              <View style={styles.dataCategory}>
-                <View style={styles.categoryHeader}>
-                  <MaterialCommunityIcons name='devices' size={16} color='#FF9800' />
-                  <Text style={styles.categoryTitle}>Technical Data</Text>
-                </View>
-                <Text style={styles.categoryText}>
-                  • Device type and model{"\n"}• Operating system version{"\n"}• App
-                  version and settings{"\n"}• Crash reports and performance data
-                </Text>
-                <View style={styles.dataNote}>
-                  <MaterialCommunityIcons name='information' size={12} color='#2196F3' />
+                  <MaterialCommunityIcons name='lock' size={12} color='#2196F3' />
                   <Text style={styles.noteText}>
-                    Used for app optimization and bug fixes
+                    This data never leaves your device unless you explicitly enable
+                    background alerts.
                   </Text>
                 </View>
               </View>
 
-              <Text style={styles.infoText}>
-                <Text style={styles.bold}>Note:</Text> We do NOT collect:
-                {"\n"}• Personal identification information
-                {"\n"}• Financial account details
-                {"\n"}• Location data (GPS)
-                {"\n"}• Contact lists or address books
-                {"\n"}• Biometric data
+              <Text style={styles.sectionSubtitle}>
+                B. Data Processed by Server (Opt-in Only)
               </Text>
+              <View style={styles.dataCategory}>
+                <View style={styles.categoryHeader}>
+                  <MaterialCommunityIcons name='server' size={16} color='#9C27B0' />
+                  <Text style={styles.categoryTitle}>Only With Your Consent</Text>
+                </View>
+                <Text style={styles.categoryText}>
+                  This data is ONLY transmitted if you explicitly enable background
+                  alerts:
+                  {"\n"}• Alert configuration (coin, target price, condition)
+                  {"\n"}• Anonymous device token for notifications
+                  {"\n"}• Alert status and timestamps
+                </Text>
+              </View>
+
+              <View style={styles.dataCategory}>
+                <View style={styles.categoryHeader}>
+                  <MaterialCommunityIcons name='close-box' size={16} color='#F44336' />
+                  <Text style={styles.categoryTitle}>I Do NOT Collect</Text>
+                </View>
+                <Text style={styles.categoryText}>
+                  • Your name, email, or personal identification
+                  {"\n"}• Exact geographic location
+                  {"\n"}• Private keys, seed phrases, or wallet addresses
+                  {"\n"}• Banking or payment information
+                  {"\n"}• Contacts, photos, or other device data
+                </Text>
+              </View>
             </View>
           )}
         </TouchableOpacity>
 
-        {/* Секция: Использование данных */}
+        {/* Data Usage */}
         <TouchableOpacity
           onPress={() => toggleSection("dataUsage")}
           style={styles.sectionCard}
         >
           <View style={styles.sectionHeader}>
             <MaterialCommunityIcons name='chart-box' size={20} color='#FFD700' />
-            <Text style={styles.sectionTitle}>2. How We Use Your Information</Text>
+            <Text style={styles.sectionTitle}>2. How I Use Your Information</Text>
             <Ionicons
               name={expandedSections.dataUsage ? "chevron-up" : "chevron-down"}
               size={20}
@@ -273,87 +374,54 @@ const PrivacyPolicy = () => {
                   <MaterialCommunityIcons name='calculator' size={16} color='#4CAF50' />
                 </View>
                 <View style={styles.usageContent}>
-                  <Text style={styles.usageTitle}>Portfolio Management</Text>
+                  <Text style={styles.usageTitle}>Core App Functions</Text>
                   <Text style={styles.usageText}>
-                    Calculate portfolio value, performance metrics, and generate
-                    investment insights based on your holdings.
+                    To calculate and display your portfolio, show market data, and manage
+                    your watchlists using data stored locally on your device.
                   </Text>
                 </View>
               </View>
 
               <View style={styles.usageItem}>
                 <View style={styles.usageIconContainer}>
-                  <MaterialCommunityIcons
-                    name='chart-bell-curve'
-                    size={16}
-                    color='#FF5252'
-                  />
+                  <MaterialCommunityIcons name='bell-alert' size={16} color='#9C27B0' />
                 </View>
                 <View style={styles.usageContent}>
-                  <Text style={styles.usageTitle}>Risk Assessment</Text>
+                  <Text style={styles.usageTitle}>Local Price Alerts</Text>
                   <Text style={styles.usageText}>
-                    Analyze volatility, concentration risks, and diversification to help
-                    you make informed investment decisions.
+                    To monitor prices and trigger alerts when the app is actively running
+                    on your device.
                   </Text>
                 </View>
               </View>
 
               <View style={styles.usageItem}>
                 <View style={styles.usageIconContainer}>
-                  <MaterialCommunityIcons name='bell-ring' size={16} color='#9C27B0' />
+                  <MaterialCommunityIcons name='server' size={16} color='#2196F3' />
                 </View>
                 <View style={styles.usageContent}>
-                  <Text style={styles.usageTitle}>Alert Notifications</Text>
+                  <Text style={styles.usageTitle}>Background Alerts (Opt-in)</Text>
                   <Text style={styles.usageText}>
-                    Monitor price conditions and send push notifications when your
-                    configured alerts are triggered.
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.usageItem}>
-                <View style={styles.usageIconContainer}>
-                  <MaterialCommunityIcons
-                    name='cellphone-cog'
-                    size={16}
-                    color='#2196F3'
-                  />
-                </View>
-                <View style={styles.usageContent}>
-                  <Text style={styles.usageTitle}>App Functionality</Text>
-                  <Text style={styles.usageText}>
-                    Maintain app performance, fix bugs, and improve user experience
-                    through technical optimization.
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.usageItem}>
-                <View style={styles.usageIconContainer}>
-                  <MaterialCommunityIcons name='shield-check' size={16} color='#00BCD4' />
-                </View>
-                <View style={styles.usageContent}>
-                  <Text style={styles.usageTitle}>Security Purposes</Text>
-                  <Text style={styles.usageText}>
-                    Protect against fraudulent activity and ensure the security of your
-                    data and the app's integrity.
+                    Only if you enable: To monitor cryptocurrency prices 24/7 on our
+                    server and send you push notifications when your conditions are met.
                   </Text>
                 </View>
               </View>
 
               <View style={styles.noteBox}>
-                <MaterialCommunityIcons name='lightbulb' size={16} color='#FFD700' />
+                <MaterialCommunityIcons name='scale-balance' size={16} color='#FFD700' />
                 <Text style={styles.noteText}>
-                  <Text style={styles.bold}>Key Point:</Text> All data processing happens
-                  locally on your device. No personal data is sent to our servers for
-                  processing.
+                  <Text style={styles.bold}>Legal Basis:</Text> Local processing is
+                  necessary for app functionality. Server processing for background alerts
+                  is based solely on your{" "}
+                  <Text style={styles.bold}>explicit consent</Text>.
                 </Text>
               </View>
             </View>
           )}
         </TouchableOpacity>
 
-        {/* Секция: Третьи стороны */}
+        {/* Third Parties */}
         <TouchableOpacity
           onPress={() => toggleSection("thirdParties")}
           style={styles.sectionCard}
@@ -370,166 +438,131 @@ const PrivacyPolicy = () => {
 
           {expandedSections.thirdParties && (
             <View style={styles.sectionContent}>
-              <Text style={styles.sectionSubtitle}>External APIs We Use</Text>
+              <Text style={styles.sectionSubtitle}>Data Sources</Text>
               <View style={styles.dataCategory}>
                 <View style={styles.categoryHeader}>
-                  <MaterialCommunityIcons name='web' size={16} color='#4CAF50' />
-                  <Text style={styles.categoryTitle}>CoinGecko API</Text>
+                  <MaterialCommunityIcons name='chart-line' size={16} color='#4CAF50' />
+                  <Text style={styles.categoryTitle}>Market Data APIs</Text>
                 </View>
                 <Text style={styles.categoryText}>
-                  • Source for cryptocurrency prices{"\n"}• Market data and statistics
-                  {"\n"}• Historical price data{"\n"}• 10-minute cache to reduce API calls
+                  • <Text style={styles.bold}>CoinGecko/Binance:</Text> For cryptocurrency
+                  prices
+                  {"\n"}• <Text style={styles.bold}>Data Sent:</Text> Only public coin
+                  symbols
+                  {"\n"}• <Text style={styles.bold}>No user data:</Text> Your information
+                  is never sent
                 </Text>
-                <TouchableOpacity
-                  style={styles.externalLink}
-                  onPress={() =>
-                    handleOpenExternalLink("https://www.coingecko.com/en/api")
-                  }
-                >
-                  <MaterialCommunityIcons name='open-in-new' size={14} color='#2196F3' />
-                  <Text style={styles.linkText}>CoinGecko API Terms of Service</Text>
-                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.sectionSubtitle}>
+                Infrastructure (Background Alerts Only)
+              </Text>
+              <View style={styles.dataCategory}>
+                <View style={styles.categoryHeader}>
+                  <MaterialCommunityIcons name='server' size={16} color='#2196F3' />
+                  <Text style={styles.categoryTitle}>Backend Server</Text>
+                </View>
+                <Text style={styles.categoryText}>
+                  • <Text style={styles.bold}>Purpose:</Text> Processes background alerts
+                  {"\n"}• <Text style={styles.bold}>Only used if:</Text> You enable
+                  background alerts
+                  {"\n"}• <Text style={styles.bold}>Data:</Text> Encrypted alert
+                  configurations
+                </Text>
               </View>
 
               <View style={styles.dataCategory}>
                 <View style={styles.categoryHeader}>
-                  <MaterialCommunityIcons name='chart-bar' size={16} color='#FF9800' />
-                  <Text style={styles.categoryTitle}>Binance API</Text>
+                  <MaterialCommunityIcons name='firebase' size={16} color='#FF9800' />
+                  <Text style={styles.categoryTitle}>Firebase Cloud Messaging</Text>
                 </View>
                 <Text style={styles.categoryText}>
-                  • Source for detailed candlestick chart data{"\n"}• Historical
-                  klines/OHLCV data (Open, High, Low, Close, Volume){"\n"}•
-                  High-resolution timeframes (1min, 5min, 1h, etc.){"\n"}• Real-time
-                  WebSocket connections for live price updates
-                </Text>
-                <View style={styles.dataNote}>
-                  <MaterialCommunityIcons name='information' size={12} color='#2196F3' />
-                  <Text style={styles.noteText}>
-                    Used exclusively for chart visualization. No personal or portfolio
-                    data is transmitted.
+                  • <Text style={styles.bold}>Purpose:</Text> Delivers push notifications
+                  {"\n"}• <Text style={styles.bold}>Data Shared:</Text> Device token and
+                  notification content
+                  {"\n"}• <Text style={styles.bold}>Link:</Text>{" "}
+                  <Text
+                    style={styles.linkText}
+                    onPress={() =>
+                      handleOpenExternalLink(
+                        "https://firebase.google.com/support/privacy"
+                      )
+                    }
+                  >
+                    Firebase Privacy Policy
                   </Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.externalLink}
-                  onPress={() =>
-                    handleOpenExternalLink("https://developers.binance.com/docs/")
-                  }
-                >
-                  <MaterialCommunityIcons name='open-in-new' size={14} color='#2196F3' />
-                  <Text style={styles.linkText}>Binance API Documentation</Text>
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.sectionSubtitle}>Data Flow to Third Parties</Text>
-              <View style={styles.dataNote}>
-                <MaterialCommunityIcons name='information' size={12} color='#2196F3' />
-                <Text style={styles.noteText}>
-                  When fetching market data, we send ONLY cryptocurrency symbols/IDs to
-                  the API. No personal or portfolio data is shared.
                 </Text>
-              </View>
-              <View style={styles.warningBox}>
-                <MaterialCommunityIcons name='alert' size={20} color='#FFD700' />
-                <View style={styles.warningContent}>
-                  <Text style={styles.warningTitle}>Third-Party Privacy Policies</Text>
-                  <Text style={styles.warningText}>
-                    We encourage you to review the privacy policies of these third-party
-                    services. We are not responsible for their data practices.
-                  </Text>
-                </View>
               </View>
             </View>
           )}
         </TouchableOpacity>
 
-        {/* Секция: Хранение и безопасность */}
+        {/* Data Retention */}
         <TouchableOpacity
-          onPress={() => toggleSection("security")}
+          onPress={() => toggleSection("dataRetention")}
           style={styles.sectionCard}
         >
           <View style={styles.sectionHeader}>
-            <MaterialCommunityIcons name='shield-check' size={20} color='#FFD700' />
-            <Text style={styles.sectionTitle}>4. Data Storage & Security</Text>
+            <MaterialCommunityIcons name='database-clock' size={20} color='#FFD700' />
+            <Text style={styles.sectionTitle}>4. Data Retention</Text>
             <Ionicons
-              name={expandedSections.security ? "chevron-up" : "chevron-down"}
+              name={expandedSections.dataRetention ? "chevron-up" : "chevron-down"}
               size={20}
               color='#FFD700'
             />
           </View>
 
-          {expandedSections.security && (
+          {expandedSections.dataRetention && (
             <View style={styles.sectionContent}>
-              <View style={styles.securityMetric}>
-                <View style={styles.metricRow}>
-                  <MaterialCommunityIcons
-                    name='clock-outline'
-                    size={16}
-                    color='#FFD700'
-                  />
-                  <Text style={styles.metricLabel}>Storage Duration:</Text>
-                  <Text style={styles.metricValue}>Device Lifetime</Text>
-                </View>
-                <Text style={styles.metricDescription}>
-                  Data persists on your device until you delete it or uninstall the app
-                </Text>
-              </View>
-
-              <View style={styles.securityMetric}>
-                <View style={styles.metricRow}>
-                  <MaterialCommunityIcons
-                    name='cellphone-link'
-                    size={16}
-                    color='#4CAF50'
-                  />
-                  <Text style={styles.metricLabel}>Storage Location:</Text>
-                  <Text style={styles.metricValue}>Local Device Only</Text>
-                </View>
-                <Text style={styles.metricDescription}>
-                  All portfolio data is stored locally using AsyncStorage. No cloud
-                  storage or external servers are used.
-                </Text>
-              </View>
-
-              <View style={styles.securityMetric}>
-                <View style={styles.metricRow}>
-                  <MaterialCommunityIcons name='encryption' size={16} color='#2196F3' />
-                  <Text style={styles.metricLabel}>Security Measures:</Text>
-                  <Text style={styles.metricValue}>Device-Level Protection</Text>
-                </View>
-                <Text style={styles.metricDescription}>
-                  Uses your device's built-in security features. Data is protected by your
-                  device's lock screen and encryption.
-                </Text>
-              </View>
-
-              <View style={styles.securityMetric}>
-                <View style={styles.metricRow}>
-                  <MaterialCommunityIcons name='cached' size={16} color='#9C27B0' />
-                  <Text style={styles.metricLabel}>API Cache:</Text>
-                  <Text style={styles.metricValue}>10 Minutes</Text>
-                </View>
-                <Text style={styles.metricDescription}>
-                  Market data is cached locally to reduce API calls and improve app
-                  performance
-                </Text>
-              </View>
-
-              <View style={styles.warningBox}>
-                <MaterialCommunityIcons name='alert' size={20} color='#FF5252' />
-                <View style={styles.warningContent}>
-                  <Text style={styles.warningTitle}>Important Security Notes</Text>
-                  <Text style={styles.warningText}>
-                    • Data is NOT backed up to cloud services{"\n"}• Uninstalling the app
-                    will PERMANENTLY delete all data{"\n"}• No recovery options for lost
-                    data{"\n"}• Use your device's backup features to preserve data{"\n"}•
-                    We recommend regular manual exports of your portfolio
+              <View style={styles.retentionItem}>
+                <MaterialCommunityIcons name='cellphone' size={16} color='#4CAF50' />
+                <View style={styles.retentionContent}>
+                  <Text style={styles.retentionTitle}>Local Device Data</Text>
+                  <Text style={styles.retentionText}>
+                    • <Text style={styles.bold}>Retention:</Text> Until you delete it or
+                    uninstall the app
+                    {"\n"}• <Text style={styles.bold}>Storage:</Text> Your device's local
+                    storage
+                    {"\n"}• <Text style={styles.bold}>Backup:</Text> Not automatically
+                    backed up by us
                   </Text>
                 </View>
+              </View>
+
+              <View style={styles.retentionItem}>
+                <MaterialCommunityIcons name='server' size={16} color='#2196F3' />
+                <View style={styles.retentionContent}>
+                  <Text style={styles.retentionTitle}>Server Data (If Enabled)</Text>
+                  <Text style={styles.retentionText}>
+                    • <Text style={styles.bold}>Active Alerts:</Text> Stored while
+                    enabled, deleted immediately when disabled
+                    {"\n"}• <Text style={styles.bold}>Triggered Alerts:</Text> History
+                    kept for 24 hours, then deleted
+                    {"\n"}• <Text style={styles.bold}>Inactive Devices:</Text> Data
+                    removed after 30 days of inactivity
+                    {"\n"}• <Text style={styles.bold}>When you disable:</Text> All your
+                    data is immediately deleted
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.securityBox}>
+                <MaterialCommunityIcons
+                  name='server-security'
+                  size={20}
+                  color='#FFD700'
+                />
+                <Text style={styles.securityText}>
+                  <Text style={styles.bold}>Security Measures:</Text> All communications
+                  use HTTPS/TLS encryption. Server data is encrypted at rest. Regular
+                  security updates are applied.
+                </Text>
               </View>
             </View>
           )}
         </TouchableOpacity>
 
-        {/* Секция: Права пользователя */}
+        {/* User Rights */}
         <TouchableOpacity
           onPress={() => toggleSection("userRights")}
           style={styles.sectionCard}
@@ -549,108 +582,126 @@ const PrivacyPolicy = () => {
               <View style={styles.rightsGrid}>
                 <View style={styles.rightItem}>
                   <MaterialCommunityIcons name='eye' size={24} color='#4CAF50' />
-                  <Text style={styles.rightTitle}>Right to Access</Text>
-                  <Text style={styles.rightText}>
-                    View all data stored on your device through app settings
-                  </Text>
+                  <Text style={styles.rightTitle}>Access & View</Text>
+                  <Text style={styles.rightText}>View all your data in app settings</Text>
                 </View>
 
                 <View style={styles.rightItem}>
-                  <MaterialCommunityIcons name='pencil' size={24} color='#2196F3' />
-                  <Text style={styles.rightTitle}>Right to Modify</Text>
+                  <MaterialCommunityIcons
+                    name='toggle-switch'
+                    size={24}
+                    color='#2196F3'
+                  />
+                  <Text style={styles.rightTitle}>Control Alerts</Text>
                   <Text style={styles.rightText}>
-                    Edit or update your portfolio data at any time
+                    Enable/disable background alerts anytime
                   </Text>
                 </View>
 
                 <View style={styles.rightItem}>
                   <MaterialCommunityIcons name='delete' size={24} color='#FF5252' />
-                  <Text style={styles.rightTitle}>Right to Delete</Text>
-                  <Text style={styles.rightText}>
-                    Remove portfolio data or alerts via app settings
-                  </Text>
+                  <Text style={styles.rightTitle}>Delete</Text>
+                  <Text style={styles.rightText}>Delete portfolio data or alerts</Text>
                 </View>
 
                 <View style={styles.rightItem}>
-                  <MaterialCommunityIcons name='download' size={24} color='#9C27B0' />
-                  <Text style={styles.rightTitle}>Right to Export</Text>
+                  <MaterialCommunityIcons name='export' size={24} color='#9C27B0' />
+                  <Text style={styles.rightTitle}>Export</Text>
                   <Text style={styles.rightText}>
-                    Export your portfolio data in JSON format
+                    Export your data via app settings - will be available in future
                   </Text>
                 </View>
               </View>
 
-              <Text style={styles.sectionSubtitle}>How to Exercise Your Rights:</Text>
-
+              <Text style={styles.sectionSubtitle}>How to Exercise Your Rights</Text>
               <View style={styles.stepList}>
                 <View style={styles.stepItem}>
                   <Text style={styles.stepNumber}>1</Text>
                   <Text style={styles.stepText}>
-                    <Text style={styles.bold}>Access Data:</Text> Go to Settings → View
-                    Portfolio Data
+                    <Text style={styles.bold}>For background alerts:</Text> Use the toggle
+                    button at the top of the page on Price Alerts
                   </Text>
                 </View>
 
                 <View style={styles.stepItem}>
                   <Text style={styles.stepNumber}>2</Text>
                   <Text style={styles.stepText}>
-                    <Text style={styles.bold}>Modify Data:</Text> Edit amounts directly in
-                    your portfolio
+                    <Text style={styles.bold}>To delete server data:</Text> Disable
+                    background alerts
                   </Text>
                 </View>
-
-                <View style={styles.stepItem}>
-                  <Text style={styles.stepNumber}>3</Text>
-                  <Text style={styles.stepText}>
-                    <Text style={styles.bold}>Delete Data:</Text> Settings → Clear All
-                    Data
-                  </Text>
-                </View>
-
-                <View style={styles.stepItem}>
-                  <Text style={styles.stepNumber}>4</Text>
-                  <Text style={styles.stepText}>
-                    <Text style={styles.bold}>Export Data:</Text> Settings → Export
-                    Portfolio
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.actionButtons}>
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => {
-                    // Здесь должна быть реализация экспорта
-                    alert("Export feature would be implemented here")
-                  }}
-                >
-                  <MaterialCommunityIcons name='export' size={16} color='#FFFFFF' />
-                  <Text style={styles.actionButtonText}>Export My Data</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.clearButton]}
-                  onPress={() => {
-                    // Здесь должна быть реализация очистки
-                    alert("Clear data feature would be implemented here")
-                  }}
-                >
-                  <MaterialCommunityIcons name='delete-sweep' size={16} color='#FFFFFF' />
-                  <Text style={styles.actionButtonText}>Clear All Data</Text>
-                </TouchableOpacity>
               </View>
             </View>
           )}
         </TouchableOpacity>
 
-        {/* Секция: Дети */}
+        {/* Compliance */}
+        <TouchableOpacity
+          onPress={() => toggleSection("compliance")}
+          style={styles.sectionCard}
+        >
+          <View style={styles.sectionHeader}>
+            <MaterialCommunityIcons name='gavel' size={20} color='#FFD700' />
+            <Text style={styles.sectionTitle}>6. Compliance & Standards</Text>
+            <Ionicons
+              name={expandedSections.compliance ? "chevron-up" : "chevron-down"}
+              size={20}
+              color='#FFD700'
+            />
+          </View>
+
+          {expandedSections.compliance && (
+            <View style={styles.sectionContent}>
+              <View style={styles.complianceItem}>
+                <MaterialCommunityIcons name='google' size={16} color='#4285F4' />
+                <View style={styles.complianceContent}>
+                  <Text style={styles.complianceTitle}>Google Play Requirements</Text>
+                  <Text style={styles.complianceText}>
+                    • Prominent disclosure before data collection
+                    {"\n"}• Explicit opt-in consent for background features
+                    {"\n"}• Clear privacy policy with developer contact
+                    {"\n"}• User control over data sharing
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.complianceItem}>
+                <MaterialCommunityIcons name='earth' size={16} color='#4CAF50' />
+                <View style={styles.complianceContent}>
+                  <Text style={styles.complianceTitle}>GDPR Compliance (EEA Users)</Text>
+                  <Text style={styles.complianceText}>
+                    • Lawful basis: Explicit consent (Article 6(1)(a))
+                    {"\n"}• Right to access, rectify, delete (Articles 15-17)
+                    {"\n"}• Right to data portability (Article 20)
+                    {"\n"}• Right to object to processing (Article 21)
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.complianceItem}>
+                <MaterialCommunityIcons name='shield-star' size={16} color='#FF9800' />
+                <View style={styles.complianceContent}>
+                  <Text style={styles.complianceTitle}>Security Standards</Text>
+                  <Text style={styles.complianceText}>
+                    • TLS 1.2+ encryption for all communications
+                    {"\n"}• Data encryption at rest (AES-256)
+                    {"\n"}• Regular security updates and audits
+                    {"\n"}• Minimal data collection principle
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {/* Children's Privacy */}
         <TouchableOpacity
           onPress={() => toggleSection("childrenPrivacy")}
           style={styles.sectionCard}
         >
           <View style={styles.sectionHeader}>
             <MaterialCommunityIcons name='baby-face-outline' size={20} color='#FFD700' />
-            <Text style={styles.sectionTitle}>6. Children's Privacy</Text>
+            <Text style={styles.sectionTitle}>7. Children's Privacy</Text>
             <Ionicons
               name={expandedSections.childrenPrivacy ? "chevron-up" : "chevron-down"}
               size={20}
@@ -661,91 +712,26 @@ const PrivacyPolicy = () => {
           {expandedSections.childrenPrivacy && (
             <View style={styles.sectionContent}>
               <Text style={styles.infoText}>
-                Our App is{" "}
-                <Text style={styles.bold}>
-                  NOT intended for children under 13 years of age
-                </Text>
-                . We do not knowingly collect personal information from children under 13.
+                The App is{" "}
+                <Text style={styles.bold}>NOT intended for children under 13</Text>. I do
+                not knowingly collect personal information from children under 13.
               </Text>
-
               <Text style={styles.infoText}>
-                If you are a parent or guardian and believe your child has provided us
-                with personal information, please contact us immediately at
-                <Text style={styles.highlight}> Alex-artcode@yandex.ru</Text> so we can
-                take appropriate action.
+                If you believe a child has provided information, please contact me
+                immediately for data deletion.
               </Text>
-
-              <View style={styles.noteBox}>
-                <MaterialCommunityIcons name='school' size={16} color='#FFD700' />
-                <Text style={styles.noteText}>
-                  Parents and guardians should monitor their children's use of financial
-                  applications and provide appropriate guidance.
-                </Text>
-              </View>
             </View>
           )}
         </TouchableOpacity>
 
-        {/* Секция: Обновления политики */}
-        <TouchableOpacity
-          onPress={() => toggleSection("policyUpdates")}
-          style={styles.sectionCard}
-        >
-          <View style={styles.sectionHeader}>
-            <MaterialCommunityIcons name='update' size={20} color='#FFD700' />
-            <Text style={styles.sectionTitle}>7. Policy Updates</Text>
-            <Ionicons
-              name={expandedSections.policyUpdates ? "chevron-up" : "chevron-down"}
-              size={20}
-              color='#FFD700'
-            />
-          </View>
-
-          {expandedSections.policyUpdates && (
-            <View style={styles.sectionContent}>
-              <Text style={styles.infoText}>
-                We may update this Privacy Policy from time to time. We will notify you of
-                any changes by:
-              </Text>
-
-              <View style={styles.updateMethods}>
-                <View style={styles.updateMethod}>
-                  <MaterialCommunityIcons name='bell' size={16} color='#4CAF50' />
-                  <Text style={styles.updateMethodText}>In-app notifications</Text>
-                </View>
-
-                <View style={styles.updateMethod}>
-                  <MaterialCommunityIcons name='email' size={16} color='#2196F3' />
-                  <Text style={styles.updateMethodText}>Email (if provided)</Text>
-                </View>
-
-                <View style={styles.updateMethod}>
-                  <MaterialCommunityIcons name='web' size={16} color='#9C27B0' />
-                  <Text style={styles.updateMethodText}>
-                    Updated "Last Updated" date in the app
-                  </Text>
-                </View>
-              </View>
-
-              <Text style={styles.infoText}>
-                You are advised to review this Privacy Policy periodically for any
-                changes. Changes to this Privacy Policy are effective when they are posted
-                in the app.
-              </Text>
-
-              <View style={styles.noteBox}>
-                <MaterialCommunityIcons name='history' size={16} color='#FFD700' />
-                <Text style={styles.noteText}>
-                  Previous versions of this policy will be available upon request.
-                </Text>
-              </View>
-            </View>
-          )}
-        </TouchableOpacity>
-
-        {/* Контакты */}
+        {/* Contact Information */}
         <View style={styles.footerCard}>
           <Text style={styles.footerTitle}>Contact Information</Text>
+
+          <View style={styles.contactInfo}>
+            <MaterialCommunityIcons name='account' size={20} color='#FFD700' />
+            <Text style={styles.contactText}>Developer: Alexander Butylev</Text>
+          </View>
 
           <View style={styles.contactInfo}>
             <MaterialCommunityIcons name='email' size={20} color='#FFD700' />
@@ -755,40 +741,29 @@ const PrivacyPolicy = () => {
           </View>
 
           <Text style={styles.contactDescription}>
-            For privacy-related questions, data access requests, or to report a security
-            concern, please contact us via email.
+            Use this email for: advertising offers, privacy questions, data requests,
+            security concerns, or to report potential issues.
           </Text>
 
           <View style={styles.responseTime}>
             <MaterialCommunityIcons name='clock-fast' size={16} color='#4CAF50' />
             <Text style={styles.responseTimeText}>
-              We aim to respond to all inquiries within 48 hours
+              I aim to respond to privacy inquiries within 48 hours.
             </Text>
           </View>
 
           <View style={styles.versionInfo}>
             <Text style={styles.versionText}>
-              App Version: 2.0.0 • Privacy Policy v2.0
+              © {new Date().getFullYear()} Alexander Butylev | App Version: 1.0.0 |
+              Privacy Policy v1.0
             </Text>
             <Text style={styles.disclaimer}>
-              This privacy policy applies to all features of the Crypto-Tracker app. By
-              using this app, you acknowledge you have read and understood this policy.
+              This policy applies to the Crypto-Tracker app and associated background
+              alert services.
             </Text>
           </View>
-
-          <TouchableOpacity
-            style={styles.printButton}
-            onPress={() => {
-              // Здесь можно добавить функцию печати/сохранения
-              alert("Print/save feature would be implemented here")
-            }}
-          >
-            <MaterialCommunityIcons name='printer' size={16} color='#FFFFFF' />
-            <Text style={styles.printButtonText}>Save/Print This Policy</Text>
-          </TouchableOpacity>
         </View>
 
-        {/* Пустой блок для отступа */}
         <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>

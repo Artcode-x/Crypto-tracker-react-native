@@ -22,6 +22,8 @@ import { deletePriceAlert, clearTriggeredAlerts } from "../../store/alertsSlice"
 
 import { styles } from "./Alerts.styles"
 import AlertCard from "../../components/AlertCard/AlertCard"
+import ServerSyncService from "../../services/ServerSyncService"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 const Alerts = () => {
   const dispatch = useDispatch()
@@ -29,6 +31,35 @@ const Alerts = () => {
   //   const triggeredAlerts = useSelector(triggeredAlertsSelector) // Сработавшие
   //   const activeAlerts = useSelector(activeAlertsSelector) // Активные
 
+  const [serverAlertsEnabled, setServerAlertsEnabled] = useState(false)
+
+  React.useEffect(() => {
+    loadConsentStatus()
+  }, [])
+
+  const loadConsentStatus = async () => {
+    const consent = await AsyncStorage.getItem("@background_alerts_consent")
+    setServerAlertsEnabled(consent === "agreed")
+  }
+
+  const toggleServerAlerts = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    const newStatus = !serverAlertsEnabled
+    const consentValue = newStatus ? "agreed" : "denied"
+
+    await AsyncStorage.setItem("@background_alerts_consent", consentValue)
+    setServerAlertsEnabled(newStatus)
+
+    await ServerSyncService.updateConsent(newStatus)
+
+    // Тактильный фидбэк
+    if (newStatus) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)
+    }
+  }
+  //////
   const triggeredAlerts = useMemo(() => {
     return priceAlerts.filter((alert) => alert.triggeredAt)
   }, [priceAlerts])
@@ -136,6 +167,31 @@ const Alerts = () => {
                 <Text style={styles.clearMiniText}>{stats.triggered}</Text>
               </TouchableOpacity>
             )}
+
+            {/* Кнопка серверных алертов */}
+            <TouchableOpacity
+              onPress={toggleServerAlerts}
+              style={[
+                styles.serverToggleButton,
+                serverAlertsEnabled && styles.serverToggleButtonActive
+              ]}
+            >
+              <Ionicons
+                name={serverAlertsEnabled ? "cloud-done" : "cloud-offline"}
+                size={14}
+                color={serverAlertsEnabled ? "#4CAF50" : "#AAAAAA"}
+              />
+              <LinearGradient
+                colors={
+                  serverAlertsEnabled
+                    ? ["rgba(76, 175, 80, 0.15)", "rgba(76, 175, 80, 0.05)"]
+                    : ["rgba(170, 170, 170, 0.1)", "rgba(170, 170, 170, 0.05)"]
+                }
+                style={styles.serverToggleGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              />
+            </TouchableOpacity>
 
             <View style={styles.activeStats}>
               <View style={styles.activeStatItem}>

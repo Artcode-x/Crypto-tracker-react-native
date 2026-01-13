@@ -243,5 +243,36 @@ export const styles = StyleSheet.create({
     color: "rgba(255, 255, 255, 0.5)",
     fontSize: 13,
     marginTop: 8
+  },
+
+  /////
+
+  // серверная иконка в заголовке:
+  serverToggleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(170, 170, 170, 0.1)",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    position: "relative",
+    overflow: "hidden"
+  },
+
+  serverToggleButtonActive: {
+    backgroundColor: "rgba(76, 175, 80, 0.15)",
+    borderColor: "rgba(76, 175, 80, 0.3)"
+  },
+
+  serverToggleGradient: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 8
   }
 })
