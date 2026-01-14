@@ -296,7 +296,7 @@ class NotificationService {
       const conditionText = alert.condition === "above" ? "rose above" : "fell below"
 
       // Текст уведомления
-      const title = `💰 ${alert.coinSymbol.toUpperCase()} Alert!`
+      const title = `🚨 ${alert.coinSymbol.toUpperCase()} Alert!`
       const body = `${alert.coinName} ${conditionText} $${alert.targetPrice.toFixed(
         2
       )}. Current: $${alert.currentPrice.toFixed(2)}`
@@ -329,7 +329,7 @@ class NotificationService {
           badge: 1,
           color: "#D4AF37",
           // iOS specific
-          subtitle: "Price Alert Triggered",
+          // subtitle: "Price Alert Triggered",
           launchImageName: "adaptive-icon",
           // Android specific
           priority: isAppActive
@@ -380,8 +380,8 @@ class NotificationService {
 
         // Создаем локальное уведомление для отображения
         await this.showLocalNotificationFromFCM({
-          title: title || `💰 ${data.coinSymbol?.toUpperCase() || "Crypto"} Alert!`,
-          body: body || "Price alert triggered",
+          title: title || `🚨 ${data.coinSymbol?.toUpperCase() || "Crypto"} Alert!`,
+          // body: body || "Price alert triggered",
           data: data
         })
 

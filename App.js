@@ -11,7 +11,6 @@ import { loadAlerts, markAlertAsRead, triggerAlertFromServer } from "./store/ale
 import { AppState, View, Text } from "react-native"
 import { priceAlertsSelector } from "./store/alertsSelectors"
 import AlertConsentModal from "./components/AlertConsentModal/AlertConsentModal"
-import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 // Компонент для отображения ошибок
 const ErrorBoundary = ({ children }) => {
@@ -84,6 +83,7 @@ function AppContent() {
 
   // состояния для модалки
   const [showConsentModal, setShowConsentModal] = useState(false)
+  const [hasConsent, setHasConsent] = useState(false)
 
   useEffect(() => {
     let notificationSubscriptions = []
@@ -94,11 +94,12 @@ function AppContent() {
 
         // 1. Проверка, давал ли пользователь уже согласие
         try {
-          const hasConsent = await AsyncStorage.getItem("@background_alerts_consent")
-          console.log("Статус согласия:", hasConsent)
+          const consent = await AsyncStorage.getItem("@background_alerts_consent")
+          console.log("Статус согласия:", consent)
+          setHasConsent(consent === "agreed")
 
-          //   Если согласия нет - показываем модалку
-          if (hasConsent === null) {
+          //  Если согласия нет - показываем модалку
+          if (consent === null) {
             console.log("Первый запуск, показываем модалку согласия")
             // Показываем с задержкой для лучшего UX
             setTimeout(() => {
@@ -156,38 +157,26 @@ function AppContent() {
               if (fcmToken) {
                 console.log("FCM Token получен")
 
-                // 6. Проверка согласия перед инициализацией серверной синхронизации
-                const hasConsent = await AsyncStorage.getItem(
-                  "@background_alerts_consent"
-                )
-
-                // Инициализируем ServerSyncService, но он будет работать в пассивном режиме
+                // 6. Инициализация синхронизации с сервером (ВСЕГДА, как в старой версии)
                 await ServerSyncService.initialize(fcmToken, dispatch)
 
-                // Только если есть согласие - активация серверной синхронизации
-                if (hasConsent === "agreed") {
-                  console.log("Согласие есть, активируем серверную синхронизацию")
-                  // ServerSyncService уже инициализирован, может начать работу
-                } else {
-                  console.log("Нет согласия, серверная синхронизация в пассивном режиме")
-                }
-
                 // 7. Синхронизация статуса алертов с сервером (если есть согласие)
-                if (hasConsent === "agreed") {
-                  try {
-                    await ServerSyncService.syncAlertStatusFromServer(fcmToken)
-                  } catch (syncError) {
-                    console.warn(
-                      "Не удалось синхронизировать статус алертов:",
-                      syncError.message
-                    )
-                  }
-                }
+                // const consent = await AsyncStorage.getItem("@background_alerts_consent")
+                // if (consent === "agreed") {
+                // try {
+                //   await ServerSyncService.syncAlertStatusFromServer(fcmToken)
+                // } catch (syncError) {
+                //   console.warn(
+                //     "Не удалось синхронизировать статус алертов:",
+                //     syncError.message
+                //   )
+                // }
+                //  }
 
-                // 8. Регистрация обработчиков уведомлений
+                // 8. Регистрация обработчиков уведомлений (как в старой версии)
                 notificationSubscriptions =
                   NotificationService.registerNotificationHandlers(
-                    // Обработчик получения уведомления
+                    // Обработчик получения уведомления (как ранее)
                     (notification) => {
                       try {
                         const data = notification.request.content.data
@@ -197,7 +186,9 @@ function AppContent() {
                           alertId: data?.alertId
                         })
 
+                        // !! Проверяем, не от сервера ли уведомление
                         if (data?.type === "price-alert") {
+                          // ! Если уведомление пришло от сервера - не показываем локальное
                           if (
                             data.source === "server" ||
                             data.isServerTriggered === "true"
@@ -210,6 +201,7 @@ function AppContent() {
                               isServerTriggered: data.isServerTriggered
                             })
 
+                            // Отметка алерта как сработавшего в Redux
                             dispatch(
                               triggerAlertFromServer({
                                 alertId: data.alertId || data.serverId,
@@ -223,9 +215,10 @@ function AppContent() {
                               })
                             )
 
-                            return
+                            return // Прерывание дальнейшей обработки
                           }
 
+                          // Если уведомление локальное - обработка как обычно
                           if (data?.alertId) {
                             dispatch(markAlertAsRead(data.alertId))
                           }
@@ -249,8 +242,11 @@ function AppContent() {
                           (data?.alertId || data?.serverId)
                         ) {
                           const alertId = data.alertId || data.serverId
+
+                          // Пометка как прочитанного вне зависимости от источника
                           dispatch(markAlertAsRead(alertId))
 
+                          // Если уведомление от сервера, но алерт еще не помечен как сработавший
                           if (
                             data.source === "server" ||
                             data.isServerTriggered === "true"
@@ -285,7 +281,7 @@ function AppContent() {
         }
 
         setIsReady(true)
-        console.log("Приложение инициализировано")
+        console.log("Приложение инициализировано с фиксом дублирования уведомлений")
       } catch (error) {
         console.error("Критическая ошибка инициализации:", error)
         setIsReady(true)
@@ -299,7 +295,7 @@ function AppContent() {
       console.log(`Состояние приложения: ${appState} → ${nextAppState}`)
       setAppState(nextAppState)
 
-      // При сворачивании приложения проверяем согласие перед синхронизацией
+      // При сворачивании приложения синхронизация алертов с сервером (с проверкой согласия)
       if (nextAppState === "background" || nextAppState === "inactive") {
         AsyncStorage.getItem("@background_alerts_consent").then((consent) => {
           if (consent === "agreed") {
@@ -311,8 +307,12 @@ function AppContent() {
         })
       }
 
-      // Обновление состояния на сервере
-      ServerSyncService.updateAppStateOnServer(nextAppState)
+      // Обновление состояния на сервере (только если есть согласие)
+      AsyncStorage.getItem("@background_alerts_consent").then((consent) => {
+        if (consent === "agreed") {
+          ServerSyncService.updateAppStateOnServer(nextAppState)
+        }
+      })
     })
 
     return () => {
@@ -323,19 +323,24 @@ function AppContent() {
     }
   }, [dispatch])
 
-  //  обработчики для модалки
+  // обработчики для модалки
   const handleAgree = async () => {
     try {
       console.log("Пользователь согласился на фоновые уведомления")
       await AsyncStorage.setItem("@background_alerts_consent", "agreed")
+      setHasConsent(true)
       setShowConsentModal(false)
 
       // Активация серверной синхронизации
       const fcmToken = await NotificationService.getFCMToken()
       if (fcmToken) {
         console.log("Активация серверной синхронизации...")
-        // ServerSyncService уже инициализирован, но можно его "разбудить"
-        await ServerSyncService.initialize(fcmToken, dispatch)
+        // ServerSyncService уже инициализирован, обновление статуса алертов
+        // try {
+        //   await ServerSyncService.syncAlertStatusFromServer(fcmToken)
+        // } catch (syncError) {
+        //   console.warn("Не удалось синхронизировать статус алертов:", syncError.message)
+        // }
       }
 
       console.log("Background alerts enabled")
@@ -348,11 +353,10 @@ function AppContent() {
     try {
       console.log("Пользователь отказался от фоновых уведомлений")
       await AsyncStorage.setItem("@background_alerts_consent", "denied")
+      setHasConsent(false)
       setShowConsentModal(false)
 
-      // Можно очистить алерты с сервера, если они там есть
-      // ServerSyncService.clearAllServerAlerts()
-
+      // ServerSyncService остается инициализированным, но будет проверять согласие перед действиями
       console.log("Background alerts disabled")
     } catch (error) {
       console.error("Error saving consent:", error)

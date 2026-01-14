@@ -19,6 +19,17 @@ class ServerSyncService {
   static lastRegistrationTime = 0
   static dispatch = null
 
+  // Проверка наличия согласия на фоновые уведомления
+  static async hasBackgroundConsent() {
+    try {
+      const consent = await AsyncStorage.getItem("@background_alerts_consent")
+      return consent === "agreed"
+    } catch (error) {
+      console.warn("Ошибка проверки согласия:", error)
+      return false
+    }
+  }
+
   // Инициализация службы
   static async initialize(fcmToken, dispatch = null) {
     try {
@@ -31,41 +42,19 @@ class ServerSyncService {
       // Проверка доступности сервера
       await this.checkServerAvailability()
 
-      // Проверяем согласие пользователя
+      // Проверка согласия перед регистрацией
       const hasConsent = await this.hasBackgroundConsent()
-
-      if (hasConsent) {
-        // Если есть согласие - продолжаем полную инициализацию
-        if (this.serverAvailable) {
-          await this.registerDevice(fcmToken)
-        }
-
-        // Восстановление отложенных операций
-        await this.processPendingOperations()
-
-        console.log(
-          "ServerSyncService инициализирован с согласием на фоновые уведомления"
-        )
-      } else {
-        console.log(
-          "Нет согласия на фоновые уведомления. ServerSyncService работает в пассивном режиме."
-        )
+      if (hasConsent && this.serverAvailable) {
+        await this.registerDevice(fcmToken)
       }
 
+      // Восстановление отложенных операций
+      await this.processPendingOperations()
+
+      console.log("ServerSyncService инициализирован")
       return true
     } catch (error) {
       console.warn("Ошибка инициализации ServerSyncService:", error.message)
-      return false
-    }
-  }
-
-  // Проверка наличия согласия на фоновые уведомления
-  static async hasBackgroundConsent() {
-    try {
-      const consent = await AsyncStorage.getItem("@background_alerts_consent")
-      return consent === "agreed"
-    } catch (error) {
-      console.warn("Ошибка проверки согласия:", error)
       return false
     }
   }
@@ -93,7 +82,7 @@ class ServerSyncService {
 
   // Регистрация устройства на сервере
   static async registerDevice(fcmToken) {
-    // Проверяем согласие перед регистрацией
+    // Проверка согласия
     const hasConsent = await this.hasBackgroundConsent()
     if (!hasConsent) {
       console.log("Пропускаем регистрацию: нет согласия на фоновые уведомления")
@@ -146,7 +135,7 @@ class ServerSyncService {
 
   // Синхронизация алертов с сервером
   static async syncAlertsWithServer(alerts) {
-    // Проверяем согласие перед синхронизацией
+    // Проверка согласия
     const hasConsent = await this.hasBackgroundConsent()
     if (!hasConsent) {
       console.log("Пропускаем синхронизацию: нет согласия на фоновые уведомления")
@@ -204,18 +193,13 @@ class ServerSyncService {
     }
   }
 
-  // Проверка, нужно ли синхронизировать с сервером
-  static async shouldSyncWithServer() {
-    const hasConsent = await this.hasBackgroundConsent()
-    return hasConsent && this.appState !== "active" && this.deviceToken !== null
-  }
-
   // Синхронизация статуса алертов с сервером
   static async syncAlertStatusFromServer(deviceToken) {
-    // Проверяем согласие
+    console.log("🔍 syncAlertStatusFromServer ВЫЗВАН! ")
+    // Проверка согласия
     const hasConsent = await this.hasBackgroundConsent()
     if (!hasConsent) {
-      console.log("Пропускаем синхронизацию статуса: нет согласия на фоновые уведомления")
+      console.log("Пропускаем синхронизацию статуса: нет согласия")
       return false
     }
 
@@ -291,11 +275,11 @@ class ServerSyncService {
 
   // Удаление алерта с сервера
   static async deleteAlertFromServer(alertId, serverId = null) {
-    // Проверяем согласие
+    // Проверка согласия
     const hasConsent = await this.hasBackgroundConsent()
     if (!hasConsent) {
-      console.log("Пропускаем удаление с сервера: нет согласия на фоновые уведомления")
-      return true // Возвращаем true, чтобы локальное удаление продолжилось
+      console.log("Пропускаем удаление с сервера: нет согласия")
+      return true
     }
 
     if (!this.deviceToken || !this.serverAvailable) {
@@ -335,7 +319,7 @@ class ServerSyncService {
   static async updateAppStateOnServer(newState) {
     this.appState = newState
 
-    // Проверяем согласие
+    // Проверка согласия
     const hasConsent = await this.hasBackgroundConsent()
     if (!hasConsent) {
       return false
@@ -365,73 +349,6 @@ class ServerSyncService {
     }
   }
 
-  // Метод для обновления статуса согласия (вызывается из модалки)
-  static async updateConsent(consentGiven) {
-    try {
-      if (consentGiven) {
-        console.log("Пользователь дал согласие на фоновые уведомления")
-
-        // Если согласие дано и есть токен - продолжаем инициализацию
-        if (this.deviceToken) {
-          await this.checkServerAvailability()
-
-          if (this.serverAvailable) {
-            await this.registerDevice(this.deviceToken)
-            await this.processPendingOperations()
-          }
-        }
-      } else {
-        console.log("Пользователь отказался от фоновых уведомлений")
-
-        // Очищаем все алерты с сервера если они там есть
-        if (this.deviceToken && this.serverAvailable) {
-          await this.clearAllServerAlerts()
-        }
-
-        // Очищаем отложенные операции
-        this.pendingOperations = []
-        await this.savePendingOperations()
-      }
-
-      return true
-    } catch (error) {
-      console.warn("Ошибка обновления согласия:", error)
-      return false
-    }
-  }
-
-  // Метод для очистки всех алертов с сервера при отзыве согласия
-  static async clearAllServerAlerts() {
-    if (!this.deviceToken || !this.serverAvailable) {
-      console.log("Не удалось очистить алерты: сервер недоступен")
-      return false
-    }
-
-    try {
-      console.log("Очистка всех алертов с сервера...")
-
-      const response = await fetch(`${SERVER_CONFIG.BASE_URL}/clear-alerts`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          deviceToken: this.deviceToken,
-          timestamp: new Date().toISOString()
-        })
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log(`Удалено ${data.deletedCount || 0} алертов с сервера`)
-        return true
-      }
-    } catch (error) {
-      console.warn("Не удалось очистить алерты с сервера:", error.message)
-    }
-    return false
-  }
-
   // Добавление операции в очередь ожидания
   static addPendingOperation(type, data) {
     this.pendingOperations.push({
@@ -447,12 +364,10 @@ class ServerSyncService {
 
   // Обработка отложенных операций
   static async processPendingOperations() {
-    // Проверяем согласие
+    // Проверка согласия
     const hasConsent = await this.hasBackgroundConsent()
     if (!hasConsent) {
-      console.log(
-        "Пропускаем обработку отложенных операций: нет согласия на фоновые уведомления"
-      )
+      console.log("Пропускаем обработку отложенных операций: нет согласия")
       return
     }
 
@@ -545,6 +460,12 @@ class ServerSyncService {
       lastSyncTime: this.lastSyncTime,
       hasBackgroundConsent: hasConsent
     }
+  }
+
+  // Проверка, нужно ли синхронизировать с сервером
+  static async shouldSyncWithServer() {
+    const hasConsent = await this.hasBackgroundConsent()
+    return hasConsent && this.appState !== "active" && this.deviceToken !== null
   }
 
   // Тестирование подключения к серверу

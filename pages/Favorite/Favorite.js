@@ -129,12 +129,12 @@ const Favorite = () => {
 
   const checkServerAvailability = useCallback(async () => {
     try {
-      const status = ServerSyncService.getStatus()
+      const status = await ServerSyncService.getStatus()
       setServerStatus(status)
 
       if (!status.serverAvailable) {
         await ServerSyncService.checkServerAvailability()
-        const updatedStatus = ServerSyncService.getStatus()
+        const updatedStatus = await ServerSyncService.getStatus()
         setServerStatus(updatedStatus)
       }
     } catch (error) {
@@ -482,34 +482,34 @@ const Favorite = () => {
             await ServerSyncService.syncAlertsWithServer(syncedAlerts)
 
             Alert.alert(
-              "✅ Alert Set with Server Sync!",
-              `Alert synced with server. You'll receive push notifications when ${alertData.coinSymbol} reaches $${alertData.targetPrice}, even when the app is closed.`,
+              "✅ Done!",
+              `Your ${alertData.coinSymbol} price alert was set to $${alertData.targetPrice}`,
               [{ text: "Great!" }]
             )
           } catch (syncError) {
             console.warn("Не удалось синхронизировать с сервером:", syncError)
             Alert.alert(
-              "⚠️ Alert Saved Locally",
-              `Alert saved but server sync failed. It will work while app is open.`,
+              "⚠️ Alert Saved",
+              `Alert saved locally. Push notifications require app to be open.`,
               [{ text: "OK" }]
             )
           }
         } else {
           Alert.alert(
-            "✅ Alert Saved Locally",
-            `Alert saved. Server is unavailable. You'll receive notifications when ${alertData.coinSymbol} reaches $${alertData.targetPrice} while the app is open.`,
+            "✅ Done",
+            `Alert saved locally. You'll receive notifications when ${alertData.coinSymbol} reaches $${alertData.targetPrice}, while the app is open.`,
             [{ text: "OK" }]
           )
         }
       } else if (notificationPermission) {
         Alert.alert(
-          "✅ Alert Set Locally",
-          `Alert saved. You'll receive notifications when ${alertData.coinSymbol} reaches $${alertData.targetPrice} while the app is open.`,
+          "✅ Done",
+          `Alert saved locally. You'll receive notifications when ${alertData.coinSymbol} reaches $${alertData.targetPrice} while the app is open.`,
           [{ text: "OK" }]
         )
       } else {
         Alert.alert(
-          "✅ Alert Saved Locally",
+          "✅ Alert saved locally",
           "Notifications are disabled. The alert will only work while the app is open.",
           [{ text: "OK" }]
         )
