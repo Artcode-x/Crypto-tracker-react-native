@@ -3,11 +3,12 @@ import { NavigationContainer } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import Main from "../../pages/Main/Main"
 import Favorite from "../../pages/Favorite/Favorite"
-import { Ionicons } from "@expo/vector-icons"
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import { StyleSheet } from "react-native"
 import Analytics from "../Analytics/Analytics"
 import PrivacyPolicy from "../../pages/PrivacyPolicy/PrivacyPolicy"
 import Alerts from "../../pages/Alerts/Alerts"
+import SupportUs from "../../pages/SupportUs/SupportUs"
 
 const Tab = createBottomTabNavigator()
 
@@ -83,6 +84,16 @@ export const AppRoute = () => {
             tabBarIcon: ({ color }) => (
               <Ionicons name='mail-unread' size={24} color={color} />
               //   star-outline
+            )
+          }}
+        />
+        <Tab.Screen
+          name='SupportUs'
+          component={SupportUs}
+          options={{
+            title: "Support Us",
+            tabBarIcon: ({ color }) => (
+              <MaterialCommunityIcons name='code-braces' size={24} color={color} />
             )
           }}
         />

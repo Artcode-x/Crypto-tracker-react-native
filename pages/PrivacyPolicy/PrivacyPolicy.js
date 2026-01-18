@@ -605,10 +605,10 @@ const PrivacyPolicy = () => {
                 </View>
 
                 <View style={styles.rightItem}>
-                  <MaterialCommunityIcons name='export' size={24} color='#9C27B0' />
-                  <Text style={styles.rightTitle}>Export</Text>
+                  <MaterialCommunityIcons name='chart-box' size={24} color='#9C27B0' />
+                  <Text style={styles.rightTitle}>Portfolio Analytics</Text>
                   <Text style={styles.rightText}>
-                    Export your data via app settings - will be available in future
+                    View detailed portfolio analytics with performance metrics
                   </Text>
                 </View>
               </View>
