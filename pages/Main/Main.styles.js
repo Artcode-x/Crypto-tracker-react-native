@@ -189,5 +189,63 @@ export const styles = StyleSheet.create({
     color: "#888",
     marginBottom: 20,
     textAlign: "center"
+  },
+
+  // ========== COMPACT DEBUG PANEL ==========
+  infoContainer: {
+    marginTop: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6
+    // marginVertical: 3,
+    // borderWidth: 0.5,
+    // borderColor: "wheat"
+  },
+
+  infoText: {
+    fontSize: RFValue(10),
+    color: "#444",
+    lineHeight: RFValue(11),
+    letterSpacing: 0.05,
+    fontWeight: "400"
+  },
+
+  infoLabel: {
+    fontSize: RFValue(10),
+    // color: "#777",
+    color: "#999",
+    fontWeight: "500",
+    marginRight: RFValue(1)
+  },
+
+  infoValue: {
+    fontSize: RFValue(9),
+    color: "#999",
+    fontWeight: "400",
+    marginRight: 6
+  },
+
+  active: {
+    color: "#34C759",
+    fontSize: RFValue(8),
+    fontWeight: "600"
+  },
+
+  inactive: {
+    color: "#FF3B30",
+    fontSize: RFValue(8),
+    fontWeight: "500"
+  },
+
+  available: {
+    color: "#34C759",
+    fontSize: RFValue(8),
+    fontWeight: "600"
+  },
+
+  unavailable: {
+    color: "#8E8E93",
+    fontSize: RFValue(8),
+    fontWeight: "500"
   }
 })

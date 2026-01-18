@@ -3,7 +3,7 @@ import { AppState, Platform } from "react-native"
 
 // Конфигурация сервера
 const SERVER_CONFIG = {
-  BASE_URL: "http://192.168.1.144:3000",
+  BASE_URL: "https://alerts-manager.ru/api/",
   TIMEOUT: 10000,
   RETRY_COUNT: 3,
   RETRY_DELAY: 1000
@@ -189,86 +189,6 @@ class ServerSyncService {
     } catch (error) {
       console.warn("Не удалось синхронизировать алерты:", error.message)
       this.addPendingOperation("sync", { alerts })
-      return false
-    }
-  }
-
-  // Синхронизация статуса алертов с сервером
-  static async syncAlertStatusFromServer(deviceToken) {
-    console.log("🔍 syncAlertStatusFromServer ВЫЗВАН! ")
-    // Проверка согласия
-    const hasConsent = await this.hasBackgroundConsent()
-    if (!hasConsent) {
-      console.log("Пропускаем синхронизацию статуса: нет согласия")
-      return false
-    }
-
-    if (!this.serverAvailable) {
-      console.log("Сервер недоступен для синхронизации статуса")
-      return false
-    }
-
-    try {
-      console.log("Синхронизация статуса алертов с сервером...")
-
-      const response = await fetch(`${SERVER_CONFIG.BASE_URL}/get-alert-status`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          deviceToken: deviceToken,
-          timestamp: new Date().toISOString()
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
-      }
-
-      const data = await response.json()
-
-      if (data.success && data.triggeredAlerts && data.triggeredAlerts.length > 0) {
-        console.log(
-          `Получено ${data.triggeredAlerts.length} сработавших алертов с сервера`
-        )
-
-        // Обновление локальных алертов
-        data.triggeredAlerts.forEach((serverAlert) => {
-          console.log(
-            `Серверный алерт: ${serverAlert.coin_name} сработал в ${serverAlert.triggered_at}`
-          )
-
-          // Если есть dispatch, обновляем Redux
-          if (this.dispatch) {
-            // Импорт action-а динамически
-            import("../store/alertsSlice").then((module) => {
-              if (module.triggerAlertFromServer) {
-                this.dispatch(
-                  module.triggerAlertFromServer({
-                    alertId: serverAlert.client_id || serverAlert.server_id,
-                    serverId: serverAlert.server_id,
-                    currentPrice: parseFloat(serverAlert.current_price) || 0,
-                    triggeredAt: serverAlert.triggered_at,
-                    coinId: serverAlert.coin_id,
-                    coinName: serverAlert.coin_name,
-                    coinSymbol: serverAlert.coin_symbol,
-                    targetPrice: parseFloat(serverAlert.target_price) || 0,
-                    condition: serverAlert.alert_condition
-                  })
-                )
-              }
-            })
-          }
-        })
-
-        return true
-      }
-
-      console.log("Нет сработавших алертов на сервере")
-      return true
-    } catch (error) {
-      console.warn("Ошибка синхронизации статуса алертов:", error.message)
       return false
     }
   }

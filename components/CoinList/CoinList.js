@@ -14,6 +14,7 @@ import CoinItem from "../CoinItem/CoinItem"
 import { Ionicons } from "@expo/vector-icons"
 import { rewriteFavorite, setCoin, setDuplicate } from "../../store/reducersSlice"
 import { coinSelector, duplicateSelector } from "../../store/toolkitSelectors"
+import { LinearGradient } from "expo-linear-gradient"
 
 const CoinList = ({
   data,
@@ -221,7 +222,7 @@ const CoinList = ({
       <View style={styles.emptyContainer}>
         <View style={styles.emptyGradient}>
           <Text style={styles.emptyText}>
-            {search ? "Ничего не найдено" : "Нет данных для отображения"}
+            {search ? "No results found" : "No data to display"}
           </Text>
           {errorMessage && !search && (
             <View style={styles.errorContainer}>
@@ -232,6 +233,23 @@ const CoinList = ({
       </View>
     )
   }, [search, isLoadingMore, refreshing, errorMessage])
+
+  // ========== ДОБАВЛЕННЫЙ ПОДГРУЗЧИК ==========
+  const renderFooter = useCallback(() => {
+    if (!isLoadingMore || search) return null
+
+    return (
+      <View style={styles.footerContainer}>
+        <LinearGradient
+          colors={["rgba(212, 175, 55, 0.2)", "transparent"]}
+          style={styles.footerGradient}
+        >
+          <ActivityIndicator size='small' color='#D4AF37' />
+          <Text style={styles.footerText}>Loading more assets...</Text>
+        </LinearGradient>
+      </View>
+    )
+  }, [isLoadingMore, search])
 
   const keyExtractor = useCallback((item, index) => {
     if (!item || !item.id) {
@@ -249,11 +267,12 @@ const CoinList = ({
         renderItem={renderItem}
         numColumns={2}
         keyExtractor={keyExtractor}
-        contentContainerStyle={styles.contentContainer}
+        contentContainerStyle={[styles.contentContainer, { paddingBottom: 55 }]} // для renderFooter
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
         onMomentumScrollBegin={handleMomentumScrollBegin}
-        ListEmptyComponent={renderEmptyList} // ListFooterComponent удален
+        ListEmptyComponent={renderEmptyList}
+        ListFooterComponent={renderFooter} // подгрузчик
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -303,12 +322,6 @@ const CoinList = ({
             <Ionicons name='checkmark-circle' size={40} color='#4CAF50' />
             <Text style={styles.modalTitle}>Success!</Text>
             <Text style={styles.modalText}>Coin added to favorites</Text>
-            {/* <TouchableOpacity
-              style={styles.modalButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.modalButtonText}>OK</Text>
-            </TouchableOpacity> */}
           </View>
         </View>
       </Modal>
@@ -322,13 +335,6 @@ const CoinList = ({
             <Text style={styles.modalText}>
               You already have {doubles} in your favorites!
             </Text>
-            {/* <TouchableOpacity
-              style={styles.modalButton}
-              onPress={() => setMsgDouble(false)}
-            >
-              <Text style={styles.modalButtonText}>Close</Text>
-              {/* Используем тот же стиль */}
-            {/* </TouchableOpacity> */}
           </View>
         </View>
       </Modal>

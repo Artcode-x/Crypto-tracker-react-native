@@ -500,9 +500,8 @@ const Main = () => {
           </View>
         </View>
       )}
-
       {/* Информация о состоянии */}
-      <View style={styles.infoContainer}>
+      {/*  <View style={styles.infoContainer}>
         <Text style={styles.infoText}>
           Coins: {marketData.length} | Page:{" "}
           {marketCurrentPage === 1
@@ -512,10 +511,42 @@ const Main = () => {
           {marketHasMore ? "Yes" : "No"}
           {is429Error && ` | Retry in: ${retryCountdown} sec`}
         </Text>
+      </View> */}
+      <View style={styles.infoContainer}>
+        <Text style={styles.infoText}>
+          <Text style={styles.infoLabel}>Coins:</Text>
+          <Text style={styles.infoValue}> {marketData.length}</Text>
+
+          <Text style={styles.infoLabel}> • Page:</Text>
+          <Text style={styles.infoValue}>
+            {marketCurrentPage === 1
+              ? " 1 (loaded)"
+              : ` ${marketCurrentPage - 1} → ${marketCurrentPage}`}
+          </Text>
+
+          <Text style={styles.infoLabel}> • Loading:</Text>
+          <Text
+            style={[
+              styles.infoValue,
+              marketIsLoadingMore ? styles.active : styles.inactive
+            ]}
+          >
+            {marketIsLoadingMore ? " ✓" : " ✗"}
+          </Text>
+
+          <Text style={styles.infoLabel}> • More:</Text>
+          <Text
+            style={[
+              styles.infoValue,
+              marketHasMore ? styles.available : styles.unavailable
+            ]}
+          >
+            {marketHasMore ? " ✓" : " ✗"}
+          </Text>
+        </Text>
       </View>
 
       <StatusBar backgroundColor='#0e0275' />
-
       <View style={styles.header}>
         <Text style={styles.title}>CryptoCurrencies</Text>
 
@@ -532,9 +563,7 @@ const Main = () => {
           </TouchableOpacity>
         </View>
       </View>
-
       <ModalView modal={modal} setModal={setModal} />
-
       {/* Основной контент */}
       {flagForLoader && marketData.length === 0 ? (
         <View style={styles.loadingContainer}>
@@ -543,7 +572,7 @@ const Main = () => {
         </View>
       ) : (
         <>
-          {marketData.length === 0 && !flagForLoader && !marketError && !is429Error && (
+          {marketData.length === 0 && !flagForLoader && !marketError && !is429Error && initialLoadAttempted && (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No data</Text>
               <TouchableOpacity
@@ -589,7 +618,6 @@ const Main = () => {
           )}
         </>
       )}
-
       <Chart
         selectedCoinData={selectedCoinData}
         chartData={chartData}

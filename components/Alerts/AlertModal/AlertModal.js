@@ -76,13 +76,13 @@ const AlertModal = ({
     }
   }, [])
 
-  // Вычисляем максимальную высоту для модалки при открытой клавиатуре
+  // Вычисление максимальной высоты для модалки при открытой клавиатуре
   const getModalMaxHeight = () => {
     if (!keyboardVisible || !isAndroid) {
       return height * 0.7
     }
 
-    // Вычитаем высоту клавиатуры и оставляем отступ сверху
+    // Вычитание высоты клавиатуры и + отступ сверху
     const availableHeight = height - keyboardHeight - 50
     return Math.min(availableHeight, height * 0.7)
   }
@@ -214,7 +214,7 @@ const AlertModal = ({
       statusBarTranslucent={true}
     >
       <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]}>
-        {/* Для iOS используем стандартное поведение */}
+        {/* Для iOS  */}
         {!isAndroid ? (
           <KeyboardAvoidingView
             behavior='padding'
@@ -248,45 +248,53 @@ const AlertModal = ({
             </TouchableWithoutFeedback>
           </KeyboardAvoidingView>
         ) : (
-          // Для Android используем простой подход без KeyboardAvoidingView
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View
-              style={[
-                styles.modalContainer,
-                styles.modalContainerAndroid,
-                { maxHeight: getModalMaxHeight() }
-              ]}
-            >
-              <ModalContent
-                coin={coin}
-                currentPrice={currentPrice}
-                formatPrice={formatPrice}
-                notificationType={notificationType}
-                handleClose={handleClose}
-                condition={condition}
-                setCondition={setCondition}
-                targetPrice={targetPrice}
-                setTargetPrice={setTargetPrice}
-                setError={setError}
-                error={error}
-                suggestedPrices={suggestedPrices}
-                keyboardVisible={keyboardVisible}
-                // condition={condition}
-                handleSave={handleSave}
-                isAndroid={isAndroid}
-                fcmToken={fcmToken}
-                notificationPermission={notificationPermission}
-                inputRef={inputRef}
-              />
-            </View>
-          </TouchableWithoutFeedback>
+          // Для Android
+          <KeyboardAvoidingView
+            behavior='padding'
+            style={styles.keyboardAvoidingView}
+            keyboardVerticalOffset={10} // Положительное зн-ие = выше
+          >
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <View
+                style={[
+                  styles.modalContainer,
+                  {
+                    maxHeight: getModalMaxHeight(),
+                    marginBottom: keyboardVisible ? 15 : 0 // Доп отступ снизу
+                  }
+                ]}
+              >
+                <ModalContent
+                  coin={coin}
+                  currentPrice={currentPrice}
+                  formatPrice={formatPrice}
+                  notificationType={notificationType}
+                  handleClose={handleClose}
+                  condition={condition}
+                  setCondition={setCondition}
+                  targetPrice={targetPrice}
+                  setTargetPrice={setTargetPrice}
+                  setError={setError}
+                  error={error}
+                  suggestedPrices={suggestedPrices}
+                  keyboardVisible={keyboardVisible}
+                  // condition={condition}
+                  handleSave={handleSave}
+                  isAndroid={isAndroid}
+                  fcmToken={fcmToken}
+                  notificationPermission={notificationPermission}
+                  inputRef={inputRef}
+                />
+              </View>
+            </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
         )}
       </Animated.View>
     </Modal>
   )
 }
 
-// Выносим содержимое модалки в отдельный компонент
+// Вынос содержимого модалки в отдельный компонент
 const ModalContent = React.memo(
   ({
     coin,
@@ -313,7 +321,7 @@ const ModalContent = React.memo(
         colors={["rgba(26, 26, 26, 0.98)", "rgba(40, 40, 40, 0.95)"]}
         style={[styles.modalGradient, isAndroid && styles.modalGradientAndroid]}
       >
-        {/* Компактный заголовок с кнопкой закрытия */}
+        {/* Заголовок с кнопкой закрытия */}
         <View style={styles.compactHeader}>
           <TouchableOpacity
             style={styles.closeButton}
@@ -353,7 +361,7 @@ const ModalContent = React.memo(
                 </Text>
               </View>
 
-              {/* Компактный индикатор уведомлений */}
+              {/* Индикатор уведомлений */}
               <View style={styles.compactNotificationStatus}>
                 <Ionicons
                   name={notificationType.icon}

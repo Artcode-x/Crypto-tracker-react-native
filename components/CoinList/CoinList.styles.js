@@ -122,5 +122,56 @@ export const styles = StyleSheet.create({
     fontSize: RFValue(14),
     fontWeight: "600",
     textAlign: "center"
+  },
+
+  // ========== FOOTER ==========
+  footerContainer: {
+    // paddingVertical: 24,
+    paddingVertical: 14,
+    alignItems: "center"
+  },
+
+  footerGradient: {
+    // paddingHorizontal: 24,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 20,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(212, 175, 55, 0.1)"
+  },
+
+  footerText: {
+    color: "#D4AF37",
+    fontSize: RFValue(12),
+    marginTop: 8,
+    fontWeight: "600",
+    letterSpacing: 0.5
+  },
+  //////
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: RFValue(20, 812) // Адаптивный паддинг
+  },
+  emptyGradient: {
+    width: "100%",
+    alignItems: "center"
+  },
+  emptyText: {
+    color: "#FFFFFF",
+    // 18 — базовый размер, 812 — высота экрана стандарта (iPhone 11/12/13/14/15)
+    fontSize: RFValue(18, 812),
+    fontWeight: "600",
+    textAlign: "center"
+  },
+  errorContainer: {
+    marginTop: RFValue(15, 812)
+  },
+  errorText: {
+    color: "#FF5252",
+    fontSize: RFValue(14, 812), // Адаптивный шрифт поменьше для ошибки
+    textAlign: "center"
   }
 })

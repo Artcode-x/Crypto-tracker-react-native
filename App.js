@@ -160,20 +160,7 @@ function AppContent() {
                 // 6. Инициализация синхронизации с сервером (ВСЕГДА, как в старой версии)
                 await ServerSyncService.initialize(fcmToken, dispatch)
 
-                // 7. Синхронизация статуса алертов с сервером (если есть согласие)
-                // const consent = await AsyncStorage.getItem("@background_alerts_consent")
-                // if (consent === "agreed") {
-                // try {
-                //   await ServerSyncService.syncAlertStatusFromServer(fcmToken)
-                // } catch (syncError) {
-                //   console.warn(
-                //     "Не удалось синхронизировать статус алертов:",
-                //     syncError.message
-                //   )
-                // }
-                //  }
-
-                // 8. Регистрация обработчиков уведомлений (как в старой версии)
+                // 7. Регистрация обработчиков уведомлений (как в старой версии)
                 notificationSubscriptions =
                   NotificationService.registerNotificationHandlers(
                     // Обработчик получения уведомления (как ранее)
@@ -335,12 +322,6 @@ function AppContent() {
       const fcmToken = await NotificationService.getFCMToken()
       if (fcmToken) {
         console.log("Активация серверной синхронизации...")
-        // ServerSyncService уже инициализирован, обновление статуса алертов
-        // try {
-        //   await ServerSyncService.syncAlertStatusFromServer(fcmToken)
-        // } catch (syncError) {
-        //   console.warn("Не удалось синхронизировать статус алертов:", syncError.message)
-        // }
       }
 
       console.log("Background alerts enabled")
