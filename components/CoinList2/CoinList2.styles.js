@@ -117,5 +117,78 @@ export const styles = StyleSheet.create({
   },
   changePoint: {
     color: "white"
+  },
+  // ========== МОДАЛЬНЫЕ ОКНА ==========
+
+  // Оверлей для всех модалок
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20
+  },
+
+  // Модалка успешного добавления
+  successModal: {
+    width: "70%",
+    maxWidth: 350,
+    alignItems: "center",
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(76, 175, 80, 0.3)",
+    // backgroundColor: "#1A1A1A"
+    backgroundColor: "rgba(26, 26, 26, 0.7)"
+  },
+
+  // Модалка предупреждения (дубликат)
+  warningModal: {
+    width: "75%",
+    maxWidth: 350,
+    alignItems: "center",
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 215, 0, 0.3)",
+    // backgroundColor: "#1A1A1A"
+    backgroundColor: "rgba(26, 26, 26, 0.7)"
+  },
+
+  // Заголовок модалки
+  modalTitle: {
+    color: "#FFFFFF",
+    fontSize: RFValue(20),
+    fontWeight: "600",
+    marginTop: 16,
+    marginBottom: 8
+  },
+
+  // Текст модалки
+  modalText: {
+    color: "rgba(255, 255, 255, 0.8)",
+    fontSize: RFValue(14),
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 20
+  },
+
+  // Кнопка для обеих модалок
+  modalButton: {
+    backgroundColor: "rgba(212, 175, 55, 0.2)",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(212, 175, 55, 0.3)",
+    minWidth: 100
+  },
+
+  // Текст кнопки (используется для обеих кнопок)
+  modalButtonText: {
+    color: "#FFD700",
+    fontSize: RFValue(14),
+    fontWeight: "600",
+    textAlign: "center"
   }
 })

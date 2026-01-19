@@ -13,7 +13,11 @@ import { useDispatch, useSelector } from "react-redux"
 import CoinItem from "../CoinItem/CoinItem"
 import { Ionicons } from "@expo/vector-icons"
 import { rewriteFavorite, setCoin, setDuplicate } from "../../store/reducersSlice"
-import { coinSelector, viewMarketFlagSelector } from "../../store/toolkitSelectors"
+import {
+  coinSelector,
+  duplicateSelector,
+  viewMarketFlagSelector
+} from "../../store/toolkitSelectors"
 
 const CoinList2 = ({
   data,
@@ -34,6 +38,7 @@ const CoinList2 = ({
   const isSmallScreen = width < 375
   const isTablet = width > 768
   const marketView = useSelector(viewMarketFlagSelector)
+  const doubles = useSelector(duplicateSelector)
 
   // Инициализация анимаций для всех иконок
   useEffect(() => {
@@ -239,7 +244,34 @@ const CoinList2 = ({
         />
       )}
 
+      {/* Улучшенное модальное окно успешного добавления */}
       <Modal
+        transparent
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.successModal}>
+            <Ionicons name='checkmark-circle' size={40} color='#4CAF50' />
+            <Text style={styles.modalTitle}>Success!</Text>
+            <Text style={styles.modalText}>Coin added to favorites</Text>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Улучшенное модальное окно дубликата */}
+      <Modal transparent visible={msgDouble} onRequestClose={() => setMsgDouble(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.warningModal}>
+            <Ionicons name='warning' size={40} color='#FFD700' />
+            <Text style={styles.modalTitle}>Already Added</Text>
+            <Text style={styles.modalText}>
+              You already have {doubles} in your favorites!
+            </Text>
+          </View>
+        </View>
+      </Modal>
+      {/* <Modal
         transparent
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
@@ -261,7 +293,7 @@ const CoinList2 = ({
             <Ionicons style={styles.changePoint} name='warning' size={30} />
           </TouchableOpacity>
         </View>
-      </Modal>
+      </Modal> */}
     </>
   )
 }

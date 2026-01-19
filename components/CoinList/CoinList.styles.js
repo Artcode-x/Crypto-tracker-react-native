@@ -63,10 +63,12 @@ export const styles = StyleSheet.create({
 
   // Модалка успешного добавления
   successModal: {
-    width: "90%",
+    // width: "90%",
+    width: "75%",
     maxWidth: 350,
     alignItems: "center",
-    padding: 24,
+    // padding: 24,
+    padding: 14,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(76, 175, 80, 0.3)",
@@ -76,10 +78,10 @@ export const styles = StyleSheet.create({
 
   // Модалка предупреждения (дубликат)
   warningModal: {
-    width: "90%",
+    width: "75%",
     maxWidth: 350,
     alignItems: "center",
-    padding: 24,
+    padding: 14,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(255, 215, 0, 0.3)",
