@@ -11,6 +11,7 @@ import { loadAlerts, markAlertAsRead, triggerAlertFromServer } from "./store/ale
 import { AppState, View, Text } from "react-native"
 import { priceAlertsSelector } from "./store/alertsSelectors"
 import AlertConsentModal from "./components/AlertConsentModal/AlertConsentModal"
+import StorageSync from "./components/StorageSync/StorageSync"
 
 // Компонент для отображения ошибок
 const ErrorBoundary = ({ children }) => {
@@ -361,6 +362,7 @@ function AppContent() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <StorageSync />
       <AppRoute />
       {/* рендер модалки */}
       <AlertConsentModal

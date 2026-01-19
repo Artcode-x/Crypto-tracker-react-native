@@ -28,11 +28,22 @@ const reducersSlice = createSlice({
     setFlag: (state, action) => {
       state.flag = action.payload
     },
+
     removeCoin: (state, action) => {
       const nameCoinForRemove = action.payload
+
+      // Удаляем монету
       state.coinItem = state.coinItem.filter(
         (coin) => coin.name !== nameCoinForRemove.name
       )
+
+      //  удал монеты из userAssets
+      if (state.userAssets[nameCoinForRemove.id]) {
+        const newAssets = { ...state.userAssets }
+        delete newAssets[nameCoinForRemove.id]
+        state.userAssets = newAssets
+        console.log(`🗑️ Удален актив для ${nameCoinForRemove.name}`)
+      }
     },
     setChartDays: (state, action) => {
       state.chartDays = action.payload
