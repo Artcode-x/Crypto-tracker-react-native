@@ -274,5 +274,111 @@ export const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderRadius: 8
+  },
+  // Таблица с анимацией подсказки
+  tooltipContainer: {
+    position: "absolute",
+    top: 70,
+    right: 20,
+    zIndex: 1000,
+    width: 200,
+    shadowColor: "#FFD700",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10
+  },
+
+  tooltipGradient: {
+    borderRadius: 12,
+    padding: 1
+  },
+
+  tooltipContent: {
+    backgroundColor: "rgba(20, 20, 25, 0.95)",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "rgba(212, 175, 55, 0.3)"
+  },
+
+  tooltipHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
+    position: "relative"
+  },
+
+  tooltipTitle: {
+    color: "#FFD700",
+    fontSize: 11,
+    fontWeight: "700",
+    marginLeft: 6,
+    flex: 1,
+    letterSpacing: 0.5
+  },
+
+  tooltipCloseButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 4
+  },
+
+  tooltipText: {
+    color: "rgba(255, 255, 255, 0.9)",
+    fontSize: 10,
+    lineHeight: 14,
+    fontWeight: "500",
+    letterSpacing: 0.2
+  },
+
+  tooltipArrow: {
+    position: "absolute",
+    bottom: -6,
+    right: 10,
+    width: 0,
+    height: 0,
+    backgroundColor: "transparent",
+    borderStyle: "solid",
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 6,
+    borderLeftColor: "transparent",
+    borderRightColor: "transparent",
+    borderTopColor: "rgba(212, 175, 55, 0.3)"
+  },
+
+  // Server toggle wrapper
+  serverToggleWrapper: {
+    position: "relative",
+    marginRight: 10
+  },
+
+  // Pulsing ring effect
+  pulseRing: {
+    position: "absolute",
+    top: -5,
+    left: -5,
+    right: -5,
+    bottom: -5,
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: "#FFD700",
+    backgroundColor: "rgba(212, 175, 55, 0.1)"
+  },
+
+  // Highlighted state for server toggle button
+  serverToggleButtonHighlighted: {
+    shadowColor: "#FFD700",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 8,
+    borderColor: "rgba(212, 175, 55, 0.5)",
+    transform: [{ scale: 1.05 }]
   }
 })

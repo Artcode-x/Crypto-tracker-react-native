@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react"
+import React, { useMemo, useState, useEffect } from "react"
 import {
   View,
   Text,
@@ -6,12 +6,14 @@ import {
   Alert as RNAlert,
   StatusBar,
   FlatList,
-  TouchableOpacity
+  TouchableOpacity,
+  Animated
 } from "react-native"
 import { useSelector, useDispatch } from "react-redux"
 import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import * as Haptics from "expo-haptics"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 import {
   priceAlertsSelector,
@@ -23,19 +25,51 @@ import { deletePriceAlert, clearTriggeredAlerts } from "../../store/alertsSlice"
 import { styles } from "./Alerts.styles"
 import AlertCard from "../../components/AlertCard/AlertCard"
 import ServerSyncService from "../../services/ServerSyncService"
-import AsyncStorage from "@react-native-async-storage/async-storage"
 
 const Alerts = () => {
   const dispatch = useDispatch()
-  const priceAlerts = useSelector(priceAlertsSelector) // Все алерты
-  //   const triggeredAlerts = useSelector(triggeredAlertsSelector) // Сработавшие
-  //   const activeAlerts = useSelector(activeAlertsSelector) // Активные
+  const priceAlerts = useSelector(priceAlertsSelector)
 
   const [serverAlertsEnabled, setServerAlertsEnabled] = useState(false)
+  const [showFirstTimeTooltip, setShowFirstTimeTooltip] = useState(false)
+  const tooltipAnim = useState(new Animated.Value(0))[0]
+  const tooltipSlideAnim = useState(new Animated.Value(-50))[0]
 
-  React.useEffect(() => {
+  useEffect(() => {
     loadConsentStatus()
+    checkFirstTimeVisit()
   }, [])
+
+  const checkFirstTimeVisit = async () => {
+    const tooltipShownCount = await AsyncStorage.getItem(
+      "@server_alerts_tooltip_shown_count"
+    )
+    const count = tooltipShownCount ? parseInt(tooltipShownCount) : 0
+
+    // Доп проверка: показать только если счетчик не обновлялся сегодня
+    const lastShownDate = await AsyncStorage.getItem("@server_alerts_last_shown_date")
+    const today = new Date().toDateString()
+
+    if (count < 3 && lastShownDate !== today) {
+      setTimeout(() => {
+        setShowFirstTimeTooltip(true)
+        Animated.parallel([
+          Animated.spring(tooltipAnim, {
+            toValue: 1,
+            tension: 20,
+            friction: 6,
+            useNativeDriver: true
+          }),
+          Animated.spring(tooltipSlideAnim, {
+            toValue: 0,
+            tension: 20,
+            friction: 7,
+            useNativeDriver: true
+          })
+        ]).start()
+      }, 800)
+    }
+  }
 
   const loadConsentStatus = async () => {
     const consent = await AsyncStorage.getItem("@background_alerts_consent")
@@ -50,23 +84,69 @@ const Alerts = () => {
     await AsyncStorage.setItem("@background_alerts_consent", consentValue)
     setServerAlertsEnabled(newStatus)
 
+    if (showFirstTimeTooltip) {
+      await hideTooltipAndSave() // теперь общая ф-ия ( вместо дублирования кода)
+    }
+
     await ServerSyncService.updateConsent(newStatus)
 
-    // Тактильный фидбэк
     if (newStatus) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)
     }
   }
-  //////
+
+  const hideTooltip = () => {
+    Animated.parallel([
+      Animated.timing(tooltipAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true
+      }),
+      Animated.timing(tooltipSlideAnim, {
+        toValue: -50,
+        duration: 300,
+        useNativeDriver: true
+      })
+    ]).start(() => {
+      setShowFirstTimeTooltip(false)
+    })
+  }
+
+  const hideTooltipAndSave = async () => {
+    // 1. Увеличение счетчика (как при клике на облачко)
+    const currentCount = await AsyncStorage.getItem("@server_alerts_tooltip_shown_count")
+    const newCount = currentCount ? parseInt(currentCount) + 1 : 1
+
+    // 2. Сохр обновленные данные
+    await AsyncStorage.setItem("@server_alerts_tooltip_shown_count", newCount.toString())
+    await AsyncStorage.setItem(
+      "@server_alerts_last_shown_date",
+      new Date().toDateString()
+    )
+
+    // 3. Вызов анимации скрытия
+    hideTooltip()
+  }
+
+  const tooltipOpacity = tooltipAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1]
+  })
+
+  const tooltipTranslateY = tooltipSlideAnim.interpolate({
+    inputRange: [-50, 0],
+    outputRange: [-50, 0]
+  })
+
   const triggeredAlerts = useMemo(() => {
     return priceAlerts.filter((alert) => alert.triggeredAt)
   }, [priceAlerts])
 
   const activeAlerts = useMemo(() => {
     return priceAlerts.filter((alert) => alert.isActive && !alert.triggeredAt)
-  }, [priceAlerts]) // ← пересчет только если priceAlerts изменился
+  }, [priceAlerts])
 
   const [activeFilter, setActiveFilter] = useState("active")
 
@@ -116,7 +196,6 @@ const Alerts = () => {
       <SafeAreaView style={styles.safeAreaContainer}>
         <StatusBar barStyle='light-content' backgroundColor='#0A0A0F' />
         <View style={styles.container}>
-          {/* Заголовок для пустого состояния */}
           <View style={styles.miniHeader}>
             <View style={styles.headerLeft}>
               <Ionicons name='notifications-outline' size={18} color='#FFD700' />
@@ -141,6 +220,49 @@ const Alerts = () => {
       <StatusBar barStyle='light-content' backgroundColor='#0A0A0F' />
 
       <View style={styles.container}>
+        {/* Подсказка для первого захода */}
+        {showFirstTimeTooltip && (
+          <Animated.View
+            style={[
+              styles.tooltipContainer,
+              {
+                opacity: tooltipOpacity,
+                transform: [{ translateY: tooltipTranslateY }]
+              }
+            ]}
+          >
+            <LinearGradient
+              colors={[
+                "rgba(212, 175, 55, 0.15)",
+                "rgba(212, 175, 55, 0.08)",
+                "rgba(212, 175, 55, 0.05)"
+              ]}
+              style={styles.tooltipGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.tooltipContent}>
+                <View style={styles.tooltipHeader}>
+                  <Ionicons name='notifications-sharp' size={14} color='#FFD700' />
+                  <Text style={styles.tooltipTitle}>Important!</Text>
+                  <TouchableOpacity
+                    onPress={hideTooltipAndSave}
+                    style={styles.tooltipCloseButton}
+                  >
+                    <Ionicons name='close' size={12} color='rgba(255, 255, 255, 0.6)' />
+                  </TouchableOpacity>
+                </View>
+                {/* ИСПРАВЛЕН ТЕКСТ */}
+                <Text style={styles.tooltipText}>
+                  For enable or disable server background notifications 24/7, click this
+                  cloud icon
+                </Text>
+                <View style={styles.tooltipArrow} />
+              </View>
+            </LinearGradient>
+          </Animated.View>
+        )}
+
         {/* Заголовок */}
         <LinearGradient
           colors={["rgba(26, 26, 26, 0.95)", "rgba(40, 40, 40, 0.9)"]}
@@ -169,29 +291,53 @@ const Alerts = () => {
             )}
 
             {/* Кнопка серверных алертов */}
-            <TouchableOpacity
-              onPress={toggleServerAlerts}
-              style={[
-                styles.serverToggleButton,
-                serverAlertsEnabled && styles.serverToggleButtonActive
-              ]}
-            >
-              <Ionicons
-                name={serverAlertsEnabled ? "cloud-done" : "cloud-offline"}
-                size={14}
-                color={serverAlertsEnabled ? "#4CAF50" : "#AAAAAA"}
-              />
-              <LinearGradient
-                colors={
-                  serverAlertsEnabled
-                    ? ["rgba(76, 175, 80, 0.15)", "rgba(76, 175, 80, 0.05)"]
-                    : ["rgba(170, 170, 170, 0.1)", "rgba(170, 170, 170, 0.05)"]
-                }
-                style={styles.serverToggleGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              />
-            </TouchableOpacity>
+            <View style={styles.serverToggleWrapper}>
+              <TouchableOpacity
+                onPress={toggleServerAlerts}
+                style={[
+                  styles.serverToggleButton,
+                  serverAlertsEnabled && styles.serverToggleButtonActive,
+                  showFirstTimeTooltip && styles.serverToggleButtonHighlighted
+                ]}
+              >
+                <Ionicons
+                  name={serverAlertsEnabled ? "cloud-done" : "cloud-offline"}
+                  size={14}
+                  color={
+                    serverAlertsEnabled
+                      ? "#4CAF50"
+                      : showFirstTimeTooltip
+                      ? "#FFD700"
+                      : "#AAAAAA"
+                  }
+                />
+                <LinearGradient
+                  colors={
+                    serverAlertsEnabled
+                      ? ["rgba(76, 175, 80, 0.15)", "rgba(76, 175, 80, 0.05)"]
+                      : showFirstTimeTooltip
+                      ? ["rgba(212, 175, 55, 0.2)", "rgba(212, 175, 55, 0.05)"]
+                      : ["rgba(170, 170, 170, 0.1)", "rgba(170, 170, 170, 0.05)"]
+                  }
+                  style={styles.serverToggleGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                />
+                {showFirstTimeTooltip && (
+                  <Animated.View
+                    style={[
+                      styles.pulseRing,
+                      {
+                        opacity: tooltipAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0.3, 0.6]
+                        })
+                      }
+                    ]}
+                  />
+                )}
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.activeStats}>
               <View style={styles.activeStatItem}>
@@ -206,6 +352,7 @@ const Alerts = () => {
           </View>
         </LinearGradient>
 
+        {/* Остальной код компонента без изменений */}
         {/* Фильтры */}
         <View style={styles.compactFilters}>
           <TouchableOpacity
