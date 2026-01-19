@@ -87,7 +87,7 @@ export const Chart = ({
           minimumFractionDigits: 2,
           maximumFractionDigits: 2
         })}`
-      : `$${price.toFixed(6)}`
+      : `$${price.toFixed(3)}`
   }
 
   const formatLargeNumber = (num) => {

@@ -4,7 +4,7 @@ import { styles } from "./ChartBlack.styles"
 
 export const ChartBlack = ({ coinHistoryData, chartData, is30DSelected }) => {
   const { width } = Dimensions.get("window")
-  const chartWidth = width * 0.92 - 64
+  const chartWidth = width * 0.92 - 9
 
   if (!coinHistoryData || coinHistoryData.length === 0 || !chartData?.prices) {
     return (
@@ -85,7 +85,7 @@ export const ChartBlack = ({ coinHistoryData, chartData, is30DSelected }) => {
             datasets: [
               {
                 data: chartData.prices || [],
-                strokeWidth: 2.5,
+                strokeWidth: 1.5,
                 color: () => lineColor
               }
             ]
@@ -98,8 +98,9 @@ export const ChartBlack = ({ coinHistoryData, chartData, is30DSelected }) => {
           withInnerLines={false}
           withOuterLines={false}
           fromZero={false}
-          formatYLabel={formatYLabel} // Кастомное форматирование
-          segments={getSegments()} // Динамическое количество сегментов
+          formatYLabel={formatYLabel}
+          segments={getSegments()}
+          yAxisOffset={-10}
           chartConfig={{
             backgroundColor: "#1A1F2E",
             backgroundGradientFrom: "#1A1F2E",
@@ -110,6 +111,11 @@ export const ChartBlack = ({ coinHistoryData, chartData, is30DSelected }) => {
             style: {
               borderRadius: 12
             },
+
+            paddingLeft: 0,
+            paddingRight: 10,
+            paddingTop: 10,
+            paddingBottom: 10,
             propsForBackgroundLines: {
               strokeWidth: 1,
               stroke: "rgba(255, 255, 255, 0.1)",
@@ -120,7 +126,8 @@ export const ChartBlack = ({ coinHistoryData, chartData, is30DSelected }) => {
               fontWeight: "500"
             },
             propsForVerticalLabels: {
-              fontSize: 9
+              fontSize: 9,
+              dx: -3
             },
             propsForHorizontalLabels: {
               fontSize: 9,
@@ -128,7 +135,7 @@ export const ChartBlack = ({ coinHistoryData, chartData, is30DSelected }) => {
             }
           }}
           bezier
-          style={styles.chartStyle}
+          style={[styles.chartStyle, { marginLeft: -3 }]}
           yAxisLabel={hasSmallNumbers() ? "$" : ""}
           yAxisSuffix={hasSmallNumbers() ? "" : ""}
         />

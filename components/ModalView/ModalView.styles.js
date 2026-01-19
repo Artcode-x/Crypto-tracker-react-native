@@ -37,7 +37,7 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 20,
     marginHorizontal: 4,
     borderRadius: 10
@@ -73,6 +73,6 @@ export const styles = StyleSheet.create({
     borderRadius: 1.5,
     backgroundColor: "#D4AF37",
     position: "absolute",
-    left: 18
+    left: 23
   }
 })

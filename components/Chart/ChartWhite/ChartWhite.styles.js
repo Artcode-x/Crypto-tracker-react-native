@@ -9,7 +9,8 @@ export const styles = StyleSheet.create({
   chartContainer: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
-    padding: 12,
+    padding: 8,
+    paddingLeft: 2,
     width: "100%",
     borderWidth: 1,
     borderColor: "rgba(0, 0, 0, 0.1)",
@@ -23,9 +24,7 @@ export const styles = StyleSheet.create({
     elevation: 3
   },
   chartStyle: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "wheat"
+    borderRadius: 12
   },
   noDataContainer: {
     height: 220,
@@ -42,26 +41,19 @@ export const styles = StyleSheet.create({
     color: "#4A5568",
     fontWeight: "500"
   },
-  rangeIndicator: {
-    marginTop: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 10,
-    alignItems: "center",
+
+  smallNumberIndicator: {
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "rgba(212, 175, 55, 0.1)",
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "rgba(0, 0, 0, 0.1)",
-    width: "90%"
+    borderColor: "rgba(212, 175, 55, 0.2)"
   },
-  rangeBadgeText: {
-    fontSize: 11,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 2
-  },
-  rangeBadgeSubtext: {
-    fontSize: 9,
-    color: "#4A5568",
-    fontWeight: "500",
-    textAlign: "center"
+  smallNumberText: {
+    fontSize: 10,
+    color: "#B7791F",
+    fontWeight: "600"
   }
 })

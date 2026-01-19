@@ -4,7 +4,7 @@ import { styles } from "./ChartWhite.styles"
 
 export const ChartWhite = ({ coinHistoryData, chartData, is30DSelected }) => {
   const { width } = Dimensions.get("window")
-  const chartWidth = width * 0.92 - 64
+  const chartWidth = width * 0.92 - 15
 
   if (!coinHistoryData || coinHistoryData.length === 0 || !chartData?.prices) {
     return (
@@ -21,63 +21,42 @@ export const ChartWhite = ({ coinHistoryData, chartData, is30DSelected }) => {
     const num = parseFloat(value)
     if (isNaN(num)) return "0"
 
+    // Если число меньше 0.000001
     if (Math.abs(num) < 0.000001 && num !== 0) {
       return num.toExponential(3)
     }
 
+    // Если число между 0.000001 и 0.001
     if (Math.abs(num) < 0.001 && num !== 0) {
       return num.toFixed(6)
     }
 
+    // Если число меньше 1
     if (Math.abs(num) < 1) {
       return num.toFixed(4)
     }
 
-    if (Math.abs(num) >= 1000000000000) {
-      return (num / 1000000000000).toFixed(2) + "T"
-    }
-
-    if (Math.abs(num) >= 1000000000) {
-      return (num / 1000000000).toFixed(2) + "B"
-    }
-
-    if (Math.abs(num) >= 1000000) {
-      return (num / 1000000).toFixed(1) + "M"
-    }
-
-    if (Math.abs(num) >= 1000) {
-      return (num / 1000).toFixed(1) + "K"
-    }
-
-    return num.toFixed(2)
+    // Для обычных чисел
+    return num.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })
   }
 
+  // Ф-ия для проверки, есть ли в данных маленькие числа
   const hasSmallNumbers = () => {
     if (!chartData?.prices) return false
     const minValue = Math.min(...chartData.prices)
     return minValue < 0.001
   }
 
-  const getValueRangeType = () => {
-    if (!chartData?.prices || chartData.prices.length === 0) return "normal"
-
-    const maxValue = Math.max(...chartData.prices)
-
-    if (maxValue >= 1000000000000) return "trillion"
-    if (maxValue >= 1000000000) return "billion"
-    if (maxValue >= 1000000) return "million"
-    if (maxValue >= 1000) return "thousand"
-    if (maxValue < 0.001) return "micro"
-    if (maxValue < 1) return "small"
-
-    return "normal"
-  }
-
+  // Настройка количества знаков после запятой в зависимости от данных
   const getDecimalPlaces = () => {
     if (hasSmallNumbers()) return 6
     return 2
   }
 
+  // Получение количества сегментов для оси Y
   const getSegments = () => {
     const prices = chartData.prices || []
     if (prices.length === 0) return 4
@@ -86,32 +65,11 @@ export const ChartWhite = ({ coinHistoryData, chartData, is30DSelected }) => {
     const max = Math.max(...prices)
     const range = max - min
 
+    // Для очень маленьких диапазонов - увеличение сегментов
     if (range < 0.001) return 6
     if (range < 0.1) return 5
     return 4
   }
-
-  const getYAxisSuffix = () => {
-    const valueRangeType = getValueRangeType()
-
-    switch (valueRangeType) {
-      case "trillion":
-        return "T"
-      case "billion":
-        return "B"
-      case "million":
-        return "M"
-      case "thousand":
-        return ""
-      default:
-        return ""
-    }
-  }
-
-  const valueRangeType = getValueRangeType()
-  const isLargeNumber = ["thousand", "million", "billion", "trillion"].includes(
-    valueRangeType
-  )
 
   return (
     <View style={styles.container}>
@@ -125,7 +83,7 @@ export const ChartWhite = ({ coinHistoryData, chartData, is30DSelected }) => {
             datasets: [
               {
                 data: chartData.prices || [],
-                strokeWidth: 2.5,
+                strokeWidth: 1.5,
                 color: () => lineColor
               }
             ]
@@ -140,6 +98,7 @@ export const ChartWhite = ({ coinHistoryData, chartData, is30DSelected }) => {
           fromZero={false}
           formatYLabel={formatYLabel}
           segments={getSegments()}
+          yAxisOffset={-10}
           chartConfig={{
             backgroundColor: "#FFFFFF",
             backgroundGradientFrom: "#FFFFFF",
@@ -150,6 +109,11 @@ export const ChartWhite = ({ coinHistoryData, chartData, is30DSelected }) => {
             style: {
               borderRadius: 12
             },
+
+            paddingLeft: 0,
+            paddingRight: 10,
+            paddingTop: 10,
+            paddingBottom: 10,
             propsForBackgroundLines: {
               strokeWidth: 1,
               stroke: "rgba(0, 0, 0, 0.1)",
@@ -160,7 +124,8 @@ export const ChartWhite = ({ coinHistoryData, chartData, is30DSelected }) => {
               fontWeight: "500"
             },
             propsForVerticalLabels: {
-              fontSize: 9
+              fontSize: 9,
+              dx: -3
             },
             propsForHorizontalLabels: {
               fontSize: 9,
@@ -170,51 +135,15 @@ export const ChartWhite = ({ coinHistoryData, chartData, is30DSelected }) => {
           bezier
           style={styles.chartStyle}
           yAxisLabel={hasSmallNumbers() ? "$" : ""}
-          yAxisSuffix={getYAxisSuffix()}
+          yAxisSuffix={hasSmallNumbers() ? "" : ""}
         />
       </View>
 
-      {(hasSmallNumbers() || isLargeNumber) && (
-        <View
-          style={[
-            styles.rangeIndicator,
-            {
-              backgroundColor: isLargeNumber
-                ? "rgba(212, 175, 55, 0.1)"
-                : valueRangeType === "micro"
-                ? "rgba(59, 130, 246, 0.1)"
-                : "rgba(72, 187, 120, 0.1)"
-            }
-          ]}
-        >
-          <Text
-            style={[
-              styles.rangeBadgeText,
-              {
-                color: isLargeNumber
-                  ? "#B7791F"
-                  : valueRangeType === "micro"
-                  ? "#2B6CB0"
-                  : "#2F855A"
-              }
-            ]}
-          >
-            {valueRangeType === "trillion" && "💎 Trillion+ Scale"}
-            {valueRangeType === "billion" && "📈 Billion Scale"}
-            {valueRangeType === "million" && "📊 Million Scale"}
-            {valueRangeType === "thousand" && "📉 Thousand Scale"}
-            {valueRangeType === "micro" && "⚡ Micro Values"}
-            {valueRangeType === "small" && "🔍 Small Values"}
-            {valueRangeType === "normal" && "📱 Normal Scale"}
-          </Text>
-          <Text style={styles.rangeBadgeSubtext}>
-            {valueRangeType === "trillion" && "Values in Trillions ($T)"}
-            {valueRangeType === "billion" && "Values in Billions ($B)"}
-            {valueRangeType === "million" && "Values in Millions ($M)"}
-            {valueRangeType === "thousand" && "Values in Thousands ($K)"}
-            {valueRangeType === "micro" && "High precision display"}
-            {valueRangeType === "small" && "Displaying 4+ decimals"}
-            {valueRangeType === "normal" && "Standard precision"}
+      {/*  индикатор для маленьких чисел */}
+      {hasSmallNumbers() && (
+        <View style={styles.smallNumberIndicator}>
+          <Text style={styles.smallNumberText}>
+            ⚡ Displaying values with high precision
           </Text>
         </View>
       )}

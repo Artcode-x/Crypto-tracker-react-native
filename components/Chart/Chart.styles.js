@@ -1,17 +1,17 @@
 import { Dimensions, Platform, StyleSheet } from "react-native"
-import { RFPercentage, RFValue } from "react-native-responsive-fontsize"
+import { RFValue } from "react-native-responsive-fontsize"
 
 const { width, height } = Dimensions.get("window")
 
 export const styles = StyleSheet.create({
   modalBlurContainer: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.85)", // Более темный фон для лучшего контраста
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
     justifyContent: "center",
     alignItems: "center"
   },
   modalContainer: {
-    width: width * 0.92,
+    width: width * 0.96,
     maxWidth: 420,
     height: height * 0.85,
     borderRadius: 25,
@@ -67,13 +67,13 @@ export const styles = StyleSheet.create({
     flex: 1
   },
   coinName: {
-    fontSize: 18,
+    fontSize: RFValue(18),
     fontWeight: "700",
     color: "#FFFFFF",
     letterSpacing: -0.3
   },
   coinSymbol: {
-    fontSize: 13,
+    fontSize: RFValue(13),
     fontWeight: "500",
     color: "#D4AF37",
     marginTop: 2
@@ -102,7 +102,7 @@ export const styles = StyleSheet.create({
     marginBottom: 20
   },
   currentPrice: {
-    fontSize: 26,
+    fontSize: RFValue(26),
     fontWeight: "800",
     color: "#FFFFFF"
   },
@@ -114,7 +114,7 @@ export const styles = StyleSheet.create({
     borderRadius: 12
   },
   priceChangeText: {
-    fontSize: 13,
+    fontSize: RFValue(13),
     fontWeight: "600",
     marginLeft: 4
   },
@@ -133,7 +133,7 @@ export const styles = StyleSheet.create({
     marginBottom: 4
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: RFValue(11),
     fontWeight: "600",
     color: "#A0AEC0",
     marginLeft: 5,
@@ -141,7 +141,7 @@ export const styles = StyleSheet.create({
     letterSpacing: 0.5
   },
   statValue: {
-    fontSize: 15,
+    fontSize: RFValue(15),
     fontWeight: "700",
     color: "#FFFFFF"
   },
@@ -163,14 +163,14 @@ export const styles = StyleSheet.create({
     marginRight: 8
   },
   trendText: {
-    fontSize: 12,
+    fontSize: RFValue(12),
     fontWeight: "700",
     color: "#FFFFFF",
     marginRight: 8,
     flex: 1
   },
   trendPercentage: {
-    fontSize: 12,
+    fontSize: RFValue(12),
     fontWeight: "700"
   },
   timePeriodsContainer: {
@@ -194,7 +194,7 @@ export const styles = StyleSheet.create({
     borderColor: "rgba(212, 175, 55, 0.5)"
   },
   timePeriodText: {
-    fontSize: 13,
+    fontSize: RFValue(13),
     fontWeight: "600",
     color: "#A0AEC0"
   },
@@ -212,7 +212,7 @@ export const styles = StyleSheet.create({
     marginBottom: 12
   },
   chartTitle: {
-    fontSize: 16,
+    fontSize: RFValue(16),
     fontWeight: "700",
     color: "#FFFFFF"
   },
@@ -240,7 +240,7 @@ export const styles = StyleSheet.create({
     borderColor: "rgba(212, 175, 55, 0.1)"
   },
   loadingText: {
-    fontSize: 13,
+    fontSize: RFValue(13),
     color: "#D4AF37",
     fontWeight: "500",
     marginTop: 8
@@ -259,7 +259,7 @@ export const styles = StyleSheet.create({
     marginBottom: 20
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: RFValue(16),
     fontWeight: "700",
     color: "#FFFFFF",
     marginBottom: 12
@@ -292,7 +292,7 @@ export const styles = StyleSheet.create({
     marginRight: 10
   },
   additionalLabel: {
-    fontSize: 10,
+    fontSize: RFValue(10),
     fontWeight: "600",
     color: "#A0AEC0",
     marginBottom: 2,
@@ -300,7 +300,7 @@ export const styles = StyleSheet.create({
     letterSpacing: 0.5
   },
   additionalValue: {
-    fontSize: 14,
+    fontSize: RFValue(14),
     fontWeight: "700",
     color: "#FFFFFF"
   },
@@ -318,7 +318,7 @@ export const styles = StyleSheet.create({
     marginBottom: 12
   },
   marketDataLabel: {
-    fontSize: 11,
+    fontSize: RFValue(11),
     fontWeight: "600",
     color: "#A0AEC0",
     marginBottom: 4,
@@ -326,7 +326,7 @@ export const styles = StyleSheet.create({
     letterSpacing: 0.5
   },
   marketDataValue: {
-    fontSize: 14,
+    fontSize: RFValue(14),
     fontWeight: "700",
     color: "#FFFFFF"
   }
