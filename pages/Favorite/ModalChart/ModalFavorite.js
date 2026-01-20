@@ -33,8 +33,6 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
   const [limit, setLimit] = useState(100)
   const [santiment, setSantiment] = useState(null)
 
-  const scaleRef = useRef(1)
-
   const formatTime = (prices) => {
     if (!prices || !prices.length) return []
     return prices.map((item) => {
@@ -77,25 +75,6 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
   }
 
   const currentCandle = getCurrentCandle()
-
-  const onPinchEvent = useCallback((event) => {
-    const scaleChange = event.nativeEvent.scale / scaleRef.current
-    if (scaleChange > 1.1) {
-      setLimit((prev) => Math.max(prev - 10, 10))
-      scaleRef.current = event.nativeEvent.scale
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    } else if (scaleChange < 0.9) {
-      setLimit((prev) => Math.min(prev + 10, 200))
-      scaleRef.current = event.nativeEvent.scale
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    }
-  }, [])
-
-  const onPinchStateChange = useCallback((event) => {
-    if (event.nativeEvent.state === State.END) {
-      scaleRef.current = 1
-    }
-  }, [])
 
   const fetchChartData = useCallback(
     async (coin) => {
@@ -184,11 +163,10 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
               prices={prices}
               currentCandle={currentCandle}
               limit={limit}
-              onPinchEvent={onPinchEvent}
-              onPinchStateChange={onPinchStateChange}
               volumeData={volumeData}
               onClose={onClose}
               screenHeight={screenHeight}
+              setLimit={setLimit}
             />
           </ScrollView>
         </SafeAreaView>
@@ -210,11 +188,10 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
               prices={prices}
               currentCandle={currentCandle}
               limit={limit}
-              onPinchEvent={onPinchEvent}
-              onPinchStateChange={onPinchStateChange}
               volumeData={volumeData}
               onClose={onClose}
               screenHeight={screenHeight}
+              setLimit={setLimit}
             />
           </ScrollView>
         </View>
@@ -232,8 +209,7 @@ const Content = ({
   prices,
   currentCandle,
   limit,
-  onPinchEvent,
-  onPinchStateChange,
+  setLimit,
   volumeData,
   onClose,
   screenHeight
@@ -302,7 +278,7 @@ const Content = ({
             <Text style={styles.loadingText}>Loading...</Text>
           </View>
         ) : prices.length === 0 ? (
-          // ВОТ ВАШ ПЛЕЙСХОЛДЕР - вместо графика когда нет данных
+          // Плейсхолдер - когда вместо графика когда нет данных
           <View style={[styles.noDataPlaceholder, { height: chartHeight }]}>
             <Ionicons
               name='bar-chart-outline'
@@ -316,14 +292,15 @@ const Content = ({
             </Text>
           </View>
         ) : (
-          <PinchGestureHandler
-            onGestureEvent={onPinchEvent}
-            onHandlerStateChange={onPinchStateChange}
-          >
-            <View style={[styles.chartBox, { height: chartHeight }]}>
-              <CandlestickChart data={prices} width={width * 0.9} height={chartHeight} />
-            </View>
-          </PinchGestureHandler>
+          <View style={[styles.chartBox, { height: chartHeight }]}>
+            <CandlestickChart
+              data={prices}
+              width={width * 0.9}
+              height={chartHeight}
+              limit={limit}
+              setLimit={setLimit}
+            />
+          </View>
         )}
 
         {/* Цены под графиком */}
