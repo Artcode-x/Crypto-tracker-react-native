@@ -6,7 +6,8 @@ import {
   StatusBar,
   TextInput,
   ActivityIndicator,
-  TouchableOpacity
+  TouchableOpacity,
+  Animated
 } from "react-native"
 import CoinList from "../../components/CoinList/CoinList"
 import prepareChartData from "../../components/PrepareChartData/PrepareChartData"
@@ -35,6 +36,7 @@ import { FetchCoinHistoricalData, GetMarketData } from "../../components/Api/Api
 import { Ionicons } from "@expo/vector-icons"
 import { ModalView } from "../../components/ModalView/ModalView"
 import CoinList2 from "../../components/CoinList2/Coinlist2"
+import { LinearGradient } from "react-native-svg"
 
 const Main = () => {
   const dispatch = useDispatch()
@@ -467,31 +469,54 @@ const Main = () => {
     <View style={styles.container}>
       {/* Баннер с ошибкой 429 */}
       {is429Error && (
-        <View style={styles.errorBanner}>
-          <View style={styles.errorBannerContent}>
-            <Ionicons name='time-outline' size={22} color='#D4AF37' />
-            <View style={styles.errorTextContainer}>
-              <Text style={styles.errorBannerTitle}> Request limit exceeded</Text>
-              <View style={styles.countdownContainer}>
-                <Text style={styles.countdownText}> Automatic retry after</Text>
-                <Text style={styles.countdownNumber}> {retryCountdown} sec</Text>
+        <View style={styles.compactPremiumBanner}>
+          {/* Левая часть - индикатор ошибки */}
+          <View style={styles.compactLeft}>
+            <View style={styles.compactIconWrapper}>
+              <Ionicons name='alert-circle' size={18} color='#FFD700' />
+              <View style={styles.compactIconGlow} />
+            </View>
+
+            <View style={styles.compactTextWrapper}>
+              <Text style={styles.compactTitle}>Rate Limit</Text>
+              <Text style={styles.compactSubtitle}>
+                Retry in <Text style={styles.compactTimer}>{retryCountdown}s</Text>
+              </Text>
+            </View>
+
+            {/* Баннер с рекламой - правее текста ошибки */}
+            <View style={styles.adBannerContainer}>
+              <View style={styles.premiumBanner}>
+                <View style={styles.bannerGradient}>
+                  <Ionicons
+                    name='sparkles'
+                    size={12}
+                    color='#FFD700'
+                    style={styles.bannerIcon}
+                  />
+                  <Text style={styles.bannerText}>Premium Ad Space</Text>
+                  {/* <View style={styles.bannerBadge}>
+                    <Text style={styles.bannerBadgeText}>Premium</Text>
+                  </View> */}
+                </View>
               </View>
             </View>
           </View>
 
+          {/* Кнопка ретрая */}
           <TouchableOpacity
-            style={styles.retryButtonSmall}
+            style={styles.compactRetryButton}
             onPress={handleManualRetry}
-            activeOpacity={0.7}
+            activeOpacity={0.8}
           >
-            <Text style={styles.retryButtonTextSmall}>Retry now</Text>
+            <Text style={styles.compactButtonText}>Retry</Text>
           </TouchableOpacity>
 
-          {/* Прогресс-бар обратного отсчета */}
-          <View style={styles.countdownBar}>
+          {/* Прогресс-бар */}
+          <View style={styles.compactProgressTrack}>
             <View
               style={[
-                styles.countdownProgress,
+                styles.compactProgressBar,
                 {
                   width: `${((60 - retryCountdown) / 60) * 100}%`
                 }
@@ -572,17 +597,21 @@ const Main = () => {
         </View>
       ) : (
         <>
-          {marketData.length === 0 && !flagForLoader && !marketError && !is429Error && initialLoadAttempted && (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No data</Text>
-              <TouchableOpacity
-                style={styles.retryButton}
-                onPress={fetchInitialMarketData}
-              >
-                <Text style={styles.retryButtonText}>Load data</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          {marketData.length === 0 &&
+            !flagForLoader &&
+            !marketError &&
+            !is429Error &&
+            initialLoadAttempted && (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No data</Text>
+                <TouchableOpacity
+                  style={styles.retryButton}
+                  onPress={fetchInitialMarketData}
+                >
+                  <Text style={styles.retryButtonText}>Load data</Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
           {/* Всегда показываем CoinList если есть данные, даже при ошибке 429 */}
           {(marketData.length > 0 || is429Error) && (

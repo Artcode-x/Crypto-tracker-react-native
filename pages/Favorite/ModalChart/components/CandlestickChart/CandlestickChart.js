@@ -9,6 +9,7 @@ import {
   TapGestureHandler,
   State
 } from "react-native-gesture-handler"
+import * as Haptics from "expo-haptics"
 
 const CandlestickChart = ({
   data,
@@ -25,6 +26,15 @@ const CandlestickChart = ({
 
   const pinchRef = useRef()
   const doubleTapRef = useRef()
+
+  // Функция для легкой вибрации
+  const triggerHaptic = () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    } catch (error) {
+      console.log("Haptic not available:", error)
+    }
+  }
 
   // Синхронизация internalLimit с limit при изменении извне
   useEffect(() => {
@@ -80,6 +90,7 @@ const CandlestickChart = ({
     if (event.nativeEvent.state === State.ACTIVE) {
       console.log("Double tap detected, resetting to full data")
       setLimit(100)
+      triggerHaptic()
     }
   }
 
