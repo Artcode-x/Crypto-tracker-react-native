@@ -27,12 +27,11 @@ const getCardHeight = () => {
   return Math.max(normalize(140), Math.min(baseHeight, normalize(220)))
 }
 
-// ВАЖНО: Рассчитываем ширину карточки КАК РАНЬШЕ
-// РАНЬШЕ было: const CARD_WIDTH = (width - 32) / 2
-// СЕЙЧАС должно быть: CARD_WIDTH = (width - normalize(36)) / 2
-// На планшетах: остаётся 100% ширины колонки
-const CARD_WIDTH = (width - normalize(36)) / 2
-// const CARD_WIDTH = (width - 32) / 2
+// Рассчитываем ширину карточки
+const LIST_PADDING = normalize(12) * 2 // spacing.lg = 12px * 2 стороны
+const CARD_MARGIN = normalize(4) // spacing.xs
+const TOTAL_MARGINS = CARD_MARGIN * 4 // 4 карточных margin в ряду
+const CARD_WIDTH = (width - LIST_PADDING - TOTAL_MARGINS) / 2
 const CARD_HEIGHT = getCardHeight()
 
 // Адаптивные отступы
@@ -55,29 +54,21 @@ const fontSize = {
   xxlarge: RFValue(13)
 }
 
-// Адаптивные размеры иконок
-const iconSize = {
-  tiny: normalize(8),
-  small: normalize(12),
-  medium: normalize(16),
-  large: normalize(20),
-  xlarge: normalize(24)
-}
-
 export const styles = StyleSheet.create({
   premiumContainer: {
     flex: 1,
     backgroundColor: "#0A0A0F"
   },
 
+  // ✅ ЦЕНТРИРУЕМ ДЛЯ ВСЕХ УСТРОЙСТВ
   premiumList: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.xxl * 5,
-    alignItems: "center" // Центрируем всю сетку
+    alignItems: "center" // ← ДОБАВЛЕНО ДЛЯ ТЕЛЕФОНОВ
   },
 
   cardContainer: {
-    width: CARD_WIDTH, // ← 100% ширины колонки (как раньше)
+    width: CARD_WIDTH,
     margin: spacing.xs
   },
 
@@ -444,7 +435,8 @@ export const styles = StyleSheet.create({
   ...(width < 350 && {
     premiumList: {
       paddingHorizontal: spacing.md,
-      paddingBottom: spacing.xxl * 4
+      paddingBottom: spacing.xxl * 4,
+      alignItems: "center" // ← И ДЛЯ МАЛЕНЬКИХ ТЕЛЕФОНОВ
     },
 
     premiumCoinCard: {
@@ -470,32 +462,30 @@ export const styles = StyleSheet.create({
   }),
 
   // Адаптация для планшетов и больших экранов
-  // УБИРАЕМ width: CARD_WIDTH * 0.9 и оставляем 100%
   ...(width > 768 && {
     premiumList: {
-      paddingHorizontal: spacing.xxl, // Больше отступы по бокам
+      paddingHorizontal: spacing.xxl,
       paddingBottom: spacing.xxl * 6,
-      alignItems: "center" // Центрируем карточки
+      alignItems: "center" // ← И ДЛЯ ПЛАНШЕТОВ (остаётся)
     },
 
-    // ВАЖНО: Убираем умножение на 0.9! Карточки 100% ширины
     cardContainer: {
-      width: CARD_WIDTH, // ← 100% ширины колонки (КАК РАНЬШЕ)
+      width: CARD_WIDTH,
       margin: spacing.xs
     },
 
     premiumCoinCard: {
-      borderRadius: spacing.xl, // Больше скругление
-      minHeight: normalize(160), // Немного выше на планшетах
+      borderRadius: spacing.xl,
+      minHeight: normalize(160),
       maxHeight: normalize(240)
     },
 
     cardGradient: {
-      padding: spacing.lg // Больше внутренние отступы
+      padding: spacing.lg
     },
 
     coinName: {
-      fontSize: RFValue(14) // Крупнее текст
+      fontSize: RFValue(14)
     },
 
     coinSymbol: {
@@ -503,7 +493,7 @@ export const styles = StyleSheet.create({
     },
 
     coinPrice: {
-      fontSize: RFValue(13) // Крупнее цена
+      fontSize: RFValue(13)
     },
 
     userAmount: {
@@ -515,7 +505,7 @@ export const styles = StyleSheet.create({
     },
 
     bottomActions: {
-      height: normalize(36), // Выше кнопки
+      height: normalize(36),
       gap: spacing.md
     },
 

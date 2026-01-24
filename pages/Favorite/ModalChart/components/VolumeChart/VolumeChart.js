@@ -3,10 +3,45 @@ import { ScrollView, Text, View, Dimensions, Platform } from "react-native"
 import Svg, { Rect } from "react-native-svg"
 import { styles } from "./VolumeChart.styles"
 
-const { width } = Dimensions.get("window")
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window")
 const isAndroid = Platform.OS === "android"
 
+// Функция для определения планшета
+const isTablet = () => {
+  const { width, height } = Dimensions.get("window")
+  const aspectRatio = Math.max(width, height) / Math.min(width, height)
+  return aspectRatio < 1.6 && (width >= 600 || height >= 600)
+}
+
+// Определяем размеры в зависимости от устройства
+const getDeviceBasedDimensions = () => {
+  const tablet = isTablet()
+  
+  if (tablet) {
+    return {
+      barWidth: 3.5, // Шире для планшетов
+      spacing: 1,
+      chartHeightRatio: 0.75, // Больше места для графика
+      statsHeightRatio: 0.15,
+      containerPadding: 10,
+      minBarHeight: 60 // Минимальная высота баров для планшетов
+    }
+  }
+  
+  return {
+    barWidth: isAndroid ? 2.5 : 2.8,
+    spacing: 0.8,
+    chartHeightRatio: 0.85,
+    statsHeightRatio: 0.12,
+    containerPadding: isAndroid ? 6 : 8,
+    minBarHeight: 40
+  }
+}
+
 export const VolumeChart = ({ volumeData, height = 100 }) => {
+  const deviceProps = getDeviceBasedDimensions()
+  const tablet = isTablet()
+  
   if (
     !volumeData ||
     !volumeData.datasets ||
@@ -45,18 +80,37 @@ export const VolumeChart = ({ volumeData, height = 100 }) => {
     return "#64D2FF"
   }
 
-  const chartHeight = Math.max(40, height * 0.85) // 85% для графика
-  const statsHeight = Math.max(16, height * 0.12) // 12% для статистики
-  const barWidth = isAndroid ? 2.5 : 2.8
-  const spacing = 0.8
-  const svgWidth = volumeValues.length * (barWidth + spacing)
+  // Динамический расчет размеров
+  const chartHeight = Math.max(deviceProps.minBarHeight, height * deviceProps.chartHeightRatio)
+  const statsHeight = Math.max(16, height * deviceProps.statsHeightRatio)
+  const svgWidth = volumeValues.length * (deviceProps.barWidth + deviceProps.spacing)
+  
+  // Минимальная ширина контента: для планшетов делаем шире
+  const minContentWidth = tablet 
+    ? Math.max(svgWidth, screenWidth - 40) 
+    : Math.max(svgWidth, screenWidth - 20)
 
   return (
-    <View style={[styles.volumeChartContainer, { height, padding: isAndroid ? 6 : 8 }]}>
-      {/*  Статистика графика - сверху */}
-      <View style={[styles.statsOverlay, { height: statsHeight }]}>
+    <View style={[
+      styles.volumeChartContainer, 
+      { 
+        height, 
+        padding: deviceProps.containerPadding,
+        // Для планшетов используем более широкий контейнер
+        paddingHorizontal: tablet ? 12 : deviceProps.containerPadding
+      }
+    ]}>
+      {/* Статистика графика */}
+      <View style={[
+        styles.statsOverlay, 
+        { 
+          height: statsHeight,
+          left: tablet ? 12 : 8,
+          right: tablet ? 12 : 8,
+          top: tablet ? 6 : (isAndroid ? 4 : 5)
+        }
+      ]}>
         <View style={styles.ultraCompactRow}>
-          {/* Now с индикатором */}
           <View style={styles.compactStatItem}>
             <Text style={[styles.indicator, { color: getIndicatorColor() }]}>
               {getVolumeIndicator()}
@@ -65,13 +119,11 @@ export const VolumeChart = ({ volumeData, height = 100 }) => {
             <Text style={styles.compactStatValue}>{formatVolume(currentVolume)}</Text>
           </View>
 
-          {/* Avg */}
           <View style={styles.compactStatItem}>
             <Text style={styles.compactStatLabel}>Avg:</Text>
             <Text style={styles.compactStatValue}>{formatVolume(avgVolume)}</Text>
           </View>
 
-          {/* Peak */}
           <View style={styles.compactStatItem}>
             <Text style={styles.compactStatLabel}>Peak:</Text>
             <Text style={styles.compactStatValue}>{formatVolume(maxVolume)}</Text>
@@ -87,21 +139,22 @@ export const VolumeChart = ({ volumeData, height = 100 }) => {
           styles.volumeScroll,
           {
             height: chartHeight,
-            marginTop: 2
+            marginTop: tablet ? 4 : 2
           }
         ]}
         contentContainerStyle={{
-          minWidth: Math.max(svgWidth, width - 20),
-          alignItems: "flex-end"
+          minWidth: minContentWidth,
+          alignItems: "flex-end",
+          // Для планшетов добавляем дополнительный отступ справа
+          paddingRight: tablet ? 20 : 0
         }}
       >
         <Svg width={svgWidth} height={chartHeight}>
           {volumeValues.map((volume, index) => {
-            const barHeight = (volume / maxVolume) * chartHeight * 0.85
-            const x = index * (barWidth + spacing)
+            const barHeight = (volume / maxVolume) * chartHeight * 0.9
+            const x = index * (deviceProps.barWidth + deviceProps.spacing)
             const y = chartHeight - barHeight
             const opacity = volume / maxVolume
-            //
             const color = `rgba(255, 59, 48, ${0.5 + opacity * 0.5})`
 
             return (
@@ -109,11 +162,11 @@ export const VolumeChart = ({ volumeData, height = 100 }) => {
                 key={index}
                 x={x}
                 y={y}
-                width={barWidth}
+                width={deviceProps.barWidth}
                 height={barHeight}
                 fill={color}
-                rx={0.5}
-                ry={0.5}
+                rx={1}
+                ry={1}
               />
             )
           })}
