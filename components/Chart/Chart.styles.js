@@ -1,7 +1,22 @@
+// Chart.styles.js
 import { Dimensions, Platform, StyleSheet } from "react-native"
 import { RFValue } from "react-native-responsive-fontsize"
 
 const { width, height } = Dimensions.get("window")
+
+// Простая функция для определения типа устройства
+const getModalWidth = () => {
+  if (width >= 768) {
+    // Планшеты и большие экраны - 90% ширины
+    return width * 0.9
+  } else if (width >= 414) {
+    // Большие телефоны - 95% ширины
+    return width * 0.95
+  } else {
+    // Маленькие телефоны - 96% ширины
+    return width * 0.96
+  }
+}
 
 export const styles = StyleSheet.create({
   modalBlurContainer: {
@@ -11,8 +26,8 @@ export const styles = StyleSheet.create({
     alignItems: "center"
   },
   modalContainer: {
-    width: width * 0.96,
-    maxWidth: 420,
+    width: getModalWidth(), // Используем адаптивную ширину
+    maxWidth: width, // МАКСИМАЛЬНАЯ ШИРИНА = ШИРИНЕ ЭКРАНА
     height: height * 0.85,
     borderRadius: 25,
     overflow: "hidden",
