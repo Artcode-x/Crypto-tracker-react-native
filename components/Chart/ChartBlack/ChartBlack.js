@@ -4,7 +4,14 @@ import { styles } from "./ChartBlack.styles"
 
 export const ChartBlack = ({ coinHistoryData, chartData, is30DSelected }) => {
   const { width } = Dimensions.get("window")
-  const chartWidth = width * 0.92 - 9
+
+  // Оптимизированный расчет ширины
+  const CHART_WIDTH_PERCENTAGE = 0.78
+  const chartWidth = width * CHART_WIDTH_PERCENTAGE
+
+  // Высота контейнера (чтобы график не обрезался)
+  const CHART_HEIGHT = 200
+  const CHART_INNER_HEIGHT = 190
 
   if (!coinHistoryData || coinHistoryData.length === 0 || !chartData?.prices) {
     return (
@@ -23,22 +30,18 @@ export const ChartBlack = ({ coinHistoryData, chartData, is30DSelected }) => {
     const num = parseFloat(value)
     if (isNaN(num)) return "0"
 
-    // Если число меньше 0.000001
     if (Math.abs(num) < 0.000001 && num !== 0) {
       return num.toExponential(3)
     }
 
-    // Если число между 0.000001 и 0.001
     if (Math.abs(num) < 0.001 && num !== 0) {
       return num.toFixed(6)
     }
 
-    // Если число меньше 1
     if (Math.abs(num) < 1) {
       return num.toFixed(4)
     }
 
-    // Для обычных чисел
     return num.toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
@@ -67,21 +70,50 @@ export const ChartBlack = ({ coinHistoryData, chartData, is30DSelected }) => {
     const max = Math.max(...prices)
     const range = max - min
 
-    // Для очень маленьких диапазонов - увеличение сегментов
     if (range < 0.001) return 6
     if (range < 0.1) return 5
     return 4
   }
 
+  // Ключевая функция: фильтрация меток чтобы не выезжали
+  const getFilteredLabels = () => {
+    const labels = chartData.labelDate || []
+    if (labels.length === 0) return []
+
+    // Для 30 дней оставляем меньше меток
+    if (is30DSelected) {
+      // Берем каждую 4-ю метку, но не более 6 меток всего
+      const step = Math.max(4, Math.floor(labels.length / 6))
+      const filtered = labels.filter((_, index) => index % step === 0)
+
+      // Удаляем последние 2 метки которые могут выезжать
+      return filtered.length > 3 ? filtered.slice(0, -2) : filtered
+    }
+
+    // Для других периодов
+    const step = Math.max(3, Math.floor(labels.length / 5))
+    const filtered = labels.filter((_, index) => index % step === 0)
+
+    // Удаляем последнюю метку которая может выезжать
+    return filtered.length > 2 ? filtered.slice(0, -1) : filtered
+  }
+
+  // Определяем размер шрифта в зависимости от ширины экрана
+  const getFontSize = () => {
+    if (width < 350) return 7 // Для маленьких экранов
+    if (width < 400) return 8 // Для средних
+    return 9 // Для больших
+  }
+
+  const filteredLabels = getFilteredLabels()
+
   return (
     <View style={styles.container}>
-      <View style={styles.chartContainer}>
+      {/* Контейнер с overflow: hidden для гарантированного обрезания */}
+      <View style={[styles.chartOuterContainer, { height: CHART_HEIGHT }]}>
         <LineChart
           data={{
-            labels:
-              is30DSelected && chartData.labelDate
-                ? chartData.labelDate.filter((_, index) => index % 3 === 0)
-                : chartData.labelDate?.filter((_, index) => index % 2 === 0) || [],
+            labels: filteredLabels,
             datasets: [
               {
                 data: chartData.prices || [],
@@ -90,8 +122,9 @@ export const ChartBlack = ({ coinHistoryData, chartData, is30DSelected }) => {
               }
             ]
           }}
-          width={chartWidth - 24}
-          height={180}
+          // Увеличиваем ширину графика чтобы он был шире контейнера
+          width={chartWidth + 40} // +40px для компенсации padding'ов
+          height={CHART_INNER_HEIGHT}
           withVerticalLines={false}
           withHorizontalLines={true}
           withDots={false}
@@ -100,44 +133,61 @@ export const ChartBlack = ({ coinHistoryData, chartData, is30DSelected }) => {
           fromZero={false}
           formatYLabel={formatYLabel}
           segments={getSegments()}
-          yAxisOffset={-10}
+          yAxisOffset={0}
           chartConfig={{
-            backgroundColor: "#1A1F2E",
-            backgroundGradientFrom: "#1A1F2E",
+            backgroundColor: "#1A1F2E", // Вместо "transparent"
+            backgroundGradientFrom: "#1A1F2E", // Вместо "transparent"
             backgroundGradientTo: "#1A1F2E",
             decimalPlaces: getDecimalPlaces(),
             color: (opacity = 1) => `rgba(255, 255, 255, ${opacity * 0.1})`,
-            labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity * 0.5})`,
+            labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity * 0.6})`,
             style: {
               borderRadius: 12
             },
-
-            paddingLeft: 0,
-            paddingRight: 10,
-            paddingTop: 10,
-            paddingBottom: 10,
+            // Увеличенные padding'ы для предотвращения выезда
+            paddingLeft: 30,
+            paddingRight: 40, // Больше справа
+            paddingTop: 15,
+            paddingBottom: 20,
             propsForBackgroundLines: {
               strokeWidth: 1,
               stroke: "rgba(255, 255, 255, 0.1)",
               strokeDasharray: "3,3"
             },
             propsForLabels: {
-              fontSize: hasSmallNumbers() ? 8 : 9,
+              fontSize: getFontSize(),
               fontWeight: "500"
             },
             propsForVerticalLabels: {
-              fontSize: 9,
-              dx: -3
+              fontSize: getFontSize(),
+              dx: 0
             },
             propsForHorizontalLabels: {
-              fontSize: 9,
-              rotation: 0
+              fontSize: getFontSize() - 1, // Метки оси X чуть меньше
+              rotation: 0,
+              dy: 8
             }
           }}
           bezier
-          style={[styles.chartStyle, { marginLeft: -3 }]}
+          // Сдвигаем график влево чтобы компенсировать увеличенную ширину
+          style={{
+            marginLeft: -8,
+            marginRight: -20,
+            borderRadius: 12
+          }}
           yAxisLabel={hasSmallNumbers() ? "$" : ""}
           yAxisSuffix={hasSmallNumbers() ? "" : ""}
+          // Скрываем последние точки чтобы линия не выходила за границы
+          getDotProps={(value, index) => {
+            const total = chartData.prices?.length || 0
+            if (index >= total - 1) {
+              return {
+                r: "0",
+                strokeWidth: "0"
+              }
+            }
+            return {}
+          }}
         />
       </View>
 

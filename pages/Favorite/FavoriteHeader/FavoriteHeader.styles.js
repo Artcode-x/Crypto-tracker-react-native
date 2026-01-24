@@ -3,7 +3,7 @@ import { RFValue } from "react-native-responsive-fontsize"
 
 export const styles = StyleSheet.create({
   premiumHeader: {
-    paddingTop: Platform.OS === "ios" ? 12 : 10,
+    paddingTop: Platform.OS === "ios" ? 9 : 8,
     paddingHorizontal: 12,
     paddingBottom: 6
   },
@@ -11,7 +11,7 @@ export const styles = StyleSheet.create({
   headerGradient: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Platform.OS === "ios" ? 10 : 7,
+    padding: Platform.OS === "ios" ? 10 : 12,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(212, 175, 55, 0.2)",
@@ -24,13 +24,13 @@ export const styles = StyleSheet.create({
   },
 
   headerTitle: {
-    fontSize: Platform.OS === "ios" ? 15 : 14,
+    fontSize: Platform.OS === "ios" ? RFValue(15) : RFValue(14),
     fontWeight: "700",
     color: "#D4AF37"
   },
 
   headerSubtitle: {
-    fontSize: Platform.OS === "ios" ? 8.5 : 8.5,
+    fontSize: Platform.OS === "ios" ? RFValue(8.5) : RFValue(8.5),
     color: "rgba(255, 255, 255, 0.6)",
     marginTop: 2
   },
@@ -55,7 +55,7 @@ export const styles = StyleSheet.create({
   },
 
   portfolioValue: {
-    fontSize: 12,
+    fontSize: RFValue(12),
     fontWeight: "700",
     color: "#D4AF37"
   },
