@@ -24,10 +24,13 @@ export const styles = StyleSheet.create({
     flex: 1,
     overflow: "hidden"
   },
-  volumeScroll: {
+  chartContainer: {
     width: "100%",
-    flex: 1
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "flex-end"
   },
+
   // Статистика поверх графика
   statsOverlay: {
     position: "absolute",

@@ -1,25 +1,49 @@
 import { StyleSheet, Dimensions, Platform, PixelRatio } from "react-native"
 import { RFValue } from "react-native-responsive-fontsize"
 
-const { width, height: screenHeight } = Dimensions.get("window")
+// Динамическое получение размеров
+const { width: windowWidth, height: screenHeight } = Dimensions.get("window")
+
+// Функция для определения планшета
+const isTablet = () => {
+  const width = windowWidth
+  const height = screenHeight
+
+  // Основная логика для Expo Go
+  if (width >= 768) return true
+
+  // Для Nexus 9 и подобных устройств
+  const screenRatio = Math.max(width, height) / Math.min(width, height)
+  const pixelRatio = windowWidth / 360
+
+  // Если ширина в dp больше 600 и соотношение сторон меньше 1.6
+  if (width / pixelRatio >= 600 && screenRatio < 1.6) {
+    return true
+  }
+
+  return false
+}
+
+// Определяем количество колонок
+const COLUMNS = isTablet() ? 3 : 2
 
 // Базовые константы для масштабирования
-const BASE_WIDTH = 375 // iPhone 13 стандарт
+const BASE_WIDTH = 375
 const BASE_HEIGHT = 812
-const scale = width / BASE_WIDTH
+const scale = windowWidth / BASE_WIDTH
 const heightScale = screenHeight / BASE_HEIGHT
 
 // Универсальная функция для адаптации размеров
 const normalize = (size, factor = 0.5) => {
-  const newSize = size * Math.min(scale, 1.2) // Ограничиваем масштаб
+  const newSize = size * Math.min(scale, 1.2)
   return Platform.OS === "ios"
     ? Math.round(PixelRatio.roundToNearestPixel(newSize))
     : Math.round(PixelRatio.roundToNearestPixel(newSize)) - factor
 }
 
-// Адаптивная высота карточки с учетом ориентации
+// Адаптивная высота карточки
 const getCardHeight = () => {
-  const isLandscape = width > screenHeight
+  const isLandscape = windowWidth > screenHeight
   const baseHeight = isLandscape
     ? screenHeight * (Platform.OS === "android" ? 0.45 : 0.4)
     : screenHeight * (Platform.OS === "android" ? 0.26 : 0.21)
@@ -27,11 +51,25 @@ const getCardHeight = () => {
   return Math.max(normalize(140), Math.min(baseHeight, normalize(220)))
 }
 
-// Рассчитываем ширину карточки
-const LIST_PADDING = normalize(12) * 2 // spacing.lg = 12px * 2 стороны
-const CARD_MARGIN = normalize(4) // spacing.xs
-const TOTAL_MARGINS = CARD_MARGIN * 4 // 4 карточных margin в ряду
-const CARD_WIDTH = (width - LIST_PADDING - TOTAL_MARGINS) / 2
+// Динамический расчет ширины карточки
+const getCardWidth = () => {
+  if (isTablet()) {
+    // Для планшетов (3 колонки)
+    const listPadding = normalize(20) * 2
+    const cardMargin = normalize(4)
+    const totalMargins = cardMargin * (COLUMNS * 2)
+    return (windowWidth - listPadding - totalMargins) / COLUMNS
+  } else {
+    // Для телефонов (2 колонки)
+    const listPadding = normalize(12) * 2
+    const cardMargin = normalize(4)
+    const totalMargins = cardMargin * 4
+    return (windowWidth - listPadding - totalMargins) / 2
+  }
+}
+
+// Рассчитываем константы
+const CARD_WIDTH = getCardWidth()
 const CARD_HEIGHT = getCardHeight()
 
 // Адаптивные отступы
@@ -54,22 +92,52 @@ const fontSize = {
   xxlarge: RFValue(13)
 }
 
+// Функция для адаптивных шрифтов на планшетах
+const getTabletFontSize = (baseSize) => {
+  return RFValue(baseSize * 0.9) // Уменьшаем на 10% для планшетов
+}
+
 export const styles = StyleSheet.create({
   premiumContainer: {
     flex: 1,
     backgroundColor: "#0A0A0F"
   },
 
-  // ✅ ЦЕНТРИРУЕМ ДЛЯ ВСЕХ УСТРОЙСТВ
   premiumList: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: isTablet() ? spacing.xxl : spacing.lg,
     paddingBottom: spacing.xxl * 5,
-    alignItems: "center" // ← ДОБАВЛЕНО ДЛЯ ТЕЛЕФОНОВ
+    alignItems: "center"
   },
 
   cardContainer: {
     width: CARD_WIDTH,
     margin: spacing.xs
+  },
+
+  updateStatus: {
+    marginTop: 6,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#D4AF37",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3
+      },
+      android: {
+        elevation: 2
+      }
+    })
+  },
+
+  updateStatusText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#D4AF37",
+    letterSpacing: 0.3,
+    marginLeft: 8
   },
 
   /* ===== КАРТОЧКА МОНЕТЫ ===== */
@@ -119,7 +187,7 @@ export const styles = StyleSheet.create({
   },
 
   rankText: {
-    fontSize: fontSize.small,
+    fontSize: isTablet() ? getTabletFontSize(8.5) : fontSize.small,
     color: "#D4AF37",
     fontWeight: "800",
     backgroundColor: "rgba(212, 175, 55, 0.15)",
@@ -139,7 +207,7 @@ export const styles = StyleSheet.create({
   },
 
   coinName: {
-    fontSize: fontSize.xlarge,
+    fontSize: isTablet() ? getTabletFontSize(11) : fontSize.xlarge,
     fontWeight: "600",
     color: "#FFF",
     marginBottom: spacing.xs / 2,
@@ -148,7 +216,7 @@ export const styles = StyleSheet.create({
   },
 
   coinSymbol: {
-    fontSize: fontSize.large,
+    fontSize: isTablet() ? getTabletFontSize(9.5) : fontSize.large,
     color: "rgba(255, 255, 255, 0.6)",
     fontWeight: "500",
     includeFontPadding: false
@@ -206,7 +274,7 @@ export const styles = StyleSheet.create({
   },
 
   alertBadgeText: {
-    fontSize: fontSize.tiny,
+    fontSize: isTablet() ? getTabletFontSize(6.5) : fontSize.tiny,
     color: "#FFF",
     fontWeight: "900",
     textAlign: "center",
@@ -229,7 +297,7 @@ export const styles = StyleSheet.create({
   },
 
   coinPrice: {
-    fontSize: fontSize.xlarge,
+    fontSize: isTablet() ? getTabletFontSize(10.5) : fontSize.xlarge,
     fontWeight: "700",
     marginBottom: spacing.xs,
     flexShrink: 1,
@@ -250,7 +318,7 @@ export const styles = StyleSheet.create({
   },
 
   changeText: {
-    fontSize: fontSize.medium,
+    fontSize: isTablet() ? getTabletFontSize(9) : fontSize.medium,
     fontWeight: "700",
     marginLeft: spacing.xs,
     flexShrink: 1,
@@ -265,7 +333,7 @@ export const styles = StyleSheet.create({
   },
 
   userAmount: {
-    fontSize: fontSize.large,
+    fontSize: isTablet() ? getTabletFontSize(9.5) : fontSize.large,
     color: "#D4AF37",
     fontWeight: "700",
     textAlign: "right",
@@ -275,7 +343,7 @@ export const styles = StyleSheet.create({
   },
 
   userValue: {
-    fontSize: fontSize.medium,
+    fontSize: isTablet() ? getTabletFontSize(8.5) : fontSize.medium,
     color: "rgba(255, 255, 255, 0.9)",
     fontWeight: "600",
     textAlign: "right",
@@ -284,7 +352,7 @@ export const styles = StyleSheet.create({
   },
 
   userAmountPlaceholder: {
-    fontSize: fontSize.medium,
+    fontSize: isTablet() ? getTabletFontSize(8.5) : fontSize.medium,
     color: "rgba(255, 255, 255, 0.3)",
     fontStyle: "italic",
     textAlign: "right",
@@ -293,7 +361,7 @@ export const styles = StyleSheet.create({
   },
 
   userValuePlaceholder: {
-    fontSize: fontSize.medium,
+    fontSize: isTablet() ? getTabletFontSize(8.5) : fontSize.medium,
     color: "rgba(255, 255, 255, 0.3)",
     fontStyle: "italic",
     textAlign: "right",
@@ -326,7 +394,7 @@ export const styles = StyleSheet.create({
   },
 
   actionButtonText: {
-    fontSize: fontSize.medium,
+    fontSize: isTablet() ? getTabletFontSize(8.5) : fontSize.medium,
     fontWeight: "600",
     includeFontPadding: false,
     flexShrink: 1
@@ -351,7 +419,6 @@ export const styles = StyleSheet.create({
   },
 
   // ===== СТИЛИ ДЛЯ ИНДИКАТОРА СЕРВЕРА =====
-
   fcmIndicator: {
     marginHorizontal: spacing.xl,
     marginTop: spacing.sm,
@@ -432,11 +499,11 @@ export const styles = StyleSheet.create({
   },
 
   // Адаптация для очень маленьких экранов
-  ...(width < 350 && {
+  ...(windowWidth < 350 && {
     premiumList: {
       paddingHorizontal: spacing.md,
       paddingBottom: spacing.xxl * 4,
-      alignItems: "center" // ← И ДЛЯ МАЛЕНЬКИХ ТЕЛЕФОНОВ
+      alignItems: "center"
     },
 
     premiumCoinCard: {
@@ -458,74 +525,6 @@ export const styles = StyleSheet.create({
     alertButton: {
       width: normalize(30),
       height: normalize(30)
-    }
-  }),
-
-  // Адаптация для планшетов и больших экранов
-  ...(width > 768 && {
-    premiumList: {
-      paddingHorizontal: spacing.xxl,
-      paddingBottom: spacing.xxl * 6,
-      alignItems: "center" // ← И ДЛЯ ПЛАНШЕТОВ (остаётся)
-    },
-
-    cardContainer: {
-      width: CARD_WIDTH,
-      margin: spacing.xs
-    },
-
-    premiumCoinCard: {
-      borderRadius: spacing.xl,
-      minHeight: normalize(160),
-      maxHeight: normalize(240)
-    },
-
-    cardGradient: {
-      padding: spacing.lg
-    },
-
-    coinName: {
-      fontSize: RFValue(14)
-    },
-
-    coinSymbol: {
-      fontSize: RFValue(11.5)
-    },
-
-    coinPrice: {
-      fontSize: RFValue(13)
-    },
-
-    userAmount: {
-      fontSize: RFValue(11)
-    },
-
-    userValue: {
-      fontSize: RFValue(10)
-    },
-
-    bottomActions: {
-      height: normalize(36),
-      gap: spacing.md
-    },
-
-    actionButtonGradient: {
-      paddingHorizontal: spacing.md,
-      gap: spacing.sm
-    },
-
-    actionButtonText: {
-      fontSize: RFValue(10)
-    },
-
-    rankText: {
-      fontSize: RFValue(9.5),
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.xs
-    },
-
-    changeText: {
-      fontSize: RFValue(10.5)
     }
   })
 })

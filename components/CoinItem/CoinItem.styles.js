@@ -5,6 +5,9 @@ const { width } = Dimensions.get("window")
 const isSmallScreen = width < 375
 const isTablet = width > 768
 
+// Коэффициент уменьшения шрифтов для планшетов (0.9 = на 10% меньше)
+const tabletFontScale = 0.9
+
 export const styles = StyleSheet.create({
   containerItem: {
     flex: 1,
@@ -28,7 +31,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     flexShrink: 1,
     marginRight: 6,
-    maxWidth: "60%", // Уменьшено с 70%
+    maxWidth: "60%",
     minWidth: "50%"
   },
   coinImage: {
@@ -38,9 +41,9 @@ export const styles = StyleSheet.create({
     marginRight: 8
   },
   tabletCoinImage: {
-    width: 32,
-    height: 32,
-    borderRadius: 16
+    width: 28,
+    height: 28,
+    borderRadius: 14
   },
   smallCoinImage: {
     width: 24,
@@ -53,7 +56,6 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 1,
     flexShrink: 1
-    // 4
   },
   coinName: {
     fontSize: RFValue(11),
@@ -68,7 +70,7 @@ export const styles = StyleSheet.create({
     overflow: "hidden"
   },
   tabletCoinName: {
-    fontSize: RFValue(13)
+    fontSize: RFValue(11 * tabletFontScale)
   },
   smallCoinName: {
     fontSize: RFValue(10)
@@ -82,7 +84,7 @@ export const styles = StyleSheet.create({
     includeFontPadding: false
   },
   tabletCoinSymbol: {
-    fontSize: RFValue(10)
+    fontSize: RFValue(8 * tabletFontScale)
   },
   smallCoinSymbol: {
     fontSize: RFValue(7)
@@ -90,7 +92,7 @@ export const styles = StyleSheet.create({
   rightSection: {
     alignItems: "center",
     justifyContent: "center",
-    minWidth: 70,
+    minWidth: 65,
     flexShrink: 0
   },
   coinPrice: {
@@ -102,7 +104,7 @@ export const styles = StyleSheet.create({
     includeFontPadding: false
   },
   tabletCoinPrice: {
-    fontSize: RFValue(13)
+    fontSize: RFValue(11 * tabletFontScale)
   },
   smallCoinPrice: {
     fontSize: RFValue(10)
@@ -116,20 +118,20 @@ export const styles = StyleSheet.create({
     includeFontPadding: false
   },
   tabletPriceChange: {
-    fontSize: RFValue(11)
+    fontSize: RFValue(10 * tabletFontScale)
   },
   smallPriceChange: {
     fontSize: RFValue(8)
   },
 
-  // СТИЛИ ДЛЯ ДЕТАЛЬНОГО ВИДА (marketView = true) - ПРЕМИУМ ДИЗАЙН
+  // СТИЛИ ДЛЯ ДЕТАЛЬНОГО ВИДА (marketView = true) - Премиум дизайн
   detailedView: {
     flex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
     backgroundColor: "rgba(30, 30, 30, 0.9)",
     borderRadius: 12,
-    padding: 12,
+    padding: 10,
     shadowColor: "wheat",
     shadowOffset: {
       width: 0,
@@ -146,19 +148,19 @@ export const styles = StyleSheet.create({
   title: {
     flex: 1,
     alignItems: "flex-start",
-    marginBottom: 8
+    marginBottom: 6
   },
   titleCoin: {
     fontSize: RFValue(14),
     fontWeight: "800",
     color: "#FFD700",
-    marginBottom: 8,
+    marginBottom: 6,
     textShadowColor: "rgba(255, 215, 0, 0.3)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2
   },
   tabletTitleCoin: {
-    fontSize: RFValue(16)
+    fontSize: RFValue(14 * tabletFontScale)
   },
   smallTitleCoin: {
     fontSize: RFValue(12)
@@ -168,17 +170,17 @@ export const styles = StyleSheet.create({
   priceBlock: {
     backgroundColor: "rgba(255, 255, 255, 0.08)",
     borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    marginBottom: 6,
-    borderLeftWidth: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    marginBottom: 4,
+    borderLeftWidth: 2,
     borderLeftColor: "#FFD700"
   },
   priceRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    minWidth: 120
+    minWidth: 110
   },
   priceLabel: {
     fontSize: RFValue(10),
@@ -186,7 +188,7 @@ export const styles = StyleSheet.create({
     fontWeight: "500"
   },
   tabletPriceLabel: {
-    fontSize: RFValue(12)
+    fontSize: RFValue(10 * tabletFontScale)
   },
   smallPriceLabel: {
     fontSize: RFValue(9)
@@ -197,7 +199,7 @@ export const styles = StyleSheet.create({
     color: "white"
   },
   tabletPriceValue: {
-    fontSize: RFValue(13)
+    fontSize: RFValue(11 * tabletFontScale)
   },
   smallPriceValue: {
     fontSize: RFValue(10)
@@ -209,19 +211,19 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(255, 255, 255, 0.06)",
     borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    marginBottom: 4
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    marginBottom: 3
   },
   changeLabel: {
     fontSize: RFValue(9),
     color: "#A0A0A0",
     fontWeight: "500",
-    marginRight: 6,
-    minWidth: 25
+    marginRight: 4,
+    minWidth: 22
   },
   tabletChangeLabel: {
-    fontSize: RFValue(11)
+    fontSize: RFValue(9 * tabletFontScale)
   },
   smallChangeLabel: {
     fontSize: RFValue(8)
@@ -231,7 +233,7 @@ export const styles = StyleSheet.create({
     fontWeight: "700"
   },
   tabletChangeValue: {
-    fontSize: RFValue(12)
+    fontSize: RFValue(10 * tabletFontScale)
   },
   smallChangeValue: {
     fontSize: RFValue(9)
@@ -241,14 +243,14 @@ export const styles = StyleSheet.create({
   otherInfo: {
     flex: 1,
     alignItems: "flex-end",
-    marginLeft: 10
+    marginLeft: 8
   },
   infoCard: {
     backgroundColor: "rgba(40, 40, 50, 0.8)",
     borderRadius: 8,
-    padding: 8,
-    marginBottom: 6,
-    minWidth: 100,
+    padding: 6,
+    marginBottom: 4,
+    minWidth: 90,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.1)"
   },
@@ -256,11 +258,11 @@ export const styles = StyleSheet.create({
     fontSize: RFValue(9),
     color: "#FFD700",
     fontWeight: "600",
-    marginBottom: 4,
+    marginBottom: 3,
     textAlign: "center"
   },
   tabletInfoTitle: {
-    fontSize: RFValue(11)
+    fontSize: RFValue(9 * tabletFontScale)
   },
   smallInfoTitle: {
     fontSize: RFValue(8)
@@ -272,7 +274,7 @@ export const styles = StyleSheet.create({
     textAlign: "center"
   },
   tabletInfoValue: {
-    fontSize: RFValue(12)
+    fontSize: RFValue(10 * tabletFontScale)
   },
   smallInfoValue: {
     fontSize: RFValue(9)
@@ -283,14 +285,14 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    marginTop: 4
+    marginTop: 3
   },
   statItem: {
     backgroundColor: "rgba(50, 50, 65, 0.7)",
     borderRadius: 6,
-    padding: 6,
-    marginBottom: 4,
-    minWidth: 45,
+    padding: 5,
+    marginBottom: 3,
+    minWidth: 40,
     alignItems: "center",
     borderWidth: 1,
     borderColor: "rgba(255, 215, 0, 0.2)"
@@ -299,10 +301,10 @@ export const styles = StyleSheet.create({
     fontSize: RFValue(7),
     color: "#C0C0C0",
     fontWeight: "500",
-    marginBottom: 2
+    marginBottom: 1
   },
   tabletStatLabel: {
-    fontSize: RFValue(9)
+    fontSize: RFValue(7 * tabletFontScale)
   },
   smallStatLabel: {
     fontSize: RFValue(6)
@@ -313,7 +315,7 @@ export const styles = StyleSheet.create({
     fontWeight: "700"
   },
   tabletStatNumber: {
-    fontSize: RFValue(10)
+    fontSize: RFValue(8 * tabletFontScale)
   },
   smallStatNumber: {
     fontSize: RFValue(7)
@@ -321,11 +323,11 @@ export const styles = StyleSheet.create({
 
   // Иконка монеты в детальном виде
   detailCoinImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
     alignSelf: "center",
-    marginTop: 8,
+    marginTop: 6,
     borderWidth: 2,
     borderColor: "rgba(255, 215, 0, 0.3)",
     shadowColor: "#FFD700",
@@ -337,9 +339,9 @@ export const styles = StyleSheet.create({
     shadowRadius: 4
   },
   tabletDetailCoinImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30
+    width: 52,
+    height: 52,
+    borderRadius: 26
   },
   smallDetailCoinImage: {
     width: 40,

@@ -16,18 +16,18 @@ const isTablet = () => {
 // Определяем размеры в зависимости от устройства
 const getDeviceBasedDimensions = () => {
   const tablet = isTablet()
-  
+
   if (tablet) {
     return {
-      barWidth: 3.5, // Шире для планшетов
+      barWidth: 3.5,
       spacing: 1,
-      chartHeightRatio: 0.75, // Больше места для графика
+      chartHeightRatio: 0.75,
       statsHeightRatio: 0.15,
       containerPadding: 10,
-      minBarHeight: 60 // Минимальная высота баров для планшетов
+      minBarHeight: 60
     }
   }
-  
+
   return {
     barWidth: isAndroid ? 2.5 : 2.8,
     spacing: 0.8,
@@ -41,7 +41,7 @@ const getDeviceBasedDimensions = () => {
 export const VolumeChart = ({ volumeData, height = 100 }) => {
   const deviceProps = getDeviceBasedDimensions()
   const tablet = isTablet()
-  
+
   if (
     !volumeData ||
     !volumeData.datasets ||
@@ -81,35 +81,60 @@ export const VolumeChart = ({ volumeData, height = 100 }) => {
   }
 
   // Динамический расчет размеров
-  const chartHeight = Math.max(deviceProps.minBarHeight, height * deviceProps.chartHeightRatio)
+  const chartHeight = Math.max(
+    deviceProps.minBarHeight,
+    height * deviceProps.chartHeightRatio
+  )
   const statsHeight = Math.max(16, height * deviceProps.statsHeightRatio)
-  const svgWidth = volumeValues.length * (deviceProps.barWidth + deviceProps.spacing)
-  
-  // Минимальная ширина контента: для планшетов делаем шире
-  const minContentWidth = tablet 
-    ? Math.max(svgWidth, screenWidth - 40) 
-    : Math.max(svgWidth, screenWidth - 20)
+
+  // Расчет ширины SVG для заполнения всей ширины
+  const calculateSvgWidth = () => {
+    const containerWidth =
+      screenWidth - 2 * deviceProps.containerPadding - (tablet ? 24 : 16)
+    const barCount = volumeValues.length
+    const totalSpacing = (barCount - 1) * deviceProps.spacing
+    const availableWidth = containerWidth - totalSpacing
+    const calculatedBarWidth = availableWidth / barCount
+
+    // Возвращаем ширину SVG равную ширине контейнера
+    return containerWidth
+  }
+
+  const svgWidth = calculateSvgWidth()
+
+  // Расчет ширины каждого бара с учетом полного заполнения
+  const calculateBarWidth = () => {
+    const barCount = volumeValues.length
+    const totalSpacing = (barCount - 1) * deviceProps.spacing
+    const availableWidth = svgWidth - totalSpacing
+    return Math.max(deviceProps.barWidth, availableWidth / barCount)
+  }
+
+  const barWidth = calculateBarWidth()
 
   return (
-    <View style={[
-      styles.volumeChartContainer, 
-      { 
-        height, 
-        padding: deviceProps.containerPadding,
-        // Для планшетов используем более широкий контейнер
-        paddingHorizontal: tablet ? 12 : deviceProps.containerPadding
-      }
-    ]}>
-      {/* Статистика графика */}
-      <View style={[
-        styles.statsOverlay, 
-        { 
-          height: statsHeight,
-          left: tablet ? 12 : 8,
-          right: tablet ? 12 : 8,
-          top: tablet ? 6 : (isAndroid ? 4 : 5)
+    <View
+      style={[
+        styles.volumeChartContainer,
+        {
+          height,
+          padding: deviceProps.containerPadding,
+          paddingHorizontal: tablet ? 12 : deviceProps.containerPadding
         }
-      ]}>
+      ]}
+    >
+      {/* Статистика графика */}
+      <View
+        style={[
+          styles.statsOverlay,
+          {
+            height: statsHeight,
+            left: tablet ? 12 : 8,
+            right: tablet ? 12 : 8,
+            top: tablet ? 6 : isAndroid ? 4 : 5
+          }
+        ]}
+      >
         <View style={styles.ultraCompactRow}>
           <View style={styles.compactStatItem}>
             <Text style={[styles.indicator, { color: getIndicatorColor() }]}>
@@ -131,28 +156,20 @@ export const VolumeChart = ({ volumeData, height = 100 }) => {
         </View>
       </View>
 
-      {/* График объема */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
+      {/* График объема - теперь без ScrollView */}
+      <View
         style={[
-          styles.volumeScroll,
+          styles.chartContainer,
           {
             height: chartHeight,
             marginTop: tablet ? 4 : 2
           }
         ]}
-        contentContainerStyle={{
-          minWidth: minContentWidth,
-          alignItems: "flex-end",
-          // Для планшетов добавляем дополнительный отступ справа
-          paddingRight: tablet ? 20 : 0
-        }}
       >
         <Svg width={svgWidth} height={chartHeight}>
           {volumeValues.map((volume, index) => {
             const barHeight = (volume / maxVolume) * chartHeight * 0.9
-            const x = index * (deviceProps.barWidth + deviceProps.spacing)
+            const x = index * (barWidth + deviceProps.spacing)
             const y = chartHeight - barHeight
             const opacity = volume / maxVolume
             const color = `rgba(255, 59, 48, ${0.5 + opacity * 0.5})`
@@ -162,7 +179,7 @@ export const VolumeChart = ({ volumeData, height = 100 }) => {
                 key={index}
                 x={x}
                 y={y}
-                width={deviceProps.barWidth}
+                width={barWidth}
                 height={barHeight}
                 fill={color}
                 rx={1}
@@ -171,7 +188,7 @@ export const VolumeChart = ({ volumeData, height = 100 }) => {
             )
           })}
         </Svg>
-      </ScrollView>
+      </View>
     </View>
   )
 }

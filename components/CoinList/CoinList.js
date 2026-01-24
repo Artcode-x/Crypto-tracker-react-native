@@ -6,9 +6,10 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
-  RefreshControl
+  RefreshControl,
+  Dimensions
 } from "react-native"
-import { isSmallScreen, isTablet, styles, width } from "./CoinList.styles"
+import { isSmallScreen, styles } from "./CoinList.styles"
 import { useDispatch, useSelector } from "react-redux"
 import CoinItem from "../CoinItem/CoinItem"
 import { Ionicons } from "@expo/vector-icons"
@@ -35,19 +36,52 @@ const CoinList = ({
   const [flag, setFlag] = useState({})
   const dispatch = useDispatch()
 
+  // Динамическое определение размеров
+  const [windowWidth, setWindowWidth] = useState(Dimensions.get("window").width)
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener("change", ({ window }) => {
+      setWindowWidth(window.width)
+    })
+
+    return () => subscription?.remove()
+  }, [])
+
+  // Функция определения планшета
+  const isTablet = useCallback(() => {
+    const width = windowWidth
+    const height = Dimensions.get("window").height
+
+    // Простая логика для Expo Go
+    if (width >= 768) return true
+
+    // Для Nexus 9 и подобных устройств
+    const screenRatio = Math.max(width, height) / Math.min(width, height)
+    const pixelRatio = windowWidth / 360 // базовая ширина телефона
+
+    // Если ширина в dp больше 600 и соотношение сторон меньше 1.6
+    if (width / pixelRatio >= 600 && screenRatio < 1.6) {
+      return true
+    }
+
+    return false
+  }, [windowWidth])
+
   const onEndReachedCalledDuringMomentum = useRef(true)
 
   const getCardHeight = () => {
-    if (isTablet) return 120
+    const tablet = isTablet()
+    if (tablet) return 120
     if (isSmallScreen) return 80
     return 100
   }
 
   const getCardWidth = () => {
-    const numColumns = 2
+    const tablet = isTablet()
+    const numColumns = tablet ? 3 : 2
     const containerPadding = isSmallScreen ? 16 : 24
     const totalMargin = (numColumns + 1) * 8
-    return (width - containerPadding - totalMargin) / numColumns
+    return (windowWidth - containerPadding - totalMargin) / numColumns
   }
 
   useEffect(() => {
@@ -133,24 +167,28 @@ const CoinList = ({
         return null
       }
 
+      const tablet = isTablet()
+      const cardWidth = getCardWidth()
+      const cardHeight = getCardHeight()
+
       return (
         <View
           style={[
-            flag[item.id] && { borderLeftWidth: 3, borderLeftColor: "#FFD700" }, // Изменен цвет на золотистый
+            flag[item.id] && { borderLeftWidth: 3, borderLeftColor: "#FFD700" },
             styles.itemContainer,
             {
-              height: getCardHeight(),
-              width: getCardWidth()
+              height: cardHeight,
+              width: cardWidth
             }
           ]}
         >
           <CoinItem
             coin={item}
             onPress={() => openModal(item)}
-            cardHeight={getCardHeight()}
-            cardWidth={getCardWidth()}
+            cardHeight={cardHeight}
+            cardWidth={cardWidth}
             isSmallScreen={isSmallScreen}
-            isTablet={isTablet}
+            isTablet={tablet}
           />
           <TouchableOpacity
             onPress={() => {
@@ -168,22 +206,22 @@ const CoinList = ({
             }}
             style={[
               styles.addButton,
-              isTablet && styles.tabletAddButton,
+              tablet && styles.tabletAddButton,
               isSmallScreen && styles.smallAddButton,
-              flag[item.id] && styles.addButtonActive // Добавлен активный стиль
+              flag[item.id] && styles.addButtonActive
             ]}
           >
             {flag[item.id] ? (
               <Ionicons
-                name='checkmark-circle' // Убрано -outline для заполненной иконки
-                size={isTablet ? 24 : isSmallScreen ? 18 : 22} // Немного увеличен размер
-                color='#4CAF50' // Изменен цвет на зеленый
+                name='checkmark-circle'
+                size={tablet ? 24 : isSmallScreen ? 18 : 22}
+                color='#4CAF50'
               />
             ) : (
               <Ionicons
                 name='add-circle-outline'
-                size={isTablet ? 24 : isSmallScreen ? 18 : 22} // Немного увеличен размер
-                color='#FFD700' // Изменен цвет на золотистый
+                size={tablet ? 24 : isSmallScreen ? 18 : 22}
+                color='#FFD700'
               />
             )}
           </TouchableOpacity>
@@ -234,7 +272,6 @@ const CoinList = ({
     )
   }, [search, isLoadingMore, refreshing, errorMessage])
 
-  // ========== ДОБАВЛЕННЫЙ ПОДГРУЗЧИК ==========
   const renderFooter = useCallback(() => {
     if (!isLoadingMore || search) return null
 
@@ -258,6 +295,9 @@ const CoinList = ({
     return `${item.id}_${index}`
   }, [])
 
+  // Определяем количество колонок
+  const numColumns = isTablet() ? 3 : 2
+
   return (
     <>
       <FlatList
@@ -265,14 +305,14 @@ const CoinList = ({
         data={filteredData}
         showsVerticalScrollIndicator={false}
         renderItem={renderItem}
-        numColumns={2}
+        numColumns={numColumns}
         keyExtractor={keyExtractor}
-        contentContainerStyle={[styles.contentContainer, { paddingBottom: 55 }]} // для renderFooter
+        contentContainerStyle={[styles.contentContainer, { paddingBottom: 55 }]}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
         onMomentumScrollBegin={handleMomentumScrollBegin}
         ListEmptyComponent={renderEmptyList}
-        ListFooterComponent={renderFooter} // подгрузчик
+        ListFooterComponent={renderFooter}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -311,7 +351,6 @@ const CoinList = ({
         scrollEventThrottle={16}
       />
 
-      {/* Улучшенное модальное окно успешного добавления */}
       <Modal
         transparent
         visible={modalVisible}
@@ -326,7 +365,6 @@ const CoinList = ({
         </View>
       </Modal>
 
-      {/* Улучшенное модальное окно дубликата */}
       <Modal transparent visible={msgDouble} onRequestClose={() => setMsgDouble(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.warningModal}>

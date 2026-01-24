@@ -1,10 +1,30 @@
-import { StyleSheet, Dimensions } from "react-native"
+import { StyleSheet, Dimensions, Platform } from "react-native"
 import { RFValue } from "react-native-responsive-fontsize"
 
-export const { width } = Dimensions.get("window")
+export const { width, height } = Dimensions.get("window")
+
+// Более точное определение планшета
+export const isTablet = () => {
+  // Проверка по ширине (основной критерий)
+  if (width >= 768) return true
+
+  // Дополнительные проверки для Android-планшетов
+  if (Platform.OS === "android") {
+    const screenRatio = Math.max(width, height) / Math.min(width, height)
+
+    // Для Nexus 9: 2048/1536 ≈ 1.33 (портретный) или 1536/2048 ≈ 0.75 (альбомный)
+    const scaledWidth = width * (Platform.isPad ? 1 : 1)
+
+    // Если ширина больше 600dp и соотношение сторон меньше 1.6 (типично для планшетов)
+    if (scaledWidth >= 600 && screenRatio < 1.6) {
+      return true
+    }
+  }
+
+  return false
+}
 
 export const isSmallScreen = width < 375
-export const isTablet = width > 768
 
 export const styles = StyleSheet.create({
   list: {
@@ -50,9 +70,6 @@ export const styles = StyleSheet.create({
     right: 3
   },
 
-  // ========== МОДАЛЬНЫЕ ОКНА ==========
-
-  // Оверлей для всех модалок
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.7)",
@@ -61,22 +78,17 @@ export const styles = StyleSheet.create({
     padding: 20
   },
 
-  // Модалка успешного добавления
   successModal: {
-    // width: "90%",
     width: "75%",
     maxWidth: 350,
     alignItems: "center",
-    // padding: 24,
     padding: 14,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(76, 175, 80, 0.3)",
-    // backgroundColor: "#1A1A1A"
+    borderColor: "rgba(76, 175, 55, 0.3)",
     backgroundColor: "rgba(26, 26, 26, 0.7)"
   },
 
-  // Модалка предупреждения (дубликат)
   warningModal: {
     width: "75%",
     maxWidth: 350,
@@ -85,11 +97,9 @@ export const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "rgba(255, 215, 0, 0.3)",
-    // backgroundColor: "#1A1A1A"
     backgroundColor: "rgba(26, 26, 26, 0.7)"
   },
 
-  // Заголовок модалки
   modalTitle: {
     color: "#FFFFFF",
     fontSize: RFValue(20),
@@ -98,7 +108,6 @@ export const styles = StyleSheet.create({
     marginBottom: 8
   },
 
-  // Текст модалки
   modalText: {
     color: "rgba(255, 255, 255, 0.8)",
     fontSize: RFValue(14),
@@ -107,7 +116,6 @@ export const styles = StyleSheet.create({
     marginBottom: 20
   },
 
-  // Кнопка для обеих модалок
   modalButton: {
     backgroundColor: "rgba(212, 175, 55, 0.2)",
     paddingHorizontal: 24,
@@ -118,7 +126,6 @@ export const styles = StyleSheet.create({
     minWidth: 100
   },
 
-  // Текст кнопки (используется для обеих кнопок)
   modalButtonText: {
     color: "#FFD700",
     fontSize: RFValue(14),
@@ -126,15 +133,12 @@ export const styles = StyleSheet.create({
     textAlign: "center"
   },
 
-  // ========== FOOTER ==========
   footerContainer: {
-    // paddingVertical: 24,
     paddingVertical: 14,
     alignItems: "center"
   },
 
   footerGradient: {
-    // paddingHorizontal: 24,
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 20,
@@ -150,30 +154,33 @@ export const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: 0.5
   },
-  //////
+
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: RFValue(20, 812) // Адаптивный паддинг
+    padding: RFValue(20, 812)
   },
+
   emptyGradient: {
     width: "100%",
     alignItems: "center"
   },
+
   emptyText: {
     color: "#FFFFFF",
-    // 18 — базовый размер, 812 — высота экрана стандарта (iPhone 11/12/13/14/15)
     fontSize: RFValue(18, 812),
     fontWeight: "600",
     textAlign: "center"
   },
+
   errorContainer: {
     marginTop: RFValue(15, 812)
   },
+
   errorText: {
     color: "#FF5252",
-    fontSize: RFValue(14, 812), // Адаптивный шрифт поменьше для ошибки
+    fontSize: RFValue(14, 812),
     textAlign: "center"
   }
 })

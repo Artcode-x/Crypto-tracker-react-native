@@ -48,11 +48,6 @@ import FavoriteHeader from "./FavoriteHeader/FavoriteHeader"
 import AmountInputModal from "./FavoriteComponents/AmountInputModal/AmountInputModal"
 import FavoriteStatsPanel from "./FavoriteStatsPanel/FavoriteStatsPanel"
 
-const { width } = Dimensions.get("window")
-const CARD_PADDING = 8
-const CARD_MARGIN = 4
-const CARD_WIDTH = (width - CARD_PADDING * 2 - CARD_MARGIN * 4) / 2
-
 const Favorite = () => {
   const dispatch = useDispatch()
   const coinData = useSelector(coinSelector)
@@ -76,6 +71,40 @@ const Favorite = () => {
   const [fcmToken, setFcmToken] = useState(null)
   const [appState, setAppState] = useState(AppState.currentState)
   const [serverStatus, setServerStatus] = useState(null)
+
+  // Динамическое определение ширины экрана
+  const [windowWidth, setWindowWidth] = useState(Dimensions.get("window").width)
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener("change", ({ window }) => {
+      setWindowWidth(window.width)
+    })
+
+    return () => subscription?.remove()
+  }, [])
+
+  // Функция определения планшета
+  const isTablet = useCallback(() => {
+    const width = windowWidth
+    const height = Dimensions.get("window").height
+
+    // Основная логика для Expo Go
+    if (width >= 768) return true
+
+    // Для Nexus 9 и подобных устройств
+    const screenRatio = Math.max(width, height) / Math.min(width, height)
+    const pixelRatio = windowWidth / 360 // базовая ширина телефона
+
+    // Если ширина в dp больше 600 и соотношение сторон меньше 1.6
+    if (width / pixelRatio >= 600 && screenRatio < 1.6) {
+      return true
+    }
+
+    return false
+  }, [windowWidth])
+
+  // Определяем количество колонок
+  const numColumns = isTablet() ? 3 : 2
 
   const amountInputRef = useRef("")
 
@@ -143,7 +172,6 @@ const Favorite = () => {
   }, [])
 
   // Инициализация уведомлений и FCM
-
   useEffect(() => {
     const initializeNotifications = async () => {
       try {
@@ -871,49 +899,6 @@ const Favorite = () => {
         </View>
       )}
 
-      {/* // Индикатор состояния FCM и сервера
-      {fcmToken && (
-        <TouchableOpacity
-          style={[
-            styles.fcmIndicator,
-            !serverStatus?.serverAvailable && styles.fcmIndicatorOffline
-          ]}
-          onPress={testServerConnection}
-          activeOpacity={0.7}
-        >
-          <LinearGradient
-            colors={
-              serverStatus?.serverAvailable
-                ? ["rgba(76, 175, 80, 0.15)", "rgba(56, 142, 60, 0.08)"]
-                : ["rgba(255, 152, 0, 0.15)", "rgba(245, 124, 0, 0.08)"]
-            }
-            style={styles.fcmIndicatorGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-          >
-            <View style={styles.fcmIndicatorContent}>
-              <View
-                style={[
-                  styles.fcmStatusDot,
-                  serverStatus?.serverAvailable
-                    ? styles.fcmStatusDotOnline
-                    : styles.fcmStatusDotOffline
-                ]}
-              />
-              <Text style={styles.fcmIndicatorText}>
-                {serverStatus?.serverAvailable ? "Сервер онлайн" : "Сервер оффлайн"}
-              </Text>
-              <Ionicons
-                name={serverStatus?.serverAvailable ? "wifi" : "cloud-offline-outline"}
-                size={12}
-                color={serverStatus?.serverAvailable ? "#4CAF50" : "#FF9800"}
-                style={styles.fcmIndicatorIcon}
-              />
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
-      )} */}
-
       {/* Пустое состояние или список */}
       {coinData.length === 0 ? (
         <EmptyState
@@ -925,7 +910,7 @@ const Favorite = () => {
         <FlatList
           data={coinData}
           renderItem={({ item }) => <PremiumCoinCard item={item} />}
-          numColumns={2}
+          numColumns={numColumns}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.premiumList}
           showsVerticalScrollIndicator={false}
