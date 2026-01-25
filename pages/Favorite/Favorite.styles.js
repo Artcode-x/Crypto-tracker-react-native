@@ -144,13 +144,13 @@ export const styles = StyleSheet.create({
   premiumCoinCard: {
     borderRadius: spacing.lg,
     overflow: "hidden",
-    height: isTablet() ? CARD_HEIGHT * 0.9 : CARD_HEIGHT * 0.99,
-    // minHeight: normalize(140),
-    // maxHeight: normalize(220),
+    height: isTablet() ? CARD_HEIGHT * 0.95 : CARD_HEIGHT * 0.99,
+    minHeight: normalize(140),
+    maxHeight: normalize(220),
     // minHeight: normalize(133),
     // maxHeight: normalize(209),
-    minHeight: isTablet() ? normalize(126) : normalize(139),
-    maxHeight: isTablet() ? normalize(198) : normalize(218),
+    // minHeight: isTablet() ? normalize(126) : normalize(139),
+    // maxHeight: isTablet() ? normalize(198) : normalize(218),
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -220,7 +220,7 @@ export const styles = StyleSheet.create({
   },
 
   coinSymbol: {
-    fontSize: isTablet() ? getTabletFontSize(9.5) : fontSize.large,
+    fontSize: isTablet() ? getTabletFontSize(9) : fontSize.medium,
     color: "rgba(255, 255, 255, 0.6)",
     fontWeight: "500",
     includeFontPadding: false
@@ -322,7 +322,7 @@ export const styles = StyleSheet.create({
   },
 
   changeText: {
-    fontSize: isTablet() ? getTabletFontSize(9) : fontSize.medium,
+    fontSize: isTablet() ? getTabletFontSize(9) : fontSize.small,
     fontWeight: "700",
     marginLeft: spacing.xs,
     flexShrink: 1,
@@ -506,8 +506,8 @@ export const styles = StyleSheet.create({
   ...(windowWidth < 350 && {
     premiumList: {
       paddingHorizontal: spacing.md,
-      paddingBottom: spacing.xxl * 4,
-      alignItems: "center"
+      paddingBottom: spacing.xxl * 4
+      // alignItems: "center"
     },
 
     premiumCoinCard: {

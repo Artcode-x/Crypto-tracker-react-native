@@ -911,8 +911,20 @@ const Favorite = () => {
           data={coinData}
           renderItem={({ item }) => <PremiumCoinCard item={item} />}
           numColumns={numColumns}
+          contentContainerStyle={[
+            styles.premiumList,
+            {
+              alignItems: "flex-start" // ← карточки слева
+            
+            }
+          ]}
+          columnWrapperStyle={
+            isTablet()
+              ? { justifyContent: "flex-start" }
+              : { justifyContent: "space-between" }
+          }
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.premiumList}
+          // contentContainerStyle={styles.premiumList}
           showsVerticalScrollIndicator={false}
           initialNumToRender={10}
           maxToRenderPerBatch={10}
