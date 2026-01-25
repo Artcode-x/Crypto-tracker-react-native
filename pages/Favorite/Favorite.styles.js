@@ -191,7 +191,7 @@ export const styles = StyleSheet.create({
   },
 
   rankText: {
-    fontSize: isTablet() ? getTabletFontSize(8.5) : fontSize.small,
+    fontSize: isTablet() ? getTabletFontSize(8.5) : fontSize.tiny,
     color: "#D4AF37",
     fontWeight: "800",
     backgroundColor: "rgba(212, 175, 55, 0.15)",
