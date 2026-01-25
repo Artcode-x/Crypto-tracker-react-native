@@ -105,8 +105,7 @@ export const styles = StyleSheet.create({
 
   premiumList: {
     paddingHorizontal: isTablet() ? spacing.xxl : spacing.lg,
-    paddingBottom: spacing.xxl * 5,
-    alignItems: "center"
+    paddingBottom: spacing.xxl * 5
   },
 
   cardContainer: {

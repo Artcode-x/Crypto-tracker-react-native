@@ -914,17 +914,20 @@ const Favorite = () => {
           contentContainerStyle={[
             styles.premiumList,
             {
-              alignItems: "flex-start" // ← карточки слева
-            
+              alignItems: "flex-start", // карточки слева
+              width: "100%",
+              alignSelf: "center" // контейнер по центру
             }
           ]}
           columnWrapperStyle={
-            isTablet()
-              ? { justifyContent: "flex-start" }
-              : { justifyContent: "space-between" }
+            numColumns > 1
+              ? {
+                  justifyContent: "flex-start", // карточки в строке слева
+                  width: "100%"
+                }
+              : null
           }
           keyExtractor={(item) => item.id}
-          // contentContainerStyle={styles.premiumList}
           showsVerticalScrollIndicator={false}
           initialNumToRender={10}
           maxToRenderPerBatch={10}
