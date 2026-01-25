@@ -144,9 +144,13 @@ export const styles = StyleSheet.create({
   premiumCoinCard: {
     borderRadius: spacing.lg,
     overflow: "hidden",
-    height: CARD_HEIGHT,
-    minHeight: normalize(140),
-    maxHeight: normalize(220),
+    height: isTablet() ? CARD_HEIGHT * 0.9 : CARD_HEIGHT * 0.99,
+    // minHeight: normalize(140),
+    // maxHeight: normalize(220),
+    // minHeight: normalize(133),
+    // maxHeight: normalize(209),
+    minHeight: isTablet() ? normalize(126) : normalize(139),
+    maxHeight: isTablet() ? normalize(198) : normalize(218),
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -171,7 +175,7 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: spacing.sm
+    marginBottom: spacing.md
   },
 
   coinInfo: {
@@ -207,7 +211,7 @@ export const styles = StyleSheet.create({
   },
 
   coinName: {
-    fontSize: isTablet() ? getTabletFontSize(11) : fontSize.xlarge,
+    fontSize: isTablet() ? getTabletFontSize(11) : fontSize.large,
     fontWeight: "600",
     color: "#FFF",
     marginBottom: spacing.xs / 2,
@@ -297,7 +301,7 @@ export const styles = StyleSheet.create({
   },
 
   coinPrice: {
-    fontSize: isTablet() ? getTabletFontSize(10.5) : fontSize.xlarge,
+    fontSize: isTablet() ? getTabletFontSize(11.5) : fontSize.large,
     fontWeight: "700",
     marginBottom: spacing.xs,
     flexShrink: 1,
