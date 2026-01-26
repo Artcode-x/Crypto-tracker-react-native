@@ -17,7 +17,6 @@ import * as Notifications from "expo-notifications"
 import { useDispatch, useSelector } from "react-redux"
 
 import Constants from "expo-constants"
-import { Clipboard } from "react-native"
 import {
   coinSelector,
   daysSelector,
@@ -28,12 +27,7 @@ import {
   unreadAlertsCountSelector
 } from "../../store/alertsSelectors"
 import { removeCoin, updateUserAsset } from "../../store/reducersSlice"
-import {
-  addPriceAlert,
-  deletePriceAlert,
-  markAlertAsRead,
-  triggerAlertFromServer
-} from "../../store/alertsSlice"
+import { addPriceAlert, deletePriceAlert, markAlertAsRead } from "../../store/alertsSlice"
 import { styles } from "./Favorite.styles"
 import ModalFavorite from "./ModalChart/ModalFavorite"
 import AlertModal from "../../components/Alerts/AlertModal/AlertModal"
@@ -274,46 +268,6 @@ const Favorite = () => {
 
     updateBadges()
   }, [unreadAlertsCount, notificationPermission])
-
-  // Логирование при изменении избранного
-  useEffect(() => {
-    if (__DEV__) {
-      console.log("\n ==== ОБНОВЛЕНИЕ ИЗБРАННОГО ====")
-      console.log(`Монеты: ${coinData.length}`)
-      console.log(`Алёрты: ${priceAlerts.length} (${unreadAlertsCount} непрочитанных)`)
-      console.log(`Уведомления: ${notificationPermission ? "Разрешены" : "Не разрешены"}`)
-      console.log(`FCM Token: ${fcmToken ? "Есть" : "Нет"}`)
-      console.log(`Состояние приложения: ${appState}`)
-
-      if (serverStatus) {
-        console.log(`Сервер: ${serverStatus.serverAvailable ? "Доступен" : "Недоступен"}`)
-        console.log(`Ожидающие операции: ${serverStatus.pendingOperations}`)
-      }
-
-      const activeAlerts = priceAlerts.filter(
-        (alert) => alert.isActive && !alert.triggeredAt
-      )
-      const triggeredAlerts = priceAlerts.filter((alert) => alert.triggeredAt)
-
-      if (activeAlerts.length > 0) {
-        console.log(`Активные алерты: ${activeAlerts.length}`)
-      }
-
-      if (triggeredAlerts.length > 0) {
-        console.log(`Сработавшие алерты: ${triggeredAlerts.length}`)
-      }
-
-      console.log("=============================\n")
-    }
-  }, [
-    coinData,
-    priceAlerts,
-    unreadAlertsCount,
-    notificationPermission,
-    fcmToken,
-    appState,
-    serverStatus
-  ])
 
   // Обработчик ручного обновления
   const handleManualUpdate = useCallback(async () => {
