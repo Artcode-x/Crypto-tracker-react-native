@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useCallback } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { AppState } from "react-native"
+import { AppState, Platform } from "react-native"
 import { setCoin, updateUserAsset } from "../../store/reducersSlice"
 
 const StorageSync = () => {
@@ -12,129 +12,205 @@ const StorageSync = () => {
   const hasLoadedRef = useRef(false)
   const appStateRef = useRef(AppState.currentState)
   const saveTimeoutRef = useRef(null)
+  const isSavingRef = useRef(false)
 
-  // 1. Загружаем данные ОДИН РАЗ при старте приложения
   useEffect(() => {
     if (hasLoadedRef.current) return
 
     const loadData = async () => {
       try {
-        console.log("📥 StorageSync: Загружаем данные...")
-
         const [fav, assets] = await Promise.all([
           AsyncStorage.getItem("@user_favorites"),
           AsyncStorage.getItem("@user_assets")
         ])
 
-        if (fav) {
-          const favorites = JSON.parse(fav)
-          console.log(`📥 Загружено ${favorites.length} монет`)
+        const loadedFavorites = fav ? JSON.parse(fav) : []
+        const loadedAssets = assets ? JSON.parse(assets) : {}
 
-          // 🔥 ФИЛЬТРАЦИЯ: Проверяем что монеты еще не загружены
-          const existingIds = new Set(coinItem.map((c) => c.id))
-          const newFavorites = favorites.filter((coin) => !existingIds.has(coin.id))
+        if (loadedFavorites.length > 0) {
+          const processedIds = new Set()
 
-          newFavorites.forEach((coin) => {
-            dispatch(setCoin(coin))
+          loadedFavorites.forEach((coin) => {
+            if (!processedIds.has(coin.id)) {
+              processedIds.add(coin.id)
+
+              const coinWithTimestamp = {
+                ...coin,
+                loadedAt: new Date().toISOString(),
+
+                current_price: coin.current_price || 0,
+                price_change_percentage_24h: coin.price_change_percentage_24h || 0,
+                market_cap_rank: coin.market_cap_rank || 9999
+              }
+
+              dispatch(setCoin(coinWithTimestamp))
+            }
           })
-
-          if (newFavorites.length < favorites.length) {
-            console.log(
-              `⚠️ Пропущено ${favorites.length - newFavorites.length} дубликатов`
-            )
-          }
         }
 
-        if (assets) {
-          const assetsData = JSON.parse(assets)
-          console.log(`📥 Активы: ${Object.keys(assetsData).length}`)
+        if (Object.keys(loadedAssets).length > 0) {
+          Object.entries(loadedAssets).forEach(([coinId, amount]) => {
+            const numericAmount =
+              typeof amount === "string" ? parseFloat(amount) || 0 : amount || 0
 
-          Object.entries(assetsData).forEach(([coinId, amount]) => {
-            dispatch(updateUserAsset({ coinId, amount }))
+            if (numericAmount > 0) {
+              dispatch(
+                updateUserAsset({
+                  coinId,
+                  amount: numericAmount
+                })
+              )
+            }
           })
         }
 
         hasLoadedRef.current = true
-        console.log("✅ Загрузка завершена")
       } catch (e) {
-        console.error("❌ Ошибка загрузки:", e)
+        console.error("Критическая ошибка загрузки:", e)
+
+        hasLoadedRef.current = true
       }
     }
 
     loadData()
-  }, [dispatch, coinItem]) // Добавили coinItem для проверки дубликатов
+  }, [dispatch])
 
-  // 2. Сохраняем только при закрытии приложения
-  useEffect(() => {
-    const saveOnExit = async () => {
-      try {
-        // 🔥 ОТМЕНЯЕМ предыдущий таймер если есть
-        if (saveTimeoutRef.current) {
-          clearTimeout(saveTimeoutRef.current)
-        }
-
-        // 🔥 ДЕБАУНС: сохраняем через 300мс после последнего вызова
-        saveTimeoutRef.current = setTimeout(async () => {
-          const assetsCount = Object.keys(userAssets).length
-          console.log(`💾 Сохраняем: Монеты: ${coinItem.length}, Активы: ${assetsCount}`)
-
-          // 🔥 ФИЛЬТРАЦИЯ: сохраняем только актуальные активы
-          const coinIds = new Set(coinItem.map((coin) => coin.id))
-          const filteredAssets = {}
-
-          Object.entries(userAssets).forEach(([coinId, amount]) => {
-            if (coinIds.has(coinId)) {
-              filteredAssets[coinId] = amount
-            }
-          })
-
-          const favoritesToSave = coinItem.map((coin) => ({
-            id: coin.id,
-            name: coin.name,
-            symbol: coin.symbol,
-            // Добавление ценовых данных, чтобы не было пробелов при перезагрузке в карточках избранного
-            current_price: coin.current_price || 0,
-            price_change_percentage_24h: coin.price_change_percentage_24h || 0,
-            market_cap_rank: coin.market_cap_rank || 0,
-            //  market_cap: savedCoin.market_cap || 0,
-            // timestamp когда данные были обновлены
-            price_updated_at: new Date().toISOString()
-          }))
-
-          await AsyncStorage.setItem("@user_favorites", JSON.stringify(favoritesToSave))
-          await AsyncStorage.setItem("@user_assets", JSON.stringify(filteredAssets))
-          console.log("✅ Данные сохранены")
-        }, 300)
-      } catch (e) {
-        console.error("❌ Ошибка сохранения:", e)
-      }
+  const saveData = useCallback(async () => {
+    if (isSavingRef.current) {
+      return
     }
 
-    // Слушаем изменение состояния приложения
-    const subscription = AppState.addEventListener("change", (nextAppState) => {
-      // Когда приложение уходит в фон - сохраняем
-      if (
-        appStateRef.current === "active" &&
-        (nextAppState === "background" || nextAppState === "inactive")
-      ) {
-        console.log("📱 Приложение сворачивается...")
-        saveOnExit()
+    if (!hasLoadedRef.current) {
+      return
+    }
+
+    isSavingRef.current = true
+
+    try {
+      const favoritesToSave = coinItem.map((coin) => ({
+        id: coin.id,
+        name: coin.name,
+        symbol: coin.symbol,
+        current_price: coin.current_price || 0,
+        price_change_percentage_24h: coin.price_change_percentage_24h || 0,
+        market_cap_rank: coin.market_cap_rank || 9999,
+        sparkline_in_7d: coin.sparkline_in_7d || null,
+        image: coin.image || "",
+        last_updated: coin.last_updated || new Date().toISOString(),
+        savedAt: new Date().toISOString()
+      }))
+
+      const coinIds = new Set(coinItem.map((coin) => coin.id))
+      const assetsToSave = {}
+
+      Object.entries(userAssets).forEach(([coinId, amount]) => {
+        if (coinIds.has(coinId) && amount > 0) {
+          assetsToSave[coinId] = amount
+        }
+      })
+
+      await Promise.all([
+        AsyncStorage.setItem("@user_favorites", JSON.stringify(favoritesToSave)),
+        AsyncStorage.setItem("@user_assets", JSON.stringify(assetsToSave))
+      ])
+    } catch (e) {
+      console.error("Ошибка сохранения:", e)
+
+      try {
+        const simpleFavorites = coinItem.map((coin) => ({
+          id: coin.id,
+          name: coin.name,
+          symbol: coin.symbol
+        }))
+        await AsyncStorage.setItem("@user_favorites", JSON.stringify(simpleFavorites))
+      } catch (fallbackError) {
+        console.error("Критическая ошибка fallback сохранения:", fallbackError)
       }
+    } finally {
+      isSavingRef.current = false
+    }
+  }, [coinItem, userAssets])
 
-      appStateRef.current = nextAppState
-    })
+  useEffect(() => {
+    if (!hasLoadedRef.current) {
+      return
+    }
 
-    // Сохраняем при размонтировании компонента
+    if (
+      hasLoadedRef.current &&
+      coinItem.length === 0 &&
+      Object.keys(userAssets).length === 0
+    ) {
+      return
+    }
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      saveData()
+    }, 1000)
+
     return () => {
-      subscription.remove()
-      saveOnExit()
-
-      // Очищаем таймер
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [coinItem, userAssets])
+  }, [coinItem, userAssets, saveData])
+
+  useEffect(() => {
+    const handleAppStateChange = async (nextAppState) => {
+      if (
+        appStateRef.current === "active" &&
+        (nextAppState === "background" || nextAppState === "inactive")
+      ) {
+        console.log("Приложение сворачивается - немедленное сохранение...")
+
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current)
+          saveTimeoutRef.current = null
+        }
+
+        try {
+          await saveData()
+          console.log("Данные сохранены перед уходом в фон")
+        } catch (error) {
+          console.error("Ошибка сохранения при сворачивании:", error)
+        }
+      }
+
+      appStateRef.current = nextAppState
+    }
+
+    const subscription = AppState.addEventListener("change", handleAppStateChange)
+
+    return () => {
+      subscription.remove()
+
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+
+      if (hasLoadedRef.current) {
+        saveData().catch((e) => {
+          console.error("Ошибка сохранения при размонтировании:", e)
+        })
+      }
+    }
+  }, [saveData])
+
+  useEffect(() => {
+    if (!hasLoadedRef.current) return
+
+    const interval = setInterval(() => {
+      if (appStateRef.current === "active") {
+        saveData()
+      }
+    }, 30000)
+
+    return () => clearInterval(interval)
+  }, [saveData])
 
   return null
 }
