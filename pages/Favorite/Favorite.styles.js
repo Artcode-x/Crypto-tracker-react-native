@@ -72,6 +72,20 @@ const getCardWidth = () => {
 const CARD_WIDTH = getCardWidth()
 const CARD_HEIGHT = getCardHeight()
 
+// Функция для расчета ширины внутреннего контейнера
+const getListInnerContainerWidth = () => {
+  const cardMargin = normalize(4)
+  if (isTablet()) {
+    // Для планшетов: 3 карточки + отступы между ними
+    return CARD_WIDTH * 3 + cardMargin * 6 // 6 отступов (по 2 на каждую карточку)
+  } else {
+    // Для телефонов: 2 карточки + отступы между ними
+    return CARD_WIDTH * 2 + cardMargin * 4 // 4 отступа (по 2 на каждую карточку)
+  }
+}
+
+const LIST_INNER_CONTAINER_WIDTH = getListInnerContainerWidth()
+
 // Адаптивные отступы
 const spacing = {
   xs: normalize(4),
@@ -103,9 +117,18 @@ export const styles = StyleSheet.create({
     backgroundColor: "#0A0A0F"
   },
 
+  // Внешний контейнер списка - занимает всю ширину с отступами
   premiumList: {
     paddingHorizontal: isTablet() ? spacing.xxl : spacing.lg,
-    paddingBottom: spacing.xxl * 5
+    paddingBottom: spacing.xxl * 5,
+    width: "100%",
+    alignItems: "center" // Центрируем внутренний контейнер
+  },
+
+  // Внутренний контейнер - фиксированной ширины, центрируется внутри premiumList
+  listInnerContainer: {
+    width: LIST_INNER_CONTAINER_WIDTH,
+    alignSelf: "center" // Центрируем по горизонтали
   },
 
   cardContainer: {
@@ -146,10 +169,6 @@ export const styles = StyleSheet.create({
     height: isTablet() ? CARD_HEIGHT * 0.95 : CARD_HEIGHT * 0.99,
     minHeight: normalize(140),
     maxHeight: normalize(220),
-    // minHeight: normalize(133),
-    // maxHeight: normalize(209),
-    // minHeight: isTablet() ? normalize(126) : normalize(139),
-    // maxHeight: isTablet() ? normalize(198) : normalize(218),
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -505,20 +524,30 @@ export const styles = StyleSheet.create({
   ...(windowWidth < 350 && {
     premiumList: {
       paddingHorizontal: spacing.md,
-      paddingBottom: spacing.xxl * 4
-      // alignItems: "center"
+      paddingBottom: spacing.xxl * 4,
+      width: "100%",
+      alignItems: "center"
+    },
+
+    listInnerContainer: {
+      width: CARD_WIDTH * 2 + spacing.xs * 4,
+      alignSelf: "center"
     },
 
     premiumCoinCard: {
-      borderRadius: spacing.md
+      borderRadius: 11,
+      borderWidth: 1,
+      overflow: "hidden"
     },
 
     coinName: {
-      fontSize: fontSize.xlarge
+      fontSize: fontSize.xlarge,
+      color: "#FFF"
     },
 
     coinSymbol: {
-      fontSize: fontSize.medium
+      fontSize: fontSize.medium,
+      color: "rgba(255, 255, 255, 0.6)"
     },
 
     coinPrice: {
@@ -527,7 +556,14 @@ export const styles = StyleSheet.create({
 
     alertButton: {
       width: normalize(30),
-      height: normalize(30)
+      height: normalize(30),
+      borderRadius: normalize(15),
+      borderWidth: normalize(2),
+      borderColor: "rgba(212, 175, 55, 0.3)",
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "rgba(255, 255, 255, 0.05)",
+      position: "relative"
     }
   })
 })

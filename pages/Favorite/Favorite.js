@@ -865,19 +865,12 @@ const Favorite = () => {
           data={coinData}
           renderItem={({ item }) => <PremiumCoinCard item={item} />}
           numColumns={numColumns}
-          contentContainerStyle={[
-            styles.premiumList,
-            {
-              alignItems: "flex-start", // карточки слева
-              width: "100%",
-              alignSelf: "center" // контейнер по центру
-            }
-          ]}
+          contentContainerStyle={styles.premiumList}
           columnWrapperStyle={
             numColumns > 1
               ? {
-                  justifyContent: "flex-start", // карточки в строке слева
-                  width: "100%"
+                  justifyContent: "flex-start",
+                  width: styles.listInnerContainer.width
                 }
               : null
           }
