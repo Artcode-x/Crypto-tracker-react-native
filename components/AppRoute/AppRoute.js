@@ -14,6 +14,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets
 } from "react-native-safe-area-context"
+import { RFValue } from "react-native-responsive-fontsize"
 
 const Tab = createBottomTabNavigator()
 const { width, height } = Dimensions.get("window")
@@ -76,7 +77,7 @@ const TabNavigatorWithSafeArea = () => {
       shadowRadius: 3.84
     },
     tabBarLabelStyle: {
-      fontSize: Platform.OS === "ios" ? 12 : 11,
+      fontSize: Platform.OS === "ios" ? RFValue(10) : RFValue(9),
       marginBottom: paddingBottom > 0 ? 0 : 3,
       fontWeight: "500"
     },
@@ -106,7 +107,10 @@ const TabNavigatorWithSafeArea = () => {
         component={Main}
         options={{
           title: "Watchlists",
-          tabBarIcon: ({ color }) => <Ionicons name='pulse' size={24} color={color} />
+
+          tabBarIcon: ({ color }) => (
+            <Ionicons name='pulse' size={isTablet ? 23 : 22} color={color} />
+          )
         }}
       />
       <Tab.Screen
@@ -115,7 +119,7 @@ const TabNavigatorWithSafeArea = () => {
         options={{
           title: "Favorites",
           tabBarIcon: ({ color }) => (
-            <Ionicons name='logo-bitcoin' size={24} color={color} />
+            <Ionicons name='logo-bitcoin' size={isTablet ? 23 : 22} color={color} />
           )
         }}
       />
@@ -125,7 +129,7 @@ const TabNavigatorWithSafeArea = () => {
         options={{
           title: "Price Alerts",
           tabBarIcon: ({ color }) => (
-            <Ionicons name='notifications' size={24} color={color} />
+            <Ionicons name='notifications' size={isTablet ? 23 : 22} color={color} />
           )
         }}
       />
@@ -134,7 +138,9 @@ const TabNavigatorWithSafeArea = () => {
         component={Analytics}
         options={{
           title: "Analytics",
-          tabBarIcon: ({ color }) => <Ionicons name='bar-chart' size={24} color={color} />
+          tabBarIcon: ({ color }) => (
+            <Ionicons name='bar-chart' size={isTablet ? 23 : 22} color={color} />
+          )
         }}
       />
       <Tab.Screen
@@ -143,7 +149,7 @@ const TabNavigatorWithSafeArea = () => {
         options={{
           title: "Privacy Policy",
           tabBarIcon: ({ color }) => (
-            <Ionicons name='mail-unread' size={24} color={color} />
+            <Ionicons name='mail-unread' size={isTablet ? 23 : 22} color={color} />
           )
         }}
       />
@@ -153,7 +159,11 @@ const TabNavigatorWithSafeArea = () => {
         options={{
           title: "Support Us",
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name='code-braces' size={24} color={color} />
+            <MaterialCommunityIcons
+              name='code-braces'
+              size={isTablet ? 23 : 22}
+              color={color}
+            />
           )
         }}
       />
