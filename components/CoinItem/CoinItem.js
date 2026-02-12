@@ -275,14 +275,16 @@ const CoinItem = ({
         // Простой вид
         <View style={styles.simpleView}>
           <View style={styles.leftSection}>
-            <Image
-              source={{ uri: coin.image }}
-              style={[
-                styles.coinImage,
-                isTablet && styles.tabletCoinImage,
-                isSmallScreen && styles.smallCoinImage
-              ]}
-            />
+            <View style={styles.imageContainer}>
+              <Image
+                source={{ uri: coin.image }}
+                style={[
+                  styles.coinImage,
+                  isTablet && styles.tabletCoinImage,
+                  isSmallScreen && styles.smallCoinImage
+                ]}
+              />
+            </View>
             <View style={styles.nameSection}>
               <Text
                 style={[
@@ -307,7 +309,6 @@ const CoinItem = ({
               </Text>
             </View>
           </View>
-
           <View style={styles.rightSection}>
             <Text
               style={[

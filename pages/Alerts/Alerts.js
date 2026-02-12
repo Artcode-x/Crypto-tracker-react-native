@@ -25,6 +25,7 @@ import { deletePriceAlert, clearTriggeredAlerts } from "../../store/alertsSlice"
 import { styles } from "./Alerts.styles"
 import AlertCard from "../../components/AlertCard/AlertCard"
 import ServerSyncService from "../../services/ServerSyncService"
+import AlertsPlaceholder from "./AlertsPlaceholder"
 
 const Alerts = () => {
   const dispatch = useDispatch()
@@ -194,23 +195,7 @@ const Alerts = () => {
   if (priceAlerts.length === 0) {
     return (
       <SafeAreaView style={styles.safeAreaContainer}>
-        <StatusBar barStyle='light-content' backgroundColor='#0A0A0F' />
-        <View style={styles.container}>
-          <View style={styles.miniHeader}>
-            <View style={styles.headerLeft}>
-              <Ionicons name='notifications-outline' size={18} color='#FFD700' />
-              <Text style={styles.headerTitle}>Alerts</Text>
-            </View>
-          </View>
-
-          <View style={styles.emptyContainer}>
-            <View style={styles.emptyIconWrapper}>
-              <Ionicons name='notifications-off-outline' size={36} color='#FFD700' />
-            </View>
-            <Text style={styles.emptyTitle}>No Alerts</Text>
-            <Text style={styles.emptyText}>Create price alerts in Favorites</Text>
-          </View>
-        </View>
+        <AlertsPlaceholder />
       </SafeAreaView>
     )
   }
@@ -270,7 +255,7 @@ const Alerts = () => {
         >
           <View style={styles.headerLeft}>
             <Ionicons name='notifications' size={18} color='#FFD700' />
-            <Text style={styles.headerTitle}>Alerts</Text>
+            <Text style={styles.headerTitle}>ALERTS</Text>
             <View style={styles.headerStatsMini}>
               <View style={styles.statMini}>
                 <Text style={styles.statNumberMini}>{stats.total}</Text>

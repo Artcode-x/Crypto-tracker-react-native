@@ -1,12 +1,11 @@
+import { Ionicons } from "@expo/vector-icons"
+import { StatusBar } from "expo-status-bar"
 import { Text, TouchableOpacity, View } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
-import { styles } from "./EmptyState.styles"
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
-import { memo } from "react"
+import { styles } from "./AlertsPlaceholder.styles"
 import { useNavigation } from "@react-navigation/native"
-import { StatusBar } from "expo-status-bar"
 
-const EmptyState = ({ notificationPermission, onAddCoins, onEnableNotifications }) => {
+const AlertsPlaceholder = () => {
   const navigation = useNavigation()
 
   return (
@@ -21,14 +20,15 @@ const EmptyState = ({ notificationPermission, onAddCoins, onEnableNotifications 
       />
 
       <View style={styles.container}>
+        {/* Хедер */}
         <View style={styles.header}>
           <View style={styles.headerContent}>
             <View style={styles.headerLeft}>
               <View style={styles.iconContainer}>
-                <MaterialCommunityIcons name='gold' size={18} color='#FFD700' />
+                <Ionicons name='notifications-outline' size={18} color='#FFD700' />
                 <View style={styles.iconPulse} />
               </View>
-              <Text style={styles.headerTitle}>WATCHLIST</Text>
+              <Text style={styles.headerTitle}>ALERTS</Text>
             </View>
 
             <View style={styles.headerRight}>
@@ -41,9 +41,9 @@ const EmptyState = ({ notificationPermission, onAddCoins, onEnableNotifications 
           </View>
         </View>
 
+        {/* Витрина */}
         <View style={styles.gallery}>
           <View style={styles.pedestal}>
-            {/* Экспонат в защитном стекле */}
             <View style={styles.vitrine}>
               <LinearGradient
                 colors={["rgba(212,175,55,0.2)", "rgba(212,175,55,0.02)"]}
@@ -52,23 +52,18 @@ const EmptyState = ({ notificationPermission, onAddCoins, onEnableNotifications 
                 end={{ x: 1, y: 1 }}
               >
                 <View style={styles.sphereInner}>
-                  <MaterialCommunityIcons
-                    name='treasure-chest'
-                    size={40}
-                    color='#FFD700'
-                  />
+                  <Ionicons name='notifications-off-outline' size={40} color='#FFD700' />
                 </View>
               </LinearGradient>
 
-              {/* Тень от экспоната — очень тонкая */}
               <LinearGradient
                 colors={["rgba(212,175,55,0.1)", "transparent"]}
                 style={styles.sphereShadow}
               />
             </View>
 
-            <Text style={styles.label}>PORTFOLIO INSIGHTS</Text>
-            <Text style={styles.caption}>Your Journey Begins</Text>
+            <Text style={styles.label}>CURRENT STATE</Text>
+            <Text style={styles.caption}>No active alerts</Text>
 
             <View style={styles.division}>
               <View style={styles.divisionLine} />
@@ -77,13 +72,14 @@ const EmptyState = ({ notificationPermission, onAddCoins, onEnableNotifications 
             </View>
 
             <Text style={styles.description}>
-              Add coins to start building your portfolio{"\n"}
-              Track your favorite cryptocurrency
+              From tracking to tactics{"\n"}
+              Command your market move
             </Text>
 
+            {/* Контролы */}
             <View style={styles.controls}>
               <TouchableOpacity
-                onPress={() => navigation.navigate("Home")}
+                onPress={() => navigation.navigate("Favorite")}
                 activeOpacity={0.6}
                 style={styles.control}
               >
@@ -93,30 +89,16 @@ const EmptyState = ({ notificationPermission, onAddCoins, onEnableNotifications 
                 >
                   <Text style={styles.controlText}>+</Text>
                 </LinearGradient>
-                <Text style={styles.controlLabel}>Add coin to start</Text>
+                <Text style={styles.controlLabel}>CREATE ALERT</Text>
               </TouchableOpacity>
-
-              {!notificationPermission && (
-                <TouchableOpacity
-                  onPress={onEnableNotifications}
-                  activeOpacity={0.6}
-                  style={styles.controlSecondary}
-                >
-                  <LinearGradient
-                    colors={["rgba(212,175,55,0.08)", "rgba(212,175,55,0.01)"]}
-                    style={styles.controlSecondaryGradient}
-                  >
-                    <Ionicons name='notifications-outline' size={18} color='#FFD700' />
-                  </LinearGradient>
-                  <Text style={styles.controlSecondaryLabel}>PRICE ALERTS</Text>
-                </TouchableOpacity>
-              )}
             </View>
           </View>
         </View>
+
+        <Text style={styles.year}>MMXXVI</Text>
       </View>
     </>
   )
 }
 
-export default memo(EmptyState)
+export default AlertsPlaceholder

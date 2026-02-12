@@ -622,7 +622,10 @@ const Favorite = () => {
             colors={
               isRemoving
                 ? ["rgba(244, 67, 54, 0.3)", "rgba(183, 28, 28, 0.2)"]
-                : ["rgba(26, 26, 26, 0.95)", "rgba(40, 40, 40, 0.9)"]
+                : [
+                    "rgba(28,28,30,0.94)", // Сатинированный титан
+                    "rgba(16,16,18,0.98)" // Щеточный металл
+                  ]
             }
             style={styles.cardGradient}
           >
@@ -821,18 +824,20 @@ const Favorite = () => {
       style={styles.premiumContainer}
     >
       {/* Заголовок с Portfolio */}
-      <FavoriteHeader
-        stats={stats}
-        lastUpdateTime={lastUpdateTime}
-        priceAlerts={priceAlerts}
-        notificationPermission={notificationPermission}
-        totalPortfolioValue={totalPortfolioValue}
-        isUpdating={isUpdating}
-        handleManualUpdate={handleManualUpdate}
-        fcmToken={fcmToken}
-        testFCMNotification={testServerConnection}
-        serverStatus={serverStatus}
-      />
+      {coinData.length > 0 && (
+        <FavoriteHeader
+          stats={stats}
+          lastUpdateTime={lastUpdateTime}
+          priceAlerts={priceAlerts}
+          notificationPermission={notificationPermission}
+          totalPortfolioValue={totalPortfolioValue}
+          isUpdating={isUpdating}
+          handleManualUpdate={handleManualUpdate}
+          fcmToken={fcmToken}
+          testFCMNotification={testServerConnection}
+          serverStatus={serverStatus}
+        />
+      )}
 
       {/* Панель статистики */}
       {coinData.length > 0 && (

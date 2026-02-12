@@ -163,9 +163,7 @@ const CoinList = ({
 
   const renderItem = useCallback(
     ({ item }) => {
-      if (!item || !item.id) {
-        return null
-      }
+      if (!item || !item.id) return null
 
       const tablet = isTablet()
       const cardWidth = getCardWidth()
@@ -174,7 +172,6 @@ const CoinList = ({
       return (
         <View
           style={[
-            flag[item.id] && { borderLeftWidth: 3, borderLeftColor: "#FFD700" },
             styles.itemContainer,
             {
               height: cardHeight,
@@ -182,14 +179,46 @@ const CoinList = ({
             }
           ]}
         >
-          <CoinItem
-            coin={item}
-            onPress={() => openModal(item)}
-            cardHeight={cardHeight}
-            cardWidth={cardWidth}
-            isSmallScreen={isSmallScreen}
-            isTablet={tablet}
+          <LinearGradient
+            colors={["rgba(70,72,74,0.99)", "rgba(32,34,38,0.8)"]}
+            style={styles.cardGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
           />
+
+          <View style={styles.cardBorder} />
+
+          {flag[item.id] && (
+            <View
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 1,
+                bottom: 1,
+                width: 4,
+                backgroundColor: "#4CAF50",
+                borderTopLeftRadius: 18,
+                borderBottomLeftRadius: 18,
+                borderTopRightRadius: 0,
+                borderBottomRightRadius: 0,
+                zIndex: 5
+                // overflow: "hidden"
+              }}
+            />
+          )}
+
+          <View style={styles.contentWrapper}>
+            <CoinItem
+              coin={item}
+              onPress={() => openModal(item)}
+              cardHeight={cardHeight}
+              cardWidth={cardWidth}
+              isSmallScreen={isSmallScreen}
+              isTablet={tablet}
+            />
+          </View>
+
+          {/* КНОПКА ДОБАВЛЕНИЯ */}
           <TouchableOpacity
             onPress={() => {
               const coinData = {
@@ -221,7 +250,7 @@ const CoinList = ({
               <Ionicons
                 name='add-circle-outline'
                 size={tablet ? 24 : isSmallScreen ? 18 : 22}
-                color='#FFD700'
+                color='rgba(198, 165, 60, 0.75)'
               />
             )}
           </TouchableOpacity>

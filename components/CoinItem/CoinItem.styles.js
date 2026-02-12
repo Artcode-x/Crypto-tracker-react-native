@@ -13,7 +13,8 @@ export const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
+    paddingHorizontal: 4
   },
 
   // Стили для простого вида (marketView = false)
@@ -23,22 +24,29 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 4,
+    paddingRight: 10, // new
     width: "100%"
   },
   leftSection: {
     flex: 1,
-    flexDirection: "row",
+    flexDirection: "column",
+
+    justifyContent: "center",
     alignItems: "center",
     flexShrink: 1,
     marginRight: 6,
     maxWidth: "60%",
     minWidth: "50%"
   },
+  imageContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4
+  },
   coinImage: {
     width: 25,
     height: 25,
-    borderRadius: 14,
-    marginRight: 8
+    borderRadius: 14
   },
   tabletCoinImage: {
     width: 28,
@@ -48,14 +56,13 @@ export const styles = StyleSheet.create({
   smallCoinImage: {
     width: 24,
     height: 24,
-    borderRadius: 12,
-    marginRight: 6
+    borderRadius: 12
   },
   nameSection: {
-    flex: 1,
+    alignItems: "center",
     justifyContent: "center",
-    marginRight: 1,
-    flexShrink: 1
+    flexShrink: 1,
+    width: "100%"
   },
   coinName: {
     fontSize: RFValue(11),
@@ -64,10 +71,11 @@ export const styles = StyleSheet.create({
     flexShrink: 1,
     flexWrap: "nowrap",
     maxWidth: "100%",
-    textAlignVertical: "center",
+
     includeFontPadding: false,
-    paddingRight: 2,
-    overflow: "hidden"
+
+    overflow: "hidden",
+    textAlign: "center"
   },
   tabletCoinName: {
     fontSize: RFValue(11 * tabletFontScale)
@@ -80,8 +88,9 @@ export const styles = StyleSheet.create({
     color: "#8B93A5",
     marginTop: 2,
     fontWeight: "500",
-    textAlignVertical: "center",
-    includeFontPadding: false
+
+    includeFontPadding: false,
+    textAlign: "center"
   },
   tabletCoinSymbol: {
     fontSize: RFValue(8 * tabletFontScale)
@@ -90,6 +99,7 @@ export const styles = StyleSheet.create({
     fontSize: RFValue(7)
   },
   rightSection: {
+    paddingRight: 10,
     alignItems: "center",
     justifyContent: "center",
     minWidth: 65,

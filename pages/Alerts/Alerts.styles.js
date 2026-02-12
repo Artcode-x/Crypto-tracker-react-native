@@ -1,4 +1,5 @@
 import { StyleSheet, Dimensions, Platform } from "react-native"
+import { RFValue } from "react-native-responsive-fontsize"
 const { width } = Dimensions.get("window")
 
 export const styles = StyleSheet.create({
@@ -35,11 +36,20 @@ export const styles = StyleSheet.create({
   },
 
   headerTitle: {
+    // color: "#FFD700",
+    // fontSize: 18,
+    // fontWeight: "700",
+    // marginLeft: 10,
+    // letterSpacing: 0.3
     color: "#FFD700",
-    fontSize: 18,
-    fontWeight: "700",
-    marginLeft: 10,
-    letterSpacing: 0.3
+    fontSize: RFValue(18, 812),
+    fontWeight: "600",
+    letterSpacing: 2,
+    marginRight: 12,
+    textShadowColor: "rgba(212,175,55,0.2)",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
+    paddingLeft: 3
   },
 
   headerStatsMini: {
@@ -52,14 +62,15 @@ export const styles = StyleSheet.create({
 
   statNumberMini: {
     color: "#FFFFFF",
-    fontSize: 14,
+    fontSize: RFValue(11.5),
+
     fontWeight: "800",
     marginBottom: 1
   },
 
   statLabelMini: {
     color: "rgba(255, 255, 255, 0.5)",
-    fontSize: 8,
+    fontSize: RFValue(8),
     fontWeight: "600",
     letterSpacing: 0.5
   },

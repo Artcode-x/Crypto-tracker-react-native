@@ -132,6 +132,9 @@ export const styles = StyleSheet.create({
   },
 
   cardContainer: {
+    borderWidth: 1.1,
+    borderColor: "rgba(212,175,55,0.2)",
+    borderRadius: 12.5,
     width: CARD_WIDTH,
     margin: spacing.xs
   },

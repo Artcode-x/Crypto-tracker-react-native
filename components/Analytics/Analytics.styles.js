@@ -40,29 +40,6 @@ export const styles = StyleSheet.create({
     opacity: 0.8
   },
 
-  emptyContainer: {
-    flex: 1,
-    backgroundColor: "#0A0A0F",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 40
-  },
-
-  emptyTitle: {
-    color: "#FFD700",
-    fontSize: RFValue(20),
-    fontWeight: "600",
-    marginTop: 20
-  },
-
-  emptySubtitle: {
-    color: "rgba(255, 255, 255, 0.6)",
-    fontSize: RFValue(14),
-    textAlign: "center",
-    marginTop: 10,
-    lineHeight: 20
-  },
-
   // Секции аккордиона
   sectionCard: {
     backgroundColor: "rgba(26, 26, 26, 0.8)",

@@ -10,7 +10,6 @@ export const styles = StyleSheet.create({
     backgroundColor: "#030305"
   },
 
-  // свет софита
   ambience: {
     position: "absolute",
     top: 0,
@@ -121,7 +120,6 @@ export const styles = StyleSheet.create({
     width: "100%"
   },
 
-  // Ювелирная витрина
   vitrine: {
     alignItems: "center",
     justifyContent: "center",
@@ -176,7 +174,6 @@ export const styles = StyleSheet.create({
     marginBottom: 20
   },
 
-  // Декоративная линия
   division: {
     flexDirection: "row",
     alignItems: "center",
@@ -231,30 +228,6 @@ export const styles = StyleSheet.create({
 
   controlLabel: {
     color: "rgba(212,175,55,0.7)",
-    fontSize: RFValue(10, 812),
-    fontWeight: "400",
-    letterSpacing: 1.8,
-    textTransform: "uppercase"
-  },
-
-  controlSecondary: {
-    alignItems: "center"
-  },
-
-  controlSecondaryGradient: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 0.5,
-    borderColor: "rgba(212,175,55,0.2)",
-    marginBottom: 8,
-    backgroundColor: "rgba(3,3,5,0.9)"
-  },
-
-  controlSecondaryLabel: {
-    color: "rgba(212,175,55,0.65)",
     fontSize: RFValue(10, 812),
     fontWeight: "400",
     letterSpacing: 1.8,

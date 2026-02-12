@@ -19,6 +19,7 @@ import RecommendSection from "./components/RecommendSection/RecommendSection"
 import RiskSection from "./components/RiskSection/RiskSection"
 import OverviewSection from "./components/OverviewSection/OverviewSection"
 import HeaderCard from "./components/HeaderCard/HeaderCard"
+import AnalyticsPlaceholder from "./AnalyticsPlaceholder"
 
 const Analytics = () => {
   const coinData = useSelector(coinSelector)
@@ -375,19 +376,7 @@ const Analytics = () => {
   }
 
   if (!portfolioMetrics || portfolioMetrics.totalAssets === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <MaterialCommunityIcons
-          name='chart-box'
-          size={80}
-          color='rgba(255, 215, 0, 0.3)'
-        />
-        <Text style={styles.emptyTitle}>No Portfolio Data</Text>
-        <Text style={styles.emptySubtitle}>
-          Add amounts to your favorite coins to see portfolio analysis
-        </Text>
-      </View>
-    )
+    return <AnalyticsPlaceholder />
   }
 
   const colors = generateProfessionalPalette(portfolioMetrics.assets.length)

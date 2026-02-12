@@ -1,57 +1,113 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
-import { TouchableOpacity, View, Text } from "react-native"
+import { TouchableOpacity, View, Text, Dimensions } from "react-native"
 import { styles } from "./FavoriteStatsPanel.styles"
 
 const FavoriteStatsPanel = ({ priceAlerts, stats, unreadAlertsCount }) => {
+  const { width, height } = Dimensions.get("window")
+  const isTablet = () => width >= 768 || (width >= 600 && height >= 900)
+  const TABLET = isTablet()
+  const ICON_SIZE = TABLET ? 16 : 12
+
   return (
-    <View style={styles.statsPanel}>
+    <View style={styles.atelier}>
+      {/* Корпус из матового стекла  */}
       <LinearGradient
-        colors={["rgba(212, 175, 55, 0.15)", "rgba(183, 121, 31, 0.08)"]}
-        style={styles.statsGradient}
-      >
-        <View style={styles.compactStats}>
-          <View style={styles.statItemCompact}>
-            <Ionicons name='trending-up' size={12} color='#00C853' />
-            <Text style={styles.statNumberCompact}>{stats.bullish}</Text>
-            <Text style={styles.statLabelCompact}>Growth</Text>
+        // colors={["rgba(25,25,30,0.95)", "rgba(15,15,20,0.98)"]}
+        colors={["rgba(38,35,32,0.45)", "rgba(28,25,22,0.98)"]}
+        style={styles.case}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
+
+      {/* Световой рельеф */}
+      <LinearGradient
+        colors={["rgba(212,175,55,0.06)", "transparent"]}
+        style={styles.relief}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 0.6 }}
+      />
+
+      {/* Тиснение золотом  */}
+      <View style={styles.engraving} />
+
+      <View style={styles.movement}>
+        {/* Индикаторы  */}
+        <View style={styles.indicator}>
+          <View style={styles.markerGroup}>
+            <LinearGradient
+              colors={["rgba(212,175,55,0.15)", "rgba(212,175,55,0.03)"]}
+              style={styles.markerIcon}
+            >
+              <Ionicons name='trending-up' size={ICON_SIZE} color='#FFD700' />
+            </LinearGradient>
+            <View style={styles.markerData}>
+              <Text style={styles.markerValue}>{stats.bullish}</Text>
+              <Text style={styles.markerLabel}>BULLISH</Text>
+            </View>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItemCompact}>
-            <Ionicons name='trending-down' size={12} color='#FF3B30' />
-            <Text style={styles.statNumberCompact}>{stats.bearish}</Text>
-            <Text style={styles.statLabelCompact}>Decline</Text>
+        </View>
+
+        <View style={styles.markerDivider} />
+
+        <View style={styles.indicator}>
+          <View style={styles.markerGroup}>
+            <LinearGradient
+              colors={["rgba(212,175,55,0.15)", "rgba(212,175,55,0.03)"]}
+              style={styles.markerIcon}
+            >
+              <Ionicons name='trending-down' size={ICON_SIZE} color='#FFD700' />
+            </LinearGradient>
+            <View style={styles.markerData}>
+              <Text style={styles.markerValue}>{stats.bearish}</Text>
+              <Text style={styles.markerLabel}>BEARISH</Text>
+            </View>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItemCompact}>
-            <MaterialCommunityIcons name='diamond-stone' size={12} color='#FFD700' />
-            <Text style={styles.statNumberCompact}>{stats.top10}</Text>
-            <Text style={styles.statLabelCompact}>Top-10</Text>
+        </View>
+
+        <View style={styles.markerDivider} />
+
+        <View style={styles.indicator}>
+          <View style={styles.markerGroup}>
+            <LinearGradient
+              colors={["rgba(212,175,55,0.15)", "rgba(212,175,55,0.03)"]}
+              style={styles.markerIcon}
+            >
+              <MaterialCommunityIcons
+                name='diamond-stone'
+                size={ICON_SIZE}
+                color='#FFD700'
+              />
+            </LinearGradient>
+            <View style={styles.markerData}>
+              <Text style={styles.markerValue}>{stats.top10}</Text>
+              <Text style={styles.markerLabel}>TOP 10</Text>
+            </View>
           </View>
-          <View style={styles.statDivider} />
-          <TouchableOpacity
-            style={styles.statItemCompact}
-            onPress={() => {
-              console.log("Статистика алертов:")
-              console.log(`   Всего: ${priceAlerts.length}`)
-              console.log(`   Активных: ${stats.activeAlerts || 0}`)
-              console.log(`   Сработавших: ${stats.triggeredAlerts || 0}`)
-              console.log(`   Непрочитанных: ${unreadAlertsCount}`)
-            }}
-          >
-            <Ionicons name='notifications' size={12} color='#FF6B6B' />
-            <View style={styles.alertBadgeContainer}>
-              <Text style={styles.statNumberCompact}>{stats.activeAlerts || 0}</Text>
+        </View>
+
+        <View style={styles.markerDivider} />
+
+        <TouchableOpacity style={styles.indicator} activeOpacity={0.7}>
+          <View style={styles.markerGroup}>
+            <LinearGradient
+              colors={["rgba(212,175,55,0.15)", "rgba(212,175,55,0.03)"]}
+              style={styles.markerIcon}
+            >
+              <Ionicons name='notifications' size={ICON_SIZE} color='#FFD700' />
               {unreadAlertsCount > 0 && (
-                <View style={styles.unreadBadge}>
-                  <Text style={styles.unreadBadgeText}>{unreadAlertsCount}</Text>
+                <View style={styles.crownPulse}>
+                  <Text style={styles.pulseText}>{unreadAlertsCount}</Text>
                 </View>
               )}
+            </LinearGradient>
+            <View style={styles.markerData}>
+              <Text style={styles.markerValue}>{stats.activeAlerts || 0}</Text>
+              <Text style={styles.markerLabel}>ALERTS</Text>
             </View>
-            <Text style={styles.statLabelCompact}>Alerts</Text>
-          </TouchableOpacity>
-        </View>
-      </LinearGradient>
+          </View>
+        </TouchableOpacity>
+      </View>
     </View>
   )
 }

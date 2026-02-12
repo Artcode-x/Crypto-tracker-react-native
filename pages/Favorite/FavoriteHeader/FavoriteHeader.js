@@ -13,47 +13,126 @@ const FavoriteHeader = ({
   handleManualUpdate
 }) => {
   return (
-    <View style={styles.premiumHeader}>
+    <View style={styles.atelier}>
+      {/* Корпус из матового стекла */}
       <LinearGradient
-        colors={["rgba(212, 175, 55, 0.2)", "rgba(183, 121, 31, 0.1)"]}
-        style={styles.headerGradient}
-      >
-        <MaterialCommunityIcons name='crown' size={22} color='#D4AF37' />
-        <View style={styles.headerLeftContainer}>
-          <Text style={styles.headerTitle}>Watchlist</Text>
-          <Text style={styles.headerSubtitle}>
-            Total: {stats.total} asset{stats.total !== 1 ? "s" : ""}
-            {lastUpdateTime && ` | Last: ${lastUpdateTime}`}
-            {priceAlerts.length > 0 && ` | Alerts: ${priceAlerts.length}`}
-            {!notificationPermission && " | 🔕"}
-          </Text>
+        // colors={["rgba(25,25,30,0.95)", "rgba(15,15,20,0.98)"]}
+        colors={["rgba(38,35,32,0.45)", "rgba(28,25,22,0.98)"]}
+        style={styles.case}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
+
+      {/* Световой рельеф */}
+      <LinearGradient
+        colors={["rgba(212,175,55,0.06)", "transparent"]}
+        style={styles.relief}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 0.6 }}
+      />
+
+      {/* Тиснение золотом */}
+      <View style={styles.engraving} />
+
+      <View style={styles.movement}>
+        {/* Левая часть — эмблема мануфактуры */}
+        <View style={styles.manufacture}>
+          <View style={styles.emblem}>
+            <LinearGradient
+              colors={["rgba(212,175,55,0.2)", "rgba(212,175,55,0.05)"]}
+              style={styles.emblemBase}
+            />
+            <MaterialCommunityIcons name='crown' size={20} color='#FFD700' />
+            <View style={styles.emblemPatin} />
+          </View>
+
+          <View style={styles.caliber}>
+            <Text style={styles.caliberName}>WATCHLIST</Text>
+            <View style={styles.caliberMarkers}>
+              <View style={styles.markerGroup}>
+                <Text style={styles.markerValue}>{stats.total}</Text>
+                <Text style={styles.markerLabel}> ASSETS</Text>
+              </View>
+
+              {lastUpdateTime && (
+                <>
+                  <View style={styles.markerDivider} />
+                  <View style={styles.markerGroup}>
+                    <Ionicons
+                      style={{ paddingTop: 1 }}
+                      name='time-outline'
+                      size={12}
+                      color='rgba(212,175,55,0.8)'
+                    />
+                    <Text style={styles.markerValueSmall}>{lastUpdateTime}</Text>
+                  </View>
+                </>
+              )}
+
+              {priceAlerts.length > 0 && (
+                <>
+                  <View style={styles.markerDivider} />
+                  <View style={styles.markerGroup}>
+                    <Ionicons
+                      name='notifications-outline'
+                      size={10}
+                      color='rgba(212,175,55,0.8)'
+                    />
+                    <Text style={styles.markerValueSmall}>{priceAlerts.length}</Text>
+                  </View>
+                </>
+              )}
+
+              {!notificationPermission && (
+                <>
+                  <View style={styles.markerDivider} />
+                  <Ionicons
+                    name='notifications-off-outline'
+                    size={10}
+                    color='rgba(255,107,107,0.7)'
+                  />
+                </>
+              )}
+            </View>
+          </View>
         </View>
 
-        {/* Portfolio справа */}
-        <View style={styles.headerRightContainer}>
-          <Text style={styles.portfolioLabel}>Portfolio</Text>
-          <Text style={styles.portfolioValue}>
-            $
-            {totalPortfolioValue.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2
-            })}
-          </Text>
+        {/* Правая часть  */}
+        <View style={styles.complication}>
+          <View style={styles.perpetual}>
+            <Text style={styles.perpetualLabel}>PORTFOLIO</Text>
+            <Text style={styles.perpetualValue}>
+              $
+              {totalPortfolioValue.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })}
+            </Text>
+          </View>
 
-          {/* Кнопка ручного обновления */}
           <TouchableOpacity
             onPress={handleManualUpdate}
             disabled={isUpdating}
-            style={[styles.refreshButton, isUpdating && styles.refreshButtonDisabled]}
+            activeOpacity={0.7}
+            style={styles.crown}
           >
-            {isUpdating ? (
-              <Ionicons name='time-outline' size={16} color='#D4AF37' />
-            ) : (
-              <Ionicons name='refresh' size={16} color='#D4AF37' />
-            )}
+            <LinearGradient
+              colors={
+                isUpdating
+                  ? ["rgba(212,175,55,0.18)", "rgba(212,175,55,0.04)"]
+                  : ["rgba(212,175,55,0.1)", "rgba(212,175,55,0.02)"]
+              }
+              style={styles.crownBase}
+            />
+            <Ionicons
+              name={isUpdating ? "time-outline" : "refresh"}
+              size={16}
+              color={isUpdating ? "#FFD700" : "rgba(212,175,55,0.9)"}
+            />
+            {isUpdating && <View style={styles.crownPulse} />}
           </TouchableOpacity>
         </View>
-      </LinearGradient>
+      </View>
     </View>
   )
 }

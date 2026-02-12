@@ -3,19 +3,14 @@ import { RFValue } from "react-native-responsive-fontsize"
 
 export const { width, height } = Dimensions.get("window")
 
-// Более точное определение планшета
 export const isTablet = () => {
-  // Проверка по ширине (основной критерий)
   if (width >= 768) return true
 
-  // Дополнительные проверки для Android-планшетов
   if (Platform.OS === "android") {
     const screenRatio = Math.max(width, height) / Math.min(width, height)
 
-    // Для Nexus 9: 2048/1536 ≈ 1.33 (портретный) или 1536/2048 ≈ 0.75 (альбомный)
     const scaledWidth = width * (Platform.isPad ? 1 : 1)
 
-    // Если ширина больше 600dp и соотношение сторон меньше 1.6 (типично для планшетов)
     if (scaledWidth >= 600 && screenRatio < 1.6) {
       return true
     }
@@ -43,7 +38,8 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     padding: isSmallScreen ? 6 : 8,
     borderRadius: 8,
-    backgroundColor: "rgba(50, 48, 49, 0.8)",
+    // backgroundColor: "rgba(50, 48, 49, 0.8)",
+
     position: "relative"
   },
 
@@ -52,7 +48,10 @@ export const styles = StyleSheet.create({
     top: 4,
     right: 4,
     padding: 2,
-    zIndex: 10
+    zIndex: 10,
+    borderWidth: 0.1,
+    borderColor: "rgba(184, 154, 66, 0.6)",
+    borderRadius: 20
   },
 
   addButtonActive: {
@@ -182,5 +181,47 @@ export const styles = StyleSheet.create({
     color: "#FF5252",
     fontSize: RFValue(14, 812),
     textAlign: "center"
+  },
+  ////
+
+  cardGradient: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 8,
+    zIndex: 1
+  },
+
+  cardBorder: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderWidth: 0.8,
+    borderColor: "rgba(212, 175, 55, 0.25)",
+    borderRadius: 8,
+    zIndex: 2,
+    pointerEvents: "none"
+  },
+
+  cardHighlight: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "40%",
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    zIndex: 3,
+    pointerEvents: "none"
+  },
+
+  contentWrapper: {
+    width: "100%",
+    height: "100%",
+    zIndex: 4
   }
 })

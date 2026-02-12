@@ -10,13 +10,13 @@ export const styles = StyleSheet.create({
     backgroundColor: "#030305"
   },
 
-  // свет софита
+  // Атмосфера — рассеянный свет
   ambience: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
-    height: height * 0.5,
+    height: height * 0.45,
     zIndex: 0
   },
 
@@ -26,10 +26,10 @@ export const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 100,
-    backgroundColor: "rgba(3,3,5,0.75)",
-    backdropFilter: "blur(12px)",
-    borderBottomWidth: 0.5,
-    borderBottomColor: "rgba(212,175,55,0.2)"
+    backgroundColor: "rgba(3,3,5,0.78)",
+    backdropFilter: "blur(10px)",
+    borderBottomWidth: 0.4,
+    borderBottomColor: "rgba(212,175,55,0.18)"
   },
 
   headerContent: {
@@ -58,14 +58,14 @@ export const styles = StyleSheet.create({
     right: -4,
     bottom: -4,
     borderRadius: 14,
-    backgroundColor: "rgba(212,175,55,0.1)"
+    backgroundColor: "rgba(212,175,55,0.08)"
   },
 
   headerTitle: {
     color: "#FFD700",
     fontSize: RFValue(20, 812),
     fontWeight: "600",
-    letterSpacing: 2,
+    letterSpacing: 2.2,
     marginRight: 12,
     textShadowColor: "rgba(212,175,55,0.2)",
     textShadowOffset: { width: 0, height: 0 },
@@ -79,7 +79,7 @@ export const styles = StyleSheet.create({
 
   divider: {
     width: 1,
-    height: 20,
+    height: 18,
     backgroundColor: "rgba(212,175,55,0.2)",
     marginRight: 16
   },
@@ -93,22 +93,23 @@ export const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#FFD700",
+    backgroundColor: "rgba(212,175,55,0.7)",
     marginRight: 6,
     shadowColor: "#FFD700",
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 4,
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
     elevation: 2
   },
 
   statusText: {
-    color: "rgba(255,255,255,0.8)",
+    color: "rgba(255,255,255,0.7)",
     fontSize: RFValue(11, 812),
     fontWeight: "400",
-    letterSpacing: 0.8
+    letterSpacing: 0.9
   },
 
+  // Галерея
   gallery: {
     flex: 1,
     alignItems: "center",
@@ -121,7 +122,7 @@ export const styles = StyleSheet.create({
     width: "100%"
   },
 
-  // Ювелирная витрина
+  // Витрина
   vitrine: {
     alignItems: "center",
     justifyContent: "center",
@@ -135,35 +136,36 @@ export const styles = StyleSheet.create({
     borderRadius: sphereSize / 3,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 0.8,
-    borderColor: "rgba(212,175,55,0.3)"
+    borderWidth: 0.7,
+    borderColor: "rgba(212,175,55,0.25)"
   },
 
   sphereInner: {
     width: sphereSize * 0.85,
     height: sphereSize * 0.85,
     borderRadius: (sphereSize * 0.85) / 2,
-    backgroundColor: "rgba(3,3,5,0.9)",
+    backgroundColor: "rgba(3,3,5,0.92)",
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 0.5,
-    borderColor: "rgba(212,175,55,0.2)"
+    borderWidth: 0.4,
+    borderColor: "rgba(212,175,55,0.15)"
   },
 
   sphereShadow: {
     position: "absolute",
     bottom: -10,
     width: sphereSize * 0.8,
-    height: 12,
+    height: 10,
     borderRadius: sphereSize / 2,
-    opacity: 0.2
+    opacity: 0.15
   },
 
+  // Этикетка
   label: {
-    color: "rgba(212,175,55,0.8)",
+    color: "rgba(212,175,55,0.75)",
     fontSize: RFValue(11, 812),
     fontWeight: "500",
-    letterSpacing: 3.5,
+    letterSpacing: 3.8,
     marginBottom: 6,
     textTransform: "uppercase"
   },
@@ -181,29 +183,24 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
-    width: width * 0.4
+    width: width * 0.45
   },
 
   divisionLine: {
     flex: 1,
-    height: 0.5,
+    height: 0.4,
     backgroundColor: "rgba(212,175,55,0.2)",
     marginHorizontal: 8
   },
 
   description: {
-    color: "rgba(255,255,255,0.6)",
+    color: "rgba(255,255,255,0.55)",
     fontSize: RFValue(13, 812),
     fontWeight: "400",
     textAlign: "center",
     lineHeight: RFValue(20, 812),
     letterSpacing: 0.6,
     marginBottom: 36
-  },
-
-  controls: {
-    alignItems: "center",
-    gap: 20
   },
 
   control: {
@@ -217,7 +214,7 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 0.5,
-    borderColor: "rgba(212,175,55,0.25)",
+    borderColor: "rgba(212,175,55,0.22)",
     marginBottom: 8
   },
 
@@ -230,34 +227,10 @@ export const styles = StyleSheet.create({
   },
 
   controlLabel: {
-    color: "rgba(212,175,55,0.7)",
-    fontSize: RFValue(10, 812),
-    fontWeight: "400",
-    letterSpacing: 1.8,
-    textTransform: "uppercase"
-  },
-
-  controlSecondary: {
-    alignItems: "center"
-  },
-
-  controlSecondaryGradient: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 0.5,
-    borderColor: "rgba(212,175,55,0.2)",
-    marginBottom: 8,
-    backgroundColor: "rgba(3,3,5,0.9)"
-  },
-
-  controlSecondaryLabel: {
     color: "rgba(212,175,55,0.65)",
     fontSize: RFValue(10, 812),
     fontWeight: "400",
-    letterSpacing: 1.8,
+    letterSpacing: 1.9,
     textTransform: "uppercase"
   },
 
@@ -265,9 +238,9 @@ export const styles = StyleSheet.create({
     position: "absolute",
     bottom: Platform.OS === "ios" ? 40 : 24,
     right: width * 0.08,
-    color: "rgba(212,175,55,0.15)",
+    color: "rgba(212,175,55,0.12)",
     fontSize: RFValue(10, 812),
     fontWeight: "300",
-    letterSpacing: 2
+    letterSpacing: 2.2
   }
 })

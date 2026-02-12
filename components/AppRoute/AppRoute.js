@@ -9,11 +9,7 @@ import Analytics from "../Analytics/Analytics"
 import PrivacyPolicy from "../../pages/PrivacyPolicy/PrivacyPolicy"
 import Alerts from "../../pages/Alerts/Alerts"
 import SupportUs from "../../pages/SupportUs/SupportUs"
-import {
-  SafeAreaProvider,
-  SafeAreaView,
-  useSafeAreaInsets
-} from "react-native-safe-area-context"
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context"
 import { RFValue } from "react-native-responsive-fontsize"
 
 const Tab = createBottomTabNavigator()
@@ -24,8 +20,11 @@ const isLargeScreen = height >= 800
 const TabNavigatorWithSafeArea = () => {
   const insets = useSafeAreaInsets()
 
+  const hasRoundedCorners = insets.bottom > 4
+  const hasNavigationBar = Platform.OS === "android" && insets.bottom > 20
+
   const getTabBarHeight = () => {
-    const heightPercentage = isTablet ? 6.5 : isLargeScreen ? 9 : 8.3
+    const heightPercentage = isTablet ? 6.5 : isLargeScreen ? 8 : 8
     const minHeightPercentage = isTablet ? 6 : 7
 
     const calculatedHeight = (height * heightPercentage) / 100
@@ -33,29 +32,41 @@ const TabNavigatorWithSafeArea = () => {
 
     let finalHeight = Math.max(calculatedHeight, minHeight)
 
-    if (Platform.OS === "android") {
-      if (insets.bottom > 0) {
-        finalHeight = finalHeight + insets.bottom
-      }
-
+    if (hasNavigationBar) {
+      finalHeight = finalHeight + insets.bottom
       finalHeight = Math.max(finalHeight, 50)
     }
 
+    if (hasRoundedCorners && !hasNavigationBar) {
+      finalHeight = finalHeight + insets.bottom
+    }
+
     console.log(
-      `TabBar Height: ${finalHeight}px (${heightPercentage}%), bottom inset: ${insets.bottom}px`
+      `TabBar Height: ${finalHeight}px, bottom inset: ${insets.bottom}px, hasRoundedCorners: ${hasRoundedCorners}, hasNavigationBar: ${hasNavigationBar}`
     )
     return finalHeight
   }
 
   const getTabBarPaddingBottom = () => {
-    if (Platform.OS === "android" && insets.bottom > 0) {
+    if (insets.bottom > 0) {
       return insets.bottom
     }
     return 0
   }
 
+  const getHorizontalPadding = () => {
+    if (hasRoundedCorners) {
+      return {
+        left: Math.max(insets.left, 16),
+        right: Math.max(insets.right, 16)
+      }
+    }
+    return { left: 0, right: 0 }
+  }
+
   const tabBarHeight = getTabBarHeight()
   const paddingBottom = getTabBarPaddingBottom()
+  const horizontalPadding = getHorizontalPadding()
 
   const styles = StyleSheet.create({
     tabBarStyle: {
@@ -69,6 +80,8 @@ const TabNavigatorWithSafeArea = () => {
       borderTopWidth: 1,
       height: tabBarHeight,
       paddingBottom: paddingBottom,
+      paddingLeft: horizontalPadding.left,
+      paddingRight: horizontalPadding.right,
       minHeight: Platform.OS === "android" ? 50 : 45,
       zIndex: 1000,
       shadowColor: "#000",
@@ -77,7 +90,7 @@ const TabNavigatorWithSafeArea = () => {
       shadowRadius: 3.84
     },
     tabBarLabelStyle: {
-      fontSize: Platform.OS === "ios" ? RFValue(10) : RFValue(9),
+      fontSize: Platform.OS === "ios" ? RFValue(9.1) : RFValue(9),
       marginBottom: paddingBottom > 0 ? 0 : 3,
       fontWeight: "500"
     },
@@ -107,7 +120,6 @@ const TabNavigatorWithSafeArea = () => {
         component={Main}
         options={{
           title: "Watchlists",
-
           tabBarIcon: ({ color }) => (
             <Ionicons name='pulse' size={isTablet ? 23 : 22} color={color} />
           )
