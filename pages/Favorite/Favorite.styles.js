@@ -256,7 +256,7 @@ export const styles = StyleSheet.create({
     width: normalize(30),
     height: normalize(30),
     borderRadius: normalize(17),
-    borderWidth: normalize(1.5),
+    borderWidth: normalize(1.8),
     borderColor: "rgba(212, 175, 55, 0.3)",
     justifyContent: "center",
     alignItems: "center",
@@ -539,7 +539,7 @@ export const styles = StyleSheet.create({
 
     premiumCoinCard: {
       borderRadius: 11,
-      borderWidth: 1,
+      borderWidth: 0,
       overflow: "hidden"
     },
 

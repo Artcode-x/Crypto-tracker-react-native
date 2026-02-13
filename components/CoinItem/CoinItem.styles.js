@@ -24,7 +24,7 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 4,
-    paddingRight: 10, // new
+    paddingRight: 6, // new
     width: "100%"
   },
   leftSection: {

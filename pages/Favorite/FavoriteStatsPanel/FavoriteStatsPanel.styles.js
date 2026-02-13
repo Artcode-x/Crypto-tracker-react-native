@@ -13,10 +13,11 @@ const TABLET = isTablet()
 export const styles = StyleSheet.create({
   atelier: {
     marginHorizontal: TABLET ? width * 0.04 : width * 0.035,
-    marginBottom: TABLET ? 10 : 6,
+    marginBottom: TABLET ? 8 : 4.5,
     // borderRadius: TABLET ? 28 : 24,
     position: "relative",
-    overflow: "hidden",
+    overflow: "visible",
+
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -88,6 +89,7 @@ export const styles = StyleSheet.create({
     borderColor: "rgba(212,175,55,0.25)",
     // backgroundColor: "rgba(15,15,20,0.6)",
     position: "relative",
+    zIndex: 1,
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -130,18 +132,41 @@ export const styles = StyleSheet.create({
     marginHorizontal: TABLET ? 5 : 4
   },
 
+  // crownPulse: {
+  //   position: "absolute",
+  //   top: TABLET ? -5 : -4,
+  //   right: TABLET ? -5 : -4,
+  //   minWidth: TABLET ? 20 : 18,
+  //   height: TABLET ? 20 : 18,
+  //   borderRadius: TABLET ? 10 : 9,
+  //   backgroundColor: "#030305",
+  //   justifyContent: "center",
+  //   alignItems: "center",
+  //   borderWidth: TABLET ? 0.9 : 0.8,
+  //   borderColor: "#FFD700",
+  //   ...Platform.select({
+  //     ios: {
+  //       shadowColor: "#FFD700",
+  //       shadowOffset: { width: 0, height: 0 },
+  //       shadowOpacity: TABLET ? 0.3 : 0.3,
+  //       shadowRadius: TABLET ? 4.5 : 4
+  //     }
+  //   })
+  // },
   crownPulse: {
     position: "absolute",
-    top: TABLET ? -5 : -4,
-    right: TABLET ? -5 : -4,
-    minWidth: TABLET ? 20 : 18,
-    height: TABLET ? 20 : 18,
-    borderRadius: TABLET ? 10 : 9,
+    top: TABLET ? -5 : -3,
+    right: TABLET ? -5 : -3,
+    // minWidth: TABLET ? 20 : 18,
+    minWidth: TABLET ? 16 : 10,
+    height: TABLET ? 16 : 10,
+    borderRadius: TABLET ? 8 : 6,
     backgroundColor: "#030305",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: TABLET ? 0.9 : 0.8,
     borderColor: "#FFD700",
+    zIndex: 1000,
     ...Platform.select({
       ios: {
         shadowColor: "#FFD700",
@@ -154,9 +179,9 @@ export const styles = StyleSheet.create({
 
   pulseText: {
     color: "#FFD700",
-    fontSize: RFValue(TABLET ? 10 : 9, 812),
+    fontSize: RFValue(TABLET ? 8 : 6, 812),
     fontWeight: "700",
-    paddingHorizontal: TABLET ? 4 : 4
+    paddingHorizontal: TABLET ? 2 : 2
   },
 
   gravure: {

@@ -7,7 +7,9 @@ import {
   StatusBar,
   FlatList,
   TouchableOpacity,
-  Animated
+  Animated,
+  useWindowDimensions,
+  Platform
 } from "react-native"
 import { useSelector, useDispatch } from "react-redux"
 import { LinearGradient } from "expo-linear-gradient"
@@ -15,14 +17,10 @@ import { Ionicons } from "@expo/vector-icons"
 import * as Haptics from "expo-haptics"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 
-import {
-  priceAlertsSelector,
-  triggeredAlertsSelector,
-  activeAlertsSelector
-} from "../../store/alertsSelectors"
+import { priceAlertsSelector } from "../../store/alertsSelectors"
 import { deletePriceAlert, clearTriggeredAlerts } from "../../store/alertsSlice"
 
-import { styles } from "./Alerts.styles"
+import { createStyles } from "./Alerts.styles"
 import AlertCard from "../../components/AlertCard/AlertCard"
 import ServerSyncService from "../../services/ServerSyncService"
 import AlertsPlaceholder from "./AlertsPlaceholder"
@@ -30,6 +28,18 @@ import AlertsPlaceholder from "./AlertsPlaceholder"
 const Alerts = () => {
   const dispatch = useDispatch()
   const priceAlerts = useSelector(priceAlertsSelector)
+  const { width, height, fontScale } = useWindowDimensions()
+
+  // Адаптивные значения на основе размеров экрана
+  const isSmallScreen = width < 375
+  const isTablet = width >= 768
+  const isLandscape = width > height
+
+  // Создаем стили с актуальными размерами экрана
+  const styles = useMemo(
+    () => createStyles(width, height, fontScale, isSmallScreen, isTablet, isLandscape),
+    [width, height, fontScale, isSmallScreen, isTablet, isLandscape]
+  )
 
   const [serverAlertsEnabled, setServerAlertsEnabled] = useState(false)
   const [showFirstTimeTooltip, setShowFirstTimeTooltip] = useState(false)
@@ -47,7 +57,6 @@ const Alerts = () => {
     )
     const count = tooltipShownCount ? parseInt(tooltipShownCount) : 0
 
-    // Доп проверка: показать только если счетчик не обновлялся сегодня
     const lastShownDate = await AsyncStorage.getItem("@server_alerts_last_shown_date")
     const today = new Date().toDateString()
 
@@ -86,7 +95,7 @@ const Alerts = () => {
     setServerAlertsEnabled(newStatus)
 
     if (showFirstTimeTooltip) {
-      await hideTooltipAndSave() // теперь общая ф-ия ( вместо дублирования кода)
+      await hideTooltipAndSave()
     }
 
     await ServerSyncService.updateConsent(newStatus)
@@ -116,18 +125,15 @@ const Alerts = () => {
   }
 
   const hideTooltipAndSave = async () => {
-    // 1. Увеличение счетчика (как при клике на облачко)
     const currentCount = await AsyncStorage.getItem("@server_alerts_tooltip_shown_count")
     const newCount = currentCount ? parseInt(currentCount) + 1 : 1
 
-    // 2. Сохр обновленные данные
     await AsyncStorage.setItem("@server_alerts_tooltip_shown_count", newCount.toString())
     await AsyncStorage.setItem(
       "@server_alerts_last_shown_date",
       new Date().toDateString()
     )
 
-    // 3. Вызов анимации скрытия
     hideTooltip()
   }
 
@@ -192,6 +198,35 @@ const Alerts = () => {
     triggered: triggeredAlerts.length
   }
 
+  // Адаптивный контент - для всех устройств одинаковое отображение (в столбик)
+  const renderContent = () => {
+    // Для планшетов просто увеличиваем отступы и размеры, но оставляем одну колонку
+    return (
+      <FlatList
+        data={
+          activeFilter === "active"
+            ? activeAlerts
+            : activeFilter === "triggered"
+            ? triggeredAlerts
+            : priceAlerts
+        }
+        renderItem={({ item }) => (
+          <AlertCard alert={item} onDelete={() => handleDeleteAlert(item.id)} />
+        )}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ListEmptyComponent={
+          <View style={styles.noResults}>
+            <Ionicons name='search-outline' size={isTablet ? 48 : 24} color='#FFD700' />
+            <Text style={styles.noResultsText}>No alerts here</Text>
+          </View>
+        }
+      />
+    )
+  }
+
   if (priceAlerts.length === 0) {
     return (
       <SafeAreaView style={styles.safeAreaContainer}>
@@ -205,14 +240,17 @@ const Alerts = () => {
       <StatusBar barStyle='light-content' backgroundColor='#0A0A0F' />
 
       <View style={styles.container}>
-        {/* Подсказка для первого захода */}
+        {/* Подсказка для первого захода - адаптивная позиция */}
         {showFirstTimeTooltip && (
           <Animated.View
             style={[
               styles.tooltipContainer,
               {
                 opacity: tooltipOpacity,
-                transform: [{ translateY: tooltipTranslateY }]
+                transform: [{ translateY: tooltipTranslateY }],
+                right: isTablet ? 40 : 20,
+                top: isTablet ? 80 : 70,
+                width: isTablet ? 250 : isSmallScreen ? 180 : 200
               }
             ]}
           >
@@ -228,16 +266,23 @@ const Alerts = () => {
             >
               <View style={styles.tooltipContent}>
                 <View style={styles.tooltipHeader}>
-                  <Ionicons name='notifications-sharp' size={14} color='#FFD700' />
+                  <Ionicons
+                    name='notifications-sharp'
+                    size={isSmallScreen ? 12 : 14}
+                    color='#FFD700'
+                  />
                   <Text style={styles.tooltipTitle}>Important!</Text>
                   <TouchableOpacity
                     onPress={hideTooltipAndSave}
                     style={styles.tooltipCloseButton}
                   >
-                    <Ionicons name='close' size={12} color='rgba(255, 255, 255, 0.6)' />
+                    <Ionicons
+                      name='close'
+                      size={isSmallScreen ? 10 : 12}
+                      color='rgba(255, 255, 255, 0.6)'
+                    />
                   </TouchableOpacity>
                 </View>
-                {/* ИСПРАВЛЕН ТЕКСТ */}
                 <Text style={styles.tooltipText}>
                   For enable or disable server background notifications 24/7, click this
                   cloud icon
@@ -251,10 +296,14 @@ const Alerts = () => {
         {/* Заголовок */}
         <LinearGradient
           colors={["rgba(26, 26, 26, 0.95)", "rgba(40, 40, 40, 0.9)"]}
-          style={styles.miniHeader}
+          style={[styles.miniHeader, isLandscape && styles.miniHeaderLandscape]}
         >
           <View style={styles.headerLeft}>
-            <Ionicons name='notifications' size={18} color='#FFD700' />
+            <Ionicons
+              name='notifications'
+              size={isSmallScreen ? 16 : 18}
+              color='#FFD700'
+            />
             <Text style={styles.headerTitle}>ALERTS</Text>
             <View style={styles.headerStatsMini}>
               <View style={styles.statMini}>
@@ -270,7 +319,11 @@ const Alerts = () => {
                 onPress={handleClearTriggered}
                 style={styles.clearMiniButton}
               >
-                <Ionicons name='trash-outline' size={16} color='#F44336' />
+                <Ionicons
+                  name='trash-outline'
+                  size={isSmallScreen ? 14 : 16}
+                  color='#F44336'
+                />
                 <Text style={styles.clearMiniText}>{stats.triggered}</Text>
               </TouchableOpacity>
             )}
@@ -287,7 +340,7 @@ const Alerts = () => {
               >
                 <Ionicons
                   name={serverAlertsEnabled ? "cloud-done" : "cloud-offline"}
-                  size={14}
+                  size={isSmallScreen ? 12 : 14}
                   color={
                     serverAlertsEnabled
                       ? "#4CAF50"
@@ -326,20 +379,21 @@ const Alerts = () => {
 
             <View style={styles.activeStats}>
               <View style={styles.activeStatItem}>
-                <View style={styles.activeDot} />
+                <View style={[styles.activeDot, isSmallScreen && styles.smallDot]} />
                 <Text style={styles.activeStatText}>{stats.active}</Text>
               </View>
               <View style={styles.triggeredStatItem}>
-                <View style={styles.triggeredDot} />
+                <View style={[styles.triggeredDot, isSmallScreen && styles.smallDot]} />
                 <Text style={styles.triggeredStatText}>{stats.triggered}</Text>
               </View>
             </View>
           </View>
         </LinearGradient>
 
-        {/* Остальной код компонента без изменений */}
         {/* Фильтры */}
-        <View style={styles.compactFilters}>
+        <View
+          style={[styles.compactFilters, isLandscape && styles.compactFiltersLandscape]}
+        >
           <TouchableOpacity
             style={[
               styles.compactFilter,
@@ -349,7 +403,7 @@ const Alerts = () => {
           >
             <Ionicons
               name='flash'
-              size={12}
+              size={isSmallScreen ? 10 : 12}
               color={activeFilter === "active" ? "#FFF" : "#4CAF50"}
             />
             <Text
@@ -376,7 +430,7 @@ const Alerts = () => {
           >
             <Ionicons
               name='checkmark-circle'
-              size={12}
+              size={isSmallScreen ? 10 : 12}
               color={activeFilter === "triggered" ? "#FFF" : "#FFD700"}
             />
             <Text
@@ -403,7 +457,7 @@ const Alerts = () => {
           >
             <Ionicons
               name='list'
-              size={12}
+              size={isSmallScreen ? 10 : 12}
               color={activeFilter === "all" ? "#FFF" : "#9C27B0"}
             />
             <Text
@@ -420,28 +474,7 @@ const Alerts = () => {
           </TouchableOpacity>
         </View>
 
-        <FlatList
-          data={
-            activeFilter === "active"
-              ? activeAlerts
-              : activeFilter === "triggered"
-              ? triggeredAlerts
-              : priceAlerts
-          }
-          renderItem={({ item }) => (
-            <AlertCard alert={item} onDelete={() => handleDeleteAlert(item.id)} />
-          )}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          ListEmptyComponent={
-            <View style={styles.noResults}>
-              <Ionicons name='search-outline' size={24} color='#FFD700' />
-              <Text style={styles.noResultsText}>No alerts here</Text>
-            </View>
-          }
-        />
+        {renderContent()}
       </View>
     </SafeAreaView>
   )

@@ -258,7 +258,8 @@ export const styles = StyleSheet.create({
     fontSize: RFValue(10)
   },
   quickSuggestions: {
-    marginTop: RFValue(10)
+    marginTop: RFValue(10),
+    alignItems: "center"
   },
   quickSuggestionsAndroid: {
     marginTop: RFValue(8)
@@ -267,7 +268,7 @@ export const styles = StyleSheet.create({
     flexDirection: "row"
   },
   suggestionsContent: {
-    paddingRight: RFValue(8)
+    // paddingRight: RFValue(8)
   },
   suggestionButton: {
     paddingHorizontal: RFValue(10),
@@ -275,7 +276,7 @@ export const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.05)",
     borderRadius: RFValue(8),
     alignItems: "center",
-    marginRight: RFValue(6),
+    marginHorizontal: RFValue(3),
     minWidth: RFValue(65),
     borderWidth: 1,
     borderColor: "transparent"

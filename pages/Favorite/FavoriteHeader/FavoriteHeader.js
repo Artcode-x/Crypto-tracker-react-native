@@ -17,7 +17,8 @@ const FavoriteHeader = ({
       {/* Корпус из матового стекла */}
       <LinearGradient
         // colors={["rgba(25,25,30,0.95)", "rgba(15,15,20,0.98)"]}
-        colors={["rgba(38,35,32,0.45)", "rgba(28,25,22,0.98)"]}
+        // colors={["rgba(38,35,32,0.45)", "rgba(28,25,22,0.98)"]}
+        colors={["rgba(70,72,74,0.99)", "rgba(32,34,38,0.8)"]}
         style={styles.case}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}

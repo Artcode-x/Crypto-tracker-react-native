@@ -516,7 +516,7 @@ const ModalContent = React.memo(
                 onSubmitEditing={handleSave}
                 blurOnSubmit={true}
                 contextMenuHidden={true}
-                selectTextOnFocus={true}
+                // selectTextOnFocus={true}
                 textAlign='center'
               />
 

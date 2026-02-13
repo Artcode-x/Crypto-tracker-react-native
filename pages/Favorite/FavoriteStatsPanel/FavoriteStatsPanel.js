@@ -14,7 +14,8 @@ const FavoriteStatsPanel = ({ priceAlerts, stats, unreadAlertsCount }) => {
       {/* Корпус из матового стекла  */}
       <LinearGradient
         // colors={["rgba(25,25,30,0.95)", "rgba(15,15,20,0.98)"]}
-        colors={["rgba(38,35,32,0.45)", "rgba(28,25,22,0.98)"]}
+        // colors={["rgba(38,35,32,0.45)", "rgba(28,25,22,0.98)"]}
+        colors={["rgba(70,72,74,0.99)", "rgba(32,34,38,0.8)"]}
         style={styles.case}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -90,17 +91,30 @@ const FavoriteStatsPanel = ({ priceAlerts, stats, unreadAlertsCount }) => {
 
         <TouchableOpacity style={styles.indicator} activeOpacity={0.7}>
           <View style={styles.markerGroup}>
-            <LinearGradient
-              colors={["rgba(212,175,55,0.15)", "rgba(212,175,55,0.03)"]}
-              style={styles.markerIcon}
-            >
-              <Ionicons name='notifications' size={ICON_SIZE} color='#FFD700' />
-              {unreadAlertsCount > 0 && (
-                <View style={styles.crownPulse}>
+            <View style={{ position: "relative" }}>
+              {/* Добавьте контейнер-обёртку */}
+              <LinearGradient
+                colors={["rgba(212,175,55,0.15)", "rgba(212,175,55,0.03)"]}
+                style={styles.markerIcon}
+              >
+                <Ionicons name='notifications' size={ICON_SIZE} color='#FFD700' />
+              </LinearGradient>
+              {/* {unreadAlertsCount > 0 && (
+                <View
+                  style={[
+                    styles.crownPulse,
+                    {
+                      position: "absolute",
+                      top: TABLET ? -4 : -3,
+                      right: TABLET ? -4 : -3
+                    }
+                  ]}
+                >
                   <Text style={styles.pulseText}>{unreadAlertsCount}</Text>
                 </View>
-              )}
-            </LinearGradient>
+              )} */}
+            </View>
+
             <View style={styles.markerData}>
               <Text style={styles.markerValue}>{stats.activeAlerts || 0}</Text>
               <Text style={styles.markerLabel}>ALERTS</Text>

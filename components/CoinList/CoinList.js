@@ -35,6 +35,7 @@ const CoinList = ({
   const [modalVisible, setModalVisible] = useState(false)
   const [flag, setFlag] = useState({})
   const dispatch = useDispatch()
+  const isButtonPressed = useRef(false)
 
   // Динамическое определение размеров
   const [windowWidth, setWindowWidth] = useState(Dimensions.get("window").width)
@@ -115,6 +116,14 @@ const CoinList = ({
   }, [data])
 
   const addToFavorite = (coinData) => {
+    if (isButtonPressed.current) {
+      console.log("Блокировка: слишком быстрое нажатие")
+      return
+    }
+
+    // Блокируем кнопку
+    isButtonPressed.current = true
+
     const isDuplicate = favoriteCoins.some(
       (favoriteCoin) => favoriteCoin.id === coinData.id
     )
@@ -124,19 +133,22 @@ const CoinList = ({
       setMsgDouble(true)
       setTimeout(() => {
         setMsgDouble(false)
+        // Разблокируем ПОСЛЕ того, как скроется предупреждение
+        isButtonPressed.current = false
       }, 1000)
     } else {
       dispatch(setCoin(coinData))
       setModalVisible(true)
 
       setFlag((prevFlag) => ({ ...prevFlag, [coinData.id]: true }))
+
+      // Единый таймер на разблокировку ПОСЛЕ всех анимаций
       setTimeout(() => {
         setFlag((prevFlag) => ({ ...prevFlag, [coinData.id]: false }))
-      }, 1800)
-
-      setTimeout(() => {
         setModalVisible(false)
-      }, 1000)
+        // Разблокируем только когда всё закончится (после 1800ms)
+        isButtonPressed.current = false
+      }, 1800) // Ждем окончания самой долгой анимации
     }
   }
 
@@ -194,7 +206,7 @@ const CoinList = ({
                 position: "absolute",
                 left: 0,
                 top: 1,
-                bottom: 1,
+                bottom: 0,
                 width: 4,
                 backgroundColor: "#4CAF50",
                 borderTopLeftRadius: 18,
