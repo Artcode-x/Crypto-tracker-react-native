@@ -4,7 +4,14 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import Main from "../../pages/Main/Main"
 import Favorite from "../../pages/Favorite/Favorite"
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
-import { Dimensions, Platform, StyleSheet } from "react-native"
+import {
+  Dimensions,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  Text
+} from "react-native"
 import Analytics from "../Analytics/Analytics"
 import PrivacyPolicy from "../../pages/PrivacyPolicy/PrivacyPolicy"
 import Alerts from "../../pages/Alerts/Alerts"
@@ -16,6 +23,8 @@ const Tab = createBottomTabNavigator()
 const { width, height } = Dimensions.get("window")
 const isTablet = width >= 768
 const isLargeScreen = height >= 800
+
+const DEFAULT_HORIZONTAL_PADDING = width * 0.02
 
 const TabNavigatorWithSafeArea = () => {
   const insets = useSafeAreaInsets()
@@ -57,11 +66,15 @@ const TabNavigatorWithSafeArea = () => {
   const getHorizontalPadding = () => {
     if (hasRoundedCorners) {
       return {
-        left: Math.max(insets.left, 16),
-        right: Math.max(insets.right, 16)
+        left: Math.max(insets.left, DEFAULT_HORIZONTAL_PADDING, 16),
+        right: Math.max(insets.right, DEFAULT_HORIZONTAL_PADDING, 16)
+      }
+    } else {
+      return {
+        left: DEFAULT_HORIZONTAL_PADDING,
+        right: DEFAULT_HORIZONTAL_PADDING
       }
     }
-    return { left: 0, right: 0 }
   }
 
   const tabBarHeight = getTabBarHeight()
@@ -87,26 +100,115 @@ const TabNavigatorWithSafeArea = () => {
       shadowColor: "#000",
       shadowOffset: { width: 0, height: -2 },
       shadowOpacity: 0.25,
-      shadowRadius: 3.84
+      shadowRadius: 3.84,
+      flexDirection: "row",
+      alignItems: "center"
+    },
+    tabBarItem: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      height: "100%"
     },
     tabBarLabelStyle: {
-      fontSize: Platform.OS === "ios" ? RFValue(9.1) : RFValue(9),
+      fontSize: Platform.OS === "ios" ? RFValue(7.1) : RFValue(9),
       marginBottom: paddingBottom > 0 ? 0 : 3,
-      fontWeight: "500"
+      fontWeight: "500",
+      textAlign: "center",
+      // Добавляем эти свойства для длинных текстов
+      flexShrink: 1,
+      width: "100%"
+    },
+    // Добавляем специальный стиль для длинных надписей
+    longLabelStyle: {
+      fontSize: Platform.OS === "ios" ? RFValue(6.5) : RFValue(8) // Уменьшаем размер
     },
     tabBarIconStyle: {
       marginTop: 5
+    },
+    labelContainer: {
+      width: "100%",
+      alignItems: "center",
+      paddingHorizontal: 2
     }
   })
+
+  const renderTabBar = (props) => {
+    return (
+      <View style={styles.tabBarStyle}>
+        {props.state.routes.map((route, index) => {
+          const { options } = props.descriptors[route.key]
+          const isFocused = props.state.index === index
+
+          const onPress = () => {
+            const event = props.navigation.emit({
+              type: "tabPress",
+              target: route.key,
+              canPreventDefault: true
+            })
+
+            if (!isFocused && !event.defaultPrevented) {
+              props.navigation.navigate(route.name)
+            }
+          }
+
+          const onLongPress = () => {
+            props.navigation.emit({
+              type: "tabLongPress",
+              target: route.key
+            })
+          }
+
+          const color = isFocused ? "#FF6347" : "#aaa"
+          const iconSize = isTablet ? 23 : 22
+
+          const title = options.title || route.name
+          const isLongLabel = title.length > 10
+
+          return (
+            <TouchableOpacity
+              key={route.key}
+              accessibilityRole='button'
+              accessibilityState={isFocused ? { selected: true } : {}}
+              accessibilityLabel={options.tabBarAccessibilityLabel}
+              testID={options.tabBarTestID}
+              onPress={onPress}
+              onLongPress={onLongPress}
+              style={styles.tabBarItem}
+              activeOpacity={0.7}
+            >
+              <View style={styles.tabBarIconStyle}>
+                {options.tabBarIcon ? (
+                  options.tabBarIcon({ color, size: iconSize })
+                ) : (
+                  <Ionicons name='help' size={iconSize} color={color} />
+                )}
+              </View>
+              <View style={styles.labelContainer}>
+                <Text
+                  style={[
+                    styles.tabBarLabelStyle,
+                    { color },
+                    isLongLabel && styles.longLabelStyle
+                  ]}
+                  numberOfLines={1}
+                  ellipsizeMode='tail'
+                >
+                  {title}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )
+        })}
+      </View>
+    )
+  }
 
   return (
     <Tab.Navigator
       screenOptions={{
         tabBarActiveTintColor: "#FF6347",
         tabBarInactiveTintColor: "#aaa",
-        tabBarStyle: styles.tabBarStyle,
-        tabBarLabelStyle: styles.tabBarLabelStyle,
-        tabBarIconStyle: styles.tabBarIconStyle,
         headerTintColor: "#fff",
         headerStyle: {
           backgroundColor: "rgba(50, 48, 49, 0.8)",
@@ -114,14 +216,16 @@ const TabNavigatorWithSafeArea = () => {
           borderBottomWidth: 1
         }
       }}
+      tabBar={renderTabBar}
     >
+      {/* ВСЕ ЭКРАНЫ ТЕПЕРЬ ПРАВИЛЬНО ОБЕРНУТЫ В Screen */}
       <Tab.Screen
         name='Home'
         component={Main}
         options={{
           title: "Watchlists",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name='pulse' size={isTablet ? 23 : 22} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name='pulse' size={size} color={color} />
           )
         }}
       />
@@ -130,8 +234,8 @@ const TabNavigatorWithSafeArea = () => {
         component={Favorite}
         options={{
           title: "Favorites",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name='logo-bitcoin' size={isTablet ? 23 : 22} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name='logo-bitcoin' size={size} color={color} />
           )
         }}
       />
@@ -140,8 +244,8 @@ const TabNavigatorWithSafeArea = () => {
         component={Alerts}
         options={{
           title: "Price Alerts",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name='notifications' size={isTablet ? 23 : 22} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name='notifications' size={size} color={color} />
           )
         }}
       />
@@ -150,8 +254,8 @@ const TabNavigatorWithSafeArea = () => {
         component={Analytics}
         options={{
           title: "Analytics",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name='bar-chart' size={isTablet ? 23 : 22} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name='bar-chart' size={size} color={color} />
           )
         }}
       />
@@ -160,8 +264,8 @@ const TabNavigatorWithSafeArea = () => {
         component={PrivacyPolicy}
         options={{
           title: "Privacy Policy",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name='mail-unread' size={isTablet ? 23 : 22} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name='mail-unread' size={size} color={color} />
           )
         }}
       />
@@ -170,12 +274,8 @@ const TabNavigatorWithSafeArea = () => {
         component={SupportUs}
         options={{
           title: "Support Us",
-          tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons
-              name='code-braces'
-              size={isTablet ? 23 : 22}
-              color={color}
-            />
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name='code-braces' size={size} color={color} />
           )
         }}
       />
