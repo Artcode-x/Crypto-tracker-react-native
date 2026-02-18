@@ -15,7 +15,14 @@ const initialState = {
   marketIsLoadingMore: false, // Флаг загрузки дополнительных данных
   marketHasMore: true, // Есть ли еще данные для загрузки
   marketLastUpdated: null, // Когда последний раз обновляли
-  marketError: null // Ошибка загрузки
+  marketError: null, // Ошибка загрузки
+
+  insets: {
+    bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0
+  }
 }
 
 const reducersSlice = createSlice({
@@ -131,6 +138,12 @@ const reducersSlice = createSlice({
       if (index !== -1) {
         state.marketData[index] = { ...state.marketData[index], ...data }
       }
+    },
+    setInsets: (state, action) => {
+      state.insets = {
+        ...state.insets,
+        ...action.payload
+      }
     }
   }
 })
@@ -153,7 +166,8 @@ export const {
   setMarketLastUpdated,
   setMarketError,
   resetMarketData,
-  updateMarketDataItem
+  updateMarketDataItem,
+  setInsets
 } = reducersSlice.actions
 
 export default reducersSlice.reducer

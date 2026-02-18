@@ -14,7 +14,11 @@ import { useDispatch, useSelector } from "react-redux"
 import CoinItem from "../CoinItem/CoinItem"
 import { Ionicons } from "@expo/vector-icons"
 import { rewriteFavorite, setCoin, setDuplicate } from "../../store/reducersSlice"
-import { coinSelector, duplicateSelector } from "../../store/toolkitSelectors"
+import {
+  bottomInset,
+  coinSelector,
+  duplicateSelector
+} from "../../store/toolkitSelectors"
 import { LinearGradient } from "expo-linear-gradient"
 
 const CoinList = ({
@@ -35,6 +39,7 @@ const CoinList = ({
   const [modalVisible, setModalVisible] = useState(false)
   const [flag, setFlag] = useState({})
   const dispatch = useDispatch()
+  const bottomInsets = useSelector(bottomInset)
   const isButtonPressed = useRef(false)
 
   // Динамическое определение размеров
@@ -348,7 +353,16 @@ const CoinList = ({
         renderItem={renderItem}
         numColumns={numColumns}
         keyExtractor={keyExtractor}
-        contentContainerStyle={[styles.contentContainer, { paddingBottom: 55 }]}
+        // contentContainerStyle={[styles.contentContainer, { paddingBottom: 55 }]}
+        contentContainerStyle={[
+          styles.contentContainer,
+          {
+            paddingBottom:
+              bottomInsets.bottom > 0
+                ? bottomInsets.bottom + 60 // Если есть навигационная панель, добавляем отступ
+                : 55 // Если нет, используем стандартный отступ
+          }
+        ]}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
         onMomentumScrollBegin={handleMomentumScrollBegin}

@@ -16,5 +16,4 @@ export const marketIsLoadingMoreSelector = (store) =>
   mainSelector(store).marketIsLoadingMore
 export const marketHasMoreSelector = (store) => mainSelector(store).marketHasMore
 export const marketErrorSelector = (store) => mainSelector(store).marketError
-
-
+export const bottomInset = (store) => mainSelector(store).insets

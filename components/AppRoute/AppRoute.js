@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect } from "react"
 import { NavigationContainer } from "@react-navigation/native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import Main from "../../pages/Main/Main"
@@ -18,6 +18,8 @@ import Alerts from "../../pages/Alerts/Alerts"
 import SupportUs from "../../pages/SupportUs/SupportUs"
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context"
 import { RFValue } from "react-native-responsive-fontsize"
+import { useDispatch } from "react-redux"
+import { setInsets } from "../../store/reducersSlice"
 
 const Tab = createBottomTabNavigator()
 const { width, height } = Dimensions.get("window")
@@ -27,7 +29,12 @@ const isLargeScreen = height >= 800
 const DEFAULT_HORIZONTAL_PADDING = width * 0.02
 
 const TabNavigatorWithSafeArea = () => {
+  const dispatch = useDispatch()
   const insets = useSafeAreaInsets()
+
+  useEffect(() => {
+    dispatch(setInsets(insets))
+  }, [insets, dispatch])
 
   const hasRoundedCorners = insets.bottom > 4
   const hasNavigationBar = Platform.OS === "android" && insets.bottom > 20
@@ -47,7 +54,7 @@ const TabNavigatorWithSafeArea = () => {
     }
 
     if (hasRoundedCorners && !hasNavigationBar) {
-      finalHeight = finalHeight + insets.bottom
+      finalHeight = finalHeight / 1.15 + insets.bottom
     }
 
     console.log(
@@ -92,7 +99,7 @@ const TabNavigatorWithSafeArea = () => {
       borderTopColor: "wheat",
       borderTopWidth: 1,
       height: tabBarHeight,
-      paddingBottom: paddingBottom,
+      paddingBottom: paddingBottom + 1.5,
       paddingLeft: horizontalPadding.left,
       paddingRight: horizontalPadding.right,
       minHeight: Platform.OS === "android" ? 50 : 45,
@@ -111,7 +118,7 @@ const TabNavigatorWithSafeArea = () => {
       height: "100%"
     },
     tabBarLabelStyle: {
-      fontSize: Platform.OS === "ios" ? RFValue(7.1) : RFValue(9),
+      fontSize: Platform.OS === "ios" ? RFValue(7.1) : RFValue(8),
       marginBottom: paddingBottom > 0 ? 0 : 3,
       fontWeight: "500",
       textAlign: "center",
@@ -121,7 +128,7 @@ const TabNavigatorWithSafeArea = () => {
     },
     // Добавляем специальный стиль для длинных надписей
     longLabelStyle: {
-      fontSize: Platform.OS === "ios" ? RFValue(6.5) : RFValue(8) // Уменьшаем размер
+      fontSize: Platform.OS === "ios" ? RFValue(6.5) : RFValue(8)
     },
     tabBarIconStyle: {
       marginTop: 5
