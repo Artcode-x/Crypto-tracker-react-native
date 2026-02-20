@@ -32,11 +32,11 @@ const EmptyState = ({ notificationPermission, onAddCoins, onEnableNotifications 
             </View>
 
             <View style={styles.headerRight}>
-              <View style={styles.divider} />
-              <View style={styles.status}>
+              {/* <View style={styles.divider} /> */}
+              {/* <View style={styles.status}>
                 <View style={styles.statusDot} />
                 <Text style={styles.statusText}>24/7</Text>
-              </View>
+              </View> */}
             </View>
           </View>
         </View>

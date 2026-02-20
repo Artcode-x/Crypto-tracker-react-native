@@ -48,7 +48,8 @@ const getCardHeight = () => {
     ? screenHeight * (Platform.OS === "android" ? 0.45 : 0.4)
     : screenHeight * (Platform.OS === "android" ? 0.26 : 0.21)
 
-  return Math.max(normalize(140), Math.min(baseHeight, normalize(220)))
+  // return Math.max(normalize(140), Math.min(baseHeight, normalize(220)))
+  return Math.max(normalize(140), Math.min(baseHeight, normalize(190)))
 }
 
 // Динамический расчет ширины карточки
@@ -538,6 +539,7 @@ export const styles = StyleSheet.create({
     },
 
     premiumCoinCard: {
+      height: CARD_HEIGHT / 1.1,
       borderRadius: 11,
       borderWidth: 0,
       overflow: "hidden"

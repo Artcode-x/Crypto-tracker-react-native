@@ -60,7 +60,8 @@ export const styles = StyleSheet.create({
   selectedCoinSymbol: {
     fontSize: RFValue(12),
     color: "rgba(255, 255, 255, 0.7)",
-    marginTop: 2,
+
+    paddingTop: 4,
     lineHeight: 16
   },
 
@@ -90,11 +91,12 @@ export const styles = StyleSheet.create({
 
   sentimentText: {
     fontSize: RFValue(11),
-    fontWeight: "600"
+    fontWeight: "600",
+    color: "wheat"
   },
 
   bullish: {
-    color: "#00D8A3"
+    color: "wheat"
   },
 
   bearish: {

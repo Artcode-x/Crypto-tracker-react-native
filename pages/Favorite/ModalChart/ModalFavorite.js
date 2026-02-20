@@ -23,6 +23,8 @@ import {
 import { SwitchTimeframeButtons } from "./components/SwitchTimeframeButtons/SwitchTimeframeButtons"
 import { VolumeChart } from "./components/VolumeChart/VolumeChart"
 import CandlestickChart from "./components/CandlestickChart/CandlestickChart"
+import { useSelector } from "react-redux"
+import { bottomInset } from "../../../store/toolkitSelectors"
 
 const { width, height } = Dimensions.get("window")
 
@@ -32,6 +34,8 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
   const [loadingChart, setLoadingChart] = useState(false)
   const [limit, setLimit] = useState(100)
   const [santiment, setSantiment] = useState(null)
+
+  const bottomInsets = useSelector(bottomInset)
 
   const formatTime = (prices) => {
     if (!prices || !prices.length) return []
@@ -150,7 +154,12 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
         <SafeAreaView style={styles.modalContainer}>
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[
+              styles.scrollContent,
+              {
+                paddingBottom: bottomInsets.bottom > 0 ? bottomInsets.bottom + 5 : 0
+              }
+            ]}
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
@@ -175,7 +184,12 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
           <View style={styles.androidStatusBar} />
           <ScrollView
             style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[
+              styles.scrollContent,
+              {
+                paddingBottom: bottomInsets.bottom > 0 ? bottomInsets.bottom + 5 : 0
+              }
+            ]}
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
