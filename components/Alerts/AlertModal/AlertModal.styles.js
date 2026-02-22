@@ -285,7 +285,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: RFValue(8),
     paddingVertical: RFValue(5),
     minWidth: RFValue(60),
-    marginRight: RFValue(5),
+    // marginRight: RFValue(5),
     borderRadius: RFValue(6)
   },
   suggestionButtonActive: {
