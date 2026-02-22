@@ -67,7 +67,7 @@ const EmptyState = ({ notificationPermission, onAddCoins, onEnableNotifications 
               />
             </View>
 
-            <Text style={styles.label}>PORTFOLIO INSIGHTS</Text>
+            <Text style={styles.label}>YOUR HOLDINGS</Text>
             <Text style={styles.caption}>Your Journey Begins</Text>
 
             <View style={styles.division}>

@@ -508,6 +508,12 @@ const ModalContent = React.memo(
 
                   setTargetPrice(filteredText)
                   setError("")
+                  // автоматический выбор ABOVE или BELOW
+                  if (filteredText && parseFloat(filteredText) > 0) {
+                    const numPrice = parseFloat(filteredText)
+                    const newCondition = numPrice > currentPrice ? "above" : "below"
+                    setCondition(newCondition)
+                  }
                 }}
                 placeholder='0.00'
                 placeholderTextColor='rgba(255, 255, 255, 0.3)'
