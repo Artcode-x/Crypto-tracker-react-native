@@ -199,3 +199,42 @@ export async function fetchCurrentPrices(coinIds) {
     return {}
   }
 }
+
+// Для поиска монет
+
+export async function SearchCoins(query) {
+  if (!query || query.length < 2) return []
+
+  try {
+    console.log(`🔍 Поиск: ${query}`)
+
+    const response = await axios.get(
+      `https://api.coingecko.com/api/v3/search?query=${query}`
+    )
+
+    if (!response.data || !response.data.coins) {
+      return []
+    }
+
+    // Получаем детальную информацию по найденным монетам (первые 10)
+    const coins = response.data.coins.slice(0, 10)
+
+    if (coins.length === 0) return []
+
+    // Получаем рыночные данные для найденных монет
+    const coinIds = coins.map((coin) => coin.id).join(",")
+    const marketResponse = await axios.get(
+      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${coinIds}&sparkline=true&price_change_percentage=7d`
+    )
+
+    return marketResponse.data
+  } catch (error) {
+    console.error("Ошибка поиска:", error.message)
+
+    if (error.message === "Request failed with status code 429") {
+      throw new Error("429")
+    }
+
+    return []
+  }
+}

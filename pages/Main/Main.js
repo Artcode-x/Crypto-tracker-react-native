@@ -32,7 +32,11 @@ import {
   setMarketError,
   resetMarketData
 } from "../../store/reducersSlice"
-import { FetchCoinHistoricalData, GetMarketData } from "../../components/Api/Api"
+import {
+  FetchCoinHistoricalData,
+  GetMarketData,
+  SearchCoins
+} from "../../components/Api/Api"
 import { Ionicons } from "@expo/vector-icons"
 import { ModalView } from "../../components/ModalView/ModalView"
 import CoinList2 from "../../components/CoinList2/Coinlist2"
@@ -55,6 +59,11 @@ const Main = () => {
   const [is429Error, setIs429Error] = useState(false)
   const [retryCountdown, setRetryCountdown] = useState(0)
   const [initialLoadAttempted, setInitialLoadAttempted] = useState(false)
+
+  // Для поиска
+  const [searchResults, setSearchResults] = useState([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchError, setSearchError] = useState(null)
 
   // Refs для управления загрузкой
   const isLoadingMoreRef = useRef(false)
@@ -304,7 +313,7 @@ const Main = () => {
 
         dispatch(
           setMarketError(
-            `Слишком много запросов. Автоматический повтор через ${delayInSeconds}сек...`
+            `Too many requests. Automatic repeat after ${delayInSeconds}sec...`
           )
         )
 
@@ -455,14 +464,42 @@ const Main = () => {
   }
 
   const handleSearch = (text) => {
+    setSearch(text)
+    setSearchError(null)
+
     if (retryTimeoutRef.current) {
       clearTimeout(retryTimeoutRef.current)
     }
-    setTimeout(() => {
-      if (isMountedRef.current) {
-        setSearch(text)
+
+    // Если текст пустой - очищаем результаты поиска
+    if (!text.trim()) {
+      setSearchResults([])
+      return
+    }
+
+    // Добавляем задержку перед поиском (debounce)
+    retryTimeoutRef.current = setTimeout(async () => {
+      if (!isMountedRef.current || text.length < 2) return
+
+      setIsSearching(true)
+      try {
+        const results = await SearchCoins(text)
+        if (isMountedRef.current) {
+          setSearchResults(results)
+        }
+      } catch (error) {
+        if (error.message === "429") {
+          setSearchError("Too many requests, try again later")
+        } else {
+          setSearchError("Search failed, please try again")
+        }
+        setSearchResults([]) // Очищаем результаты при ошибке
+      } finally {
+        if (isMountedRef.current) {
+          setIsSearching(false)
+        }
       }
-    }, 300)
+    }, 500) // Ждем 500мс после ввода
   }
 
   return (
@@ -618,7 +655,7 @@ const Main = () => {
             <>
               {!marketViewFlag ? (
                 <CoinList
-                  data={marketData}
+                  data={search.trim().length >= 2 ? searchResults : marketData}
                   search={search}
                   openModal={openModal}
                   refreshing={refreshing}
@@ -628,10 +665,13 @@ const Main = () => {
                   loadMoreData={loadMoreData}
                   isLoadingMore={marketIsLoadingMore}
                   hasMore={marketHasMore}
+                  isSearching={isSearching}
+                  searchResultsCount={searchResults.length}
+                  searchError={searchError}
                 />
               ) : (
                 <CoinList2
-                  data={marketData}
+                  data={search.trim().length >= 2 ? searchResults : marketData}
                   search={search}
                   openModal={openModal}
                   refreshing={refreshing}
@@ -641,6 +681,9 @@ const Main = () => {
                   loadMoreData={loadMoreData}
                   isLoadingMore={marketIsLoadingMore}
                   hasMore={marketHasMore}
+                  isSearching={isSearching}
+                  searchResultsCount={searchResults.length}
+                  searchError={searchError}
                 />
               )}
             </>

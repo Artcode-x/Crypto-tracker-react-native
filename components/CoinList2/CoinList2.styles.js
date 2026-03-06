@@ -190,5 +190,100 @@ export const styles = StyleSheet.create({
     fontSize: RFValue(14),
     fontWeight: "600",
     textAlign: "center"
+  },
+
+  // Search
+
+  searchingContainer: {
+    padding: 20,
+    alignItems: "center",
+    textAlign: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.0)",
+    borderRadius: 12,
+    marginVertical: 20,
+    alignSelf: "center",
+    flexDirection: "row",
+    gap: 10
+  },
+
+  searchingText: {
+    color: "#FFD700",
+    fontSize: RFValue(14),
+    fontWeight: "400"
+  },
+
+  noResultsContainer: {
+    padding: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 200
+  },
+
+  noResultsText: {
+    color: "#FFF",
+    fontSize: RFValue(15),
+    fontWeight: "600",
+    marginTop: 15,
+    textAlign: "center"
+  },
+
+  noResultsSubtext: {
+    color: "#999",
+    fontSize: RFValue(13),
+    marginTop: 8,
+    textAlign: "center"
+  },
+
+  // Error search
+  searchErrorContainer: {
+    padding: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 107, 107, 0.05)",
+    borderRadius: 12,
+    margin: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 107, 107, 0.3)"
+  },
+
+  searchErrorText: {
+    color: "#FF6B6B",
+    fontSize: RFValue(12.5),
+    fontWeight: "550",
+    marginTop: 12,
+    textAlign: "center"
+  },
+
+  searchErrorSubtext: {
+    color: "#999",
+    fontSize: RFValue(10.5),
+    marginTop: 6,
+    textAlign: "center"
+  },
+
+  // renderFooter - Загрузчик
+  footerContainer: {
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%"
+  },
+
+  footerGradient: {
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 20,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(212, 175, 55, 0.1)"
+  },
+
+  footerText: {
+    color: "#D4AF37",
+    fontSize: 14,
+    fontWeight: "600",
+    letterSpacing: 0.5,
+    marginTop: 8
   }
 })

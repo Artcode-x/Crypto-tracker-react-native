@@ -276,7 +276,7 @@ export const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.05)",
     borderRadius: RFValue(8),
     alignItems: "center",
-    marginHorizontal: RFValue(3),
+    marginHorizontal: RFValue(1.8),
     minWidth: RFValue(65),
     borderWidth: 1,
     borderColor: "transparent"
@@ -299,7 +299,8 @@ export const styles = StyleSheet.create({
     marginBottom: RFValue(1)
   },
   suggestionPriceAndroid: {
-    fontSize: RFValue(11)
+    // fontSize: RFValue(11)
+    fontSize: RFValue(10.5)
   },
   suggestionLabel: {
     fontSize: RFValue(10),

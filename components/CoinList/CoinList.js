@@ -31,7 +31,10 @@ const CoinList = ({
   errorMessage,
   loadMoreData,
   isLoadingMore,
-  hasMore
+  hasMore,
+  isSearching,
+  searchResultsCount,
+  searchError
 }) => {
   const favoriteCoins = useSelector(coinSelector)
   const doubles = useSelector(duplicateSelector)
@@ -58,14 +61,11 @@ const CoinList = ({
     const width = windowWidth
     const height = Dimensions.get("window").height
 
-    // Простая логика для Expo Go
     if (width >= 768) return true
 
-    // Для Nexus 9 и подобных устройств
     const screenRatio = Math.max(width, height) / Math.min(width, height)
-    const pixelRatio = windowWidth / 360 // базовая ширина телефона
+    const pixelRatio = windowWidth / 360
 
-    // Если ширина в dp больше 600 и соотношение сторон меньше 1.6
     if (width / pixelRatio >= 600 && screenRatio < 1.6) {
       return true
     }
@@ -126,7 +126,6 @@ const CoinList = ({
       return
     }
 
-    // Блокируем кнопку
     isButtonPressed.current = true
 
     const isDuplicate = favoriteCoins.some(
@@ -138,7 +137,6 @@ const CoinList = ({
       setMsgDouble(true)
       setTimeout(() => {
         setMsgDouble(false)
-        // Разблокируем ПОСЛЕ того, как скроется предупреждение
         isButtonPressed.current = false
       }, 1000)
     } else {
@@ -147,36 +145,19 @@ const CoinList = ({
 
       setFlag((prevFlag) => ({ ...prevFlag, [coinData.id]: true }))
 
-      // Единый таймер на разблокировку ПОСЛЕ всех анимаций
       setTimeout(() => {
         setFlag((prevFlag) => ({ ...prevFlag, [coinData.id]: false }))
         setModalVisible(false)
-        // Разблокируем только когда всё закончится (после 1800ms)
         isButtonPressed.current = false
-      }, 1800) // Ждем окончания самой долгой анимации
+      }, 1800)
     }
   }
 
-  const filteredData = React.useMemo(() => {
-    if (!Array.isArray(data)) {
-      return []
-    }
-
-    const cleanData = data.filter(
-      (item) => item && typeof item === "object" && item.id && item.name
-    )
-
-    if (!search || search.trim() === "") {
-      return cleanData
-    }
-
-    const searchLower = search.toLowerCase()
-    return cleanData.filter(
-      (coin) =>
-        coin.name.toLowerCase().includes(searchLower) ||
-        coin.symbol.toLowerCase().includes(searchLower)
-    )
-  }, [data, search])
+  // Очистка данных от невалидных элементов
+  const validData = React.useMemo(() => {
+    if (!Array.isArray(data)) return []
+    return data.filter((item) => item && typeof item === "object" && item.id && item.name)
+  }, [data])
 
   const renderItem = useCallback(
     ({ item }) => {
@@ -219,7 +200,6 @@ const CoinList = ({
                 borderTopRightRadius: 0,
                 borderBottomRightRadius: 0,
                 zIndex: 5
-                // overflow: "hidden"
               }}
             />
           )}
@@ -235,7 +215,6 @@ const CoinList = ({
             />
           </View>
 
-          {/* КНОПКА ДОБАВЛЕНИЯ */}
           <TouchableOpacity
             onPress={() => {
               const coinData = {
@@ -278,7 +257,7 @@ const CoinList = ({
   )
 
   const handleEndReached = useCallback(() => {
-    if (search || isLoadingMore || !hasMore || !loadMoreData) {
+    if (search || isLoadingMore || !hasMore || !loadMoreData || isSearching) {
       return
     }
 
@@ -293,21 +272,21 @@ const CoinList = ({
     setTimeout(() => {
       onEndReachedCalledDuringMomentum.current = false
     }, 2000)
-  }, [search, isLoadingMore, hasMore, loadMoreData])
+  }, [search, isLoadingMore, hasMore, loadMoreData, isSearching])
 
   const handleMomentumScrollBegin = useCallback(() => {
     onEndReachedCalledDuringMomentum.current = false
   }, [])
 
   const renderEmptyList = useCallback(() => {
-    if (isLoadingMore || refreshing) return null
+    if (search) return null
+
+    if (isLoadingMore || refreshing || isSearching) return null
 
     return (
       <View style={styles.emptyContainer}>
         <View style={styles.emptyGradient}>
-          <Text style={styles.emptyText}>
-            {search ? "No results found" : "No data to display"}
-          </Text>
+          <Text style={styles.emptyText}>No data to display</Text>
           {errorMessage && !search && (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{errorMessage}</Text>
@@ -316,7 +295,7 @@ const CoinList = ({
         </View>
       </View>
     )
-  }, [search, isLoadingMore, refreshing, errorMessage])
+  }, [search, isLoadingMore, refreshing, errorMessage, isSearching])
 
   const renderFooter = useCallback(() => {
     if (!isLoadingMore || search) return null
@@ -341,26 +320,58 @@ const CoinList = ({
     return `${item.id}_${index}`
   }, [])
 
-  // Определяем количество колонок
   const numColumns = isTablet() ? 3 : 2
+
+  const renderSearchStatus = useCallback(() => {
+    if (!search || search.length < 2) return null
+
+    if (searchError) {
+      return (
+        <View style={styles.searchErrorContainer}>
+          <Ionicons name='alert-circle-outline' size={20} color='#FF6B6B' />
+          <Text style={styles.searchErrorText}>{searchError}</Text>
+          <Text style={styles.searchErrorSubtext}>
+            Please wait a moment and try again
+          </Text>
+        </View>
+      )
+    }
+
+    if (isSearching) {
+      return (
+        <View style={styles.searchingContainer}>
+          <ActivityIndicator size='small' color='#FFD700' />
+          <Text style={styles.searchingText}>Searching coins...</Text>
+        </View>
+      )
+    }
+
+    if (searchResultsCount === 0 && !isSearching) {
+      return (
+        <View style={styles.noResultsContainer}>
+          <Ionicons name='search-outline' size={30} color='#666' />
+          <Text style={styles.noResultsText}>No coins found for "{search}"</Text>
+          <Text style={styles.noResultsSubtext}>Try another search term</Text>
+        </View>
+      )
+    }
+
+    return null
+  }, [search, isSearching, searchResultsCount, searchError])
 
   return (
     <>
       <FlatList
         style={styles.list}
-        data={filteredData}
+        data={validData}
         showsVerticalScrollIndicator={false}
         renderItem={renderItem}
         numColumns={numColumns}
         keyExtractor={keyExtractor}
-        // contentContainerStyle={[styles.contentContainer, { paddingBottom: 55 }]}
         contentContainerStyle={[
           styles.contentContainer,
           {
-            paddingBottom:
-              bottomInsets.bottom > 0
-                ? bottomInsets.bottom + 60 // Если есть навигационная панель, добавляем отступ
-                : 55 // Если нет, используем стандартный отступ
+            paddingBottom: bottomInsets.bottom > 0 ? bottomInsets.bottom + 60 : 55
           }
         ]}
         onEndReached={handleEndReached}
@@ -368,6 +379,7 @@ const CoinList = ({
         onMomentumScrollBegin={handleMomentumScrollBegin}
         ListEmptyComponent={renderEmptyList}
         ListFooterComponent={renderFooter}
+        ListHeaderComponent={renderSearchStatus}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -397,7 +409,8 @@ const CoinList = ({
             !onEndReachedCalledDuringMomentum.current &&
             !isLoadingMore &&
             hasMore &&
-            !search
+            !search &&
+            !isSearching
           ) {
             console.log("CoinList: Скролл близко к низу, запускаем загрузку")
             handleEndReached()
