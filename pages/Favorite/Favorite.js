@@ -18,6 +18,7 @@ import { useDispatch, useSelector } from "react-redux"
 
 import Constants from "expo-constants"
 import {
+  bottomInset,
   coinSelector,
   daysSelector,
   userAssetsSelector
@@ -49,6 +50,8 @@ const Favorite = () => {
   const userAssets = useSelector(userAssetsSelector) || {}
   const priceAlerts = useSelector(priceAlertsSelector)
   const unreadAlertsCount = useSelector(unreadAlertsCountSelector)
+  // Для корректного отступа при наличии вирт панели на уст-ве
+  const bottomInsets = useSelector(bottomInset)
 
   const [removingCoinId, setRemovingCoinId] = useState(null)
   const [isModalVisible, setModalVisible] = useState(false)
@@ -867,7 +870,15 @@ const Favorite = () => {
           data={coinData}
           renderItem={({ item }) => <PremiumCoinCard item={item} />}
           numColumns={numColumns}
-          contentContainerStyle={styles.premiumList}
+          contentContainerStyle={[
+            styles.premiumList,
+            {
+              paddingBottom:
+                bottomInsets.bottom > 0
+                  ? bottomInsets.bottom + 60
+                  : styles.premiumList.paddingBottom
+            }
+          ]}
           columnWrapperStyle={
             numColumns > 1
               ? {

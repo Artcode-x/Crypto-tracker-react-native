@@ -601,16 +601,18 @@ const PrivacyPolicy = () => {
                 <View style={styles.rightItem}>
                   <MaterialCommunityIcons name='delete' size={24} color='#FF5252' />
                   <Text style={styles.rightTitle}>Delete</Text>
-                  <Text style={styles.rightText}>Delete portfolio data or alerts</Text>
+                  <Text style={styles.rightText}>
+                    The ability to delete portfolio data or alerts
+                  </Text>
                 </View>
 
-                <View style={styles.rightItem}>
+                {/* <View style={styles.rightItem}>
                   <MaterialCommunityIcons name='chart-box' size={24} color='#9C27B0' />
                   <Text style={styles.rightTitle}>Portfolio Analytics</Text>
                   <Text style={styles.rightText}>
                     View detailed portfolio analytics with performance metrics
                   </Text>
-                </View>
+                </View> */}
               </View>
 
               <Text style={styles.sectionSubtitle}>How to Exercise Your Rights</Text>
