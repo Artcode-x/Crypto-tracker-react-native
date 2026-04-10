@@ -57,9 +57,6 @@ const TabNavigatorWithSafeArea = () => {
       finalHeight = finalHeight / 1.15 + insets.bottom
     }
 
-    console.log(
-      `TabBar Height: ${finalHeight}px, bottom inset: ${insets.bottom}px, hasRoundedCorners: ${hasRoundedCorners}, hasNavigationBar: ${hasNavigationBar}`
-    )
     return finalHeight
   }
 

@@ -189,7 +189,6 @@ const CoinList2 = ({
       return
     }
 
-    console.log("CoinList2: Подгрузка дополнительных данных...")
     onEndReachedCalledDuringMomentum.current = true
     loadMoreData()
 
@@ -409,7 +408,6 @@ const CoinList2 = ({
             !search &&
             !isSearching
           ) {
-            console.log("CoinList2: Скролл близко к низу, запускаем загрузку")
             handleEndReached()
           }
         }}

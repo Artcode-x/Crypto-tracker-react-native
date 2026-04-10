@@ -7,8 +7,6 @@ class NotificationService {
   // Инициализация уведомлений с поддержкой FCM
   static async initialize() {
     try {
-      console.log("Инициализация NotificationService с FCM...")
-
       // Настройка обработчика уведомлений
       await Notifications.setNotificationHandler({
         handleNotification: async () => ({
@@ -24,7 +22,6 @@ class NotificationService {
         await this.setupAndroidChannels()
       }
 
-      console.log("NotificationService инициализирован с FCM поддержкой")
       return true
     } catch (error) {
       console.error("Ошибка инициализации NotificationService:", error)
@@ -61,8 +58,6 @@ class NotificationService {
         enableVibrate: true,
         showBadge: true
       })
-
-      console.log("Android каналы настроены")
     } catch (error) {
       console.error("Ошибка настройки Android каналов:", error)
     }
@@ -71,11 +66,9 @@ class NotificationService {
   // Запрос разрешений на уведомления (с FCM)
   static async requestPermissions() {
     try {
-      console.log("Запрос разрешений на уведомления...")
-
       // Проверка, является ли устройство физическим
       if (!Device.isDevice) {
-        console.log("Эмулятор/симулятор, FCM может работать ограниченно")
+        // Эмулятор/симулятор, FCM может работать ограниченно
       }
 
       const permissions = {
@@ -98,7 +91,6 @@ class NotificationService {
         finalStatus = status
       }
 
-      console.log(`Результат разрешений: ${finalStatus}`)
       return finalStatus === "granted"
     } catch (error) {
       console.error("Ошибка запроса разрешений:", error)
@@ -109,8 +101,6 @@ class NotificationService {
   // Регистрация для push-уведомлений через FCM
   static async registerForPushNotificationsAsync() {
     try {
-      console.log("Регистрация для push-уведомлений...")
-
       // Проверяем, что устройство физическое
       if (!Device.isDevice) {
         console.warn("Физическое устройство требуется для push-уведомлений")
@@ -128,15 +118,8 @@ class NotificationService {
       const token = await this.getDevicePushToken()
 
       if (token) {
-        console.log("Успешно зарегистрирован для push-уведомлений")
-        console.log(
-          `Тип токена: ${token.startsWith("ExponentPushToken") ? "Expo" : "Native"}`
-        )
-        console.log(`Token: ${token.substring(0, 30)}${token.length > 30 ? "..." : ""}`)
-
         // Определение типа токена
         const tokenType = this.detectTokenType(token)
-        console.log(`Определен тип токена: ${tokenType}`)
       } else {
         console.warn("Не удалось получить push токен")
       }
@@ -156,12 +139,10 @@ class NotificationService {
 
       // Если не удалось получить нативный токен, используем Expo токен
       if (!token) {
-        console.log("Нативный токен не получен, используем Expo токен")
         token = await this.getExpoToken()
       }
 
       if (token) {
-        console.log("Push Token получен успешно")
         return token
       } else {
         console.error("Не удалось получить ни один тип токена")
@@ -183,8 +164,6 @@ class NotificationService {
   // Попытка получить нативный FCM токен
   static async getNativeFCMToken() {
     try {
-      console.log("Попытка получить нативный FCM токен...")
-
       // Способ 1: Используем getDevicePushTokenAsync для нативного токена
       // Этот метод возвращает нативный токен в development/production builds
       if (Device.isDevice) {
@@ -192,15 +171,9 @@ class NotificationService {
           development: __DEV__ // true для development builds
         })
 
-        console.log("DevicePushToken получен:", {
-          type: devicePushToken.type,
-          dataLength: devicePushToken.data?.length || 0
-        })
-
         // Для Android в development/production builds это будет FCM токен
         if (Platform.OS === "android") {
           if (devicePushToken.type === "fcm" || devicePushToken.type === "android") {
-            console.log("Получен нативный FCM токен для Android")
             return devicePushToken.data
           }
         }
@@ -208,13 +181,11 @@ class NotificationService {
         // Для iOS это будет APNS токен
         if (Platform.OS === "ios") {
           if (devicePushToken.type === "apns") {
-            console.log("Получен нативный APNS токен для iOS")
             return devicePushToken.data
           }
         }
       }
 
-      console.log("Нативный токен не доступен, возможно это Expo Go")
       return null
     } catch (error) {
       console.error("Ошибка получения нативного токена:", error)
@@ -229,7 +200,6 @@ class NotificationService {
         projectId: "8a1401d1-7ebd-4be4-b520-7b18ad4517ba"
       })
 
-      console.log("Expo Push Token получен")
       return expoToken.data
     } catch (error) {
       console.error("Ошибка получения Expo токена:", error)
@@ -261,12 +231,9 @@ class NotificationService {
         const tokenType = this.detectTokenType(token)
 
         if (tokenType === "expo") {
-          console.log(
-            "Получен Expo токен. Для FCM токена требуется development/production build."
-          )
-          console.log("Запустите: eas build --profile development --platform android")
+          // Получен Expo токен.
         } else if (tokenType === "fcm") {
-          console.log("Получен чистый FCM токен!")
+          // Получен чистый FCM токен!
         }
       }
 
@@ -346,7 +313,6 @@ class NotificationService {
       // Увеличиваем счетчик бейджей
       await this.incrementBadgeCount()
 
-      console.log(`Локальное уведомление отправлено: ${notificationId}`)
       return true
     } catch (error) {
       console.error(
@@ -365,19 +331,10 @@ class NotificationService {
         return { handled: false }
       }
 
-      console.log("Входящее push-уведомление:", {
-        origin: notification.origin,
-        data: notification.data,
-        title: notification.title,
-        body: notification.body
-      })
-
       const { data, title, body } = notification
 
       // Проверяем, является ли уведомление алертом о цене
       if (data?.type === "price-alert") {
-        console.log("Обработка price-alert:", data)
-
         // Создаем локальное уведомление для отображения
         await this.showLocalNotificationFromFCM({
           title: title || `🚨 ${data.coinSymbol?.toUpperCase() || "Crypto"} Alert!`,
@@ -423,8 +380,6 @@ class NotificationService {
         },
         trigger: null
       })
-
-      console.log("Локальное уведомление из FCM показано")
     } catch (error) {
       console.error("Ошибка показа локального уведомления из FCM:", error)
     }
@@ -432,8 +387,6 @@ class NotificationService {
 
   // Регистрация обработчиков уведомлений
   static registerNotificationHandlers(onReceived, onResponse) {
-    console.log("Регистрация обработчиков уведомлений...")
-
     const subscriptions = []
 
     // Обработчик получения уведомления
@@ -455,7 +408,7 @@ class NotificationService {
     if (onResponse) {
       const responseSubscription = Notifications.addNotificationResponseReceivedListener(
         (response) => {
-          console.log("Нажатие на уведомление")
+          // Нажатие на уведомление
 
           onResponse(response)
         }
@@ -463,7 +416,6 @@ class NotificationService {
       subscriptions.push(responseSubscription)
     }
 
-    console.log(`${subscriptions.length} обработчиков зарегистрировано`)
     return subscriptions
   }
 
@@ -483,8 +435,6 @@ class NotificationService {
   // Отправка тестового уведомления
   static async sendTestNotification() {
     try {
-      console.log("Отправка тестового уведомления...")
-
       const testAlert = {
         id: "test-" + Date.now(),
         coinId: "bitcoin",
@@ -568,7 +518,6 @@ class NotificationService {
         }
       })
 
-      console.log("Обработчики уведомлений удалены")
       return true
     } catch (error) {
       console.error("Ошибка удаления обработчиков:", error)
@@ -624,24 +573,18 @@ class NotificationService {
 
   // Полная проверка системы уведомлений
   static async testFullNotificationSystem() {
-    console.log("ПОЛНОЕ ТЕСТИРОВАНИЕ СИСТЕМЫ УВЕДОМЛЕНИЙ")
-
     try {
       // 1. Проверка разрешений
-      console.log("1. Проверка разрешений...")
       const permissions = await this.checkPermissions()
 
       // 2. Регистрация
-      console.log("2. Регистрация для push-уведомлений...")
       const token = await this.registerForPushNotificationsAsync()
       const tokenType = token ? this.detectTokenType(token) : "none"
 
       // 3. Отправка тестового уведомления
-      console.log("3. Отправка тестового уведомления...")
       const testResult = await this.sendTestNotification()
 
       // 4. Проверка статуса
-      console.log("4. Получение общего статуса...")
       const status = await this.getNotificationStatus()
 
       return {

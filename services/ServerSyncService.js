@@ -33,8 +33,6 @@ class ServerSyncService {
   // Инициализация службы
   static async initialize(fcmToken, dispatch = null) {
     try {
-      console.log("Инициализация ServerSyncService...")
-
       this.deviceToken = fcmToken
       this.dispatch = dispatch
       this.isInitialized = true
@@ -51,7 +49,6 @@ class ServerSyncService {
       // Восстановление отложенных операций
       await this.processPendingOperations()
 
-      console.log("ServerSyncService инициализирован")
       return true
     } catch (error) {
       console.warn("Ошибка инициализации ServerSyncService:", error.message)
@@ -69,7 +66,7 @@ class ServerSyncService {
 
       if (response.ok) {
         this.serverAvailable = true
-        console.log("Сервер доступен")
+        // Сервер доступен
       } else {
         this.serverAvailable = false
         console.warn("Сервер недоступен")
@@ -85,18 +82,18 @@ class ServerSyncService {
     // Проверка согласия
     const hasConsent = await this.hasBackgroundConsent()
     if (!hasConsent) {
-      console.log("Пропускаем регистрацию: нет согласия на фоновые уведомления")
+      // Пропускаем регистрацию: нет согласия на фоновые уведомления
       return false
     }
 
     // Проверка: если токен совпадает и регистрировали менее 30 секунд назад - пропускаем
     if (this.deviceToken === fcmToken && Date.now() - this.lastRegistrationTime < 30000) {
-      console.log("Пропускаем регистрацию: уже регистрировали менее 30 секунд назад")
+      // Пропускаем регистрацию: уже регистрировали менее 30 секунд назад
       return true
     }
 
     if (!this.serverAvailable) {
-      console.log("Сервер недоступен, откладываем регистрацию")
+      // Сервер недоступен, откладываем регистрацию
       this.addPendingOperation("register", { deviceToken: fcmToken })
       return false
     }
@@ -124,7 +121,6 @@ class ServerSyncService {
       // Запоминаем время регистрации
       this.lastRegistrationTime = Date.now()
 
-      console.log("Устройство зарегистрировано на сервере")
       return data.success
     } catch (error) {
       console.warn("Не удалось зарегистрировать устройство:", error.message)
@@ -138,13 +134,11 @@ class ServerSyncService {
     // Проверка согласия
     const hasConsent = await this.hasBackgroundConsent()
     if (!hasConsent) {
-      console.log("Пропускаем синхронизацию: нет согласия на фоновые уведомления")
       return false
     }
 
     // Если приложение активно - используем локальные уведомления
     if (this.appState === "active") {
-      console.log("Приложение активно, используем локальные уведомления")
       return false
     }
 
@@ -154,15 +148,12 @@ class ServerSyncService {
     }
 
     if (!this.serverAvailable) {
-      console.log("Сервер недоступен, откладываем синхронизацию")
       this.addPendingOperation("sync", { alerts })
       return false
     }
 
     try {
       const activeAlerts = alerts.filter((alert) => alert.isActive && !alert.triggeredAt)
-
-      console.log(`Синхронизация ${activeAlerts.length} активных алертов...`)
 
       const response = await fetch(`${SERVER_CONFIG.BASE_URL}/sync-alerts`, {
         method: "POST",
@@ -184,7 +175,6 @@ class ServerSyncService {
       const data = await response.json()
       this.lastSyncTime = new Date().toISOString()
 
-      console.log(`Алерты синхронизированы с сервером: ${data.count} шт.`)
       return data.success
     } catch (error) {
       console.warn("Не удалось синхронизировать алерты:", error.message)
@@ -198,12 +188,10 @@ class ServerSyncService {
     // Проверка согласия
     const hasConsent = await this.hasBackgroundConsent()
     if (!hasConsent) {
-      console.log("Пропускаем удаление с сервера: нет согласия")
       return true
     }
 
     if (!this.deviceToken || !this.serverAvailable) {
-      console.log("Не удалось удалить алерт, сервер недоступен")
       this.addPendingOperation("delete", { alertId, serverId })
       return false
     }
@@ -226,7 +214,6 @@ class ServerSyncService {
         throw new Error(`HTTP ${response.status}`)
       }
 
-      console.log(`Алерт удален с сервера: ${alertId}`)
       return true
     } catch (error) {
       console.warn("Не удалось удалить алерт с сервера:", error.message)
@@ -287,15 +274,12 @@ class ServerSyncService {
     // Проверка согласия
     const hasConsent = await this.hasBackgroundConsent()
     if (!hasConsent) {
-      console.log("Пропускаем обработку отложенных операций: нет согласия")
       return
     }
 
     if (this.pendingOperations.length === 0 || !this.serverAvailable) {
       return
     }
-
-    console.log(`Обработка ${this.pendingOperations.length} отложенных операций...`)
 
     const successfulOperations = []
 
@@ -360,7 +344,6 @@ class ServerSyncService {
       const operationsJson = await AsyncStorage.getItem("pending_server_operations")
       if (operationsJson) {
         this.pendingOperations = JSON.parse(operationsJson)
-        console.log(`Загружено ${this.pendingOperations.length} отложенных операций`)
       }
     } catch (error) {
       console.warn("Не удалось загрузить очередь операций:", error)
@@ -426,7 +409,6 @@ class ServerSyncService {
     this.lastSyncTime = null
     this.lastRegistrationTime = 0
     this.dispatch = null
-    console.log("ServerSyncService сброшен")
   }
 }
 

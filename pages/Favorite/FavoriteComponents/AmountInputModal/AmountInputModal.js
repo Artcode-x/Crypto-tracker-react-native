@@ -53,7 +53,6 @@ const AmountInputModal = ({
               <View style={styles.modalButtonsRow}>
                 <TouchableOpacity
                   onPress={() => {
-                    console.log("Отмена ввода количества")
                     setInputModalVisible(false)
                   }}
                   style={styles.modalButtonCancel}

@@ -6,10 +6,7 @@ export const useAppState = (callback) => {
 
   useEffect(() => {
     const handleAppStateChange = (nextAppState) => {
-      console.log(`Состояние приложения: ${appState.current} -> ${nextAppState}`)
-
       if (appState.current.match(/inactive|background/) && nextAppState === "active") {
-        console.log("Приложение вернулось на передний план")
         callback?.()
       }
       appState.current = nextAppState

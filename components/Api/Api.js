@@ -12,7 +12,6 @@ import axios from "axios"
 // Оригинальная функция с параметром page
 export async function GetMarketData(page = 1, perPage = 250) {
   try {
-    console.log(`Загрузка страницы ${page}...`)
     const response = await axios.get(
       `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${perPage}&page=${page}&sparkline=true&price_change_percentage=7d`
     )
@@ -163,7 +162,7 @@ export async function UpdateFavoriteCoins(coinIds) {
 
     // Возвращаем пустой массив при ошибке 429
     if (error.response?.status === 429) {
-      console.log("⏰ Лимит запросов, ждем следующего интервала")
+      console.log("Лимит запросов, ждем следующего интервала")
       return []
     }
 
@@ -206,8 +205,6 @@ export async function SearchCoins(query) {
   if (!query || query.length < 2) return []
 
   try {
-    console.log(`🔍 Поиск: ${query}`)
-
     const response = await axios.get(
       `https://api.coingecko.com/api/v3/search?query=${query}`
     )

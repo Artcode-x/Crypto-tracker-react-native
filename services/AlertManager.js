@@ -8,7 +8,6 @@ const AlertManager = {
   // Инициализация
   initialize(dispatchFunction) {
     AlertManager.dispatch = dispatchFunction
-    console.log("AlertManager initialized")
   },
 
   // Проверка всех алертов
@@ -21,8 +20,6 @@ const AlertManager = {
     const triggeredAlerts = []
     const activeAlerts = alerts.filter((alert) => alert.isActive && !alert.triggeredAt)
 
-    console.log(`AlertManager: Checking ${activeAlerts.length} active alerts`)
-
     activeAlerts.forEach((alert) => {
       const coin = coinData.find((c) => c.id === alert.coinId)
       if (!coin || !coin.current_price) {
@@ -34,7 +31,6 @@ const AlertManager = {
       const shouldTrigger = AlertManager.checkAlertCondition(alert, currentPrice)
 
       if (shouldTrigger) {
-        console.log(`AlertManager: Alert condition met for ${alert.coinName}`)
         triggeredAlerts.push({
           alert,
           currentPrice,
@@ -45,7 +41,6 @@ const AlertManager = {
 
     // Активация сработавших алертов
     if (triggeredAlerts.length > 0) {
-      console.log(`AlertManager: ${triggeredAlerts.length} alerts triggered`)
       triggeredAlerts.forEach(({ alert, currentPrice, coin }) => {
         AlertManager.triggerAlert(alert, currentPrice, coin)
       })
@@ -80,8 +75,6 @@ const AlertManager = {
   // Активация алерта
   async triggerAlert(alert, currentPrice, coin) {
     try {
-      console.log(`Alert triggered: ${alert.coinName} @ $${currentPrice}`)
-
       if (AlertManager.dispatch) {
         AlertManager.dispatch(
           triggerAlert({
@@ -137,8 +130,6 @@ const AlertManager = {
         currentPrice: coin.current_price || 0
       }))
 
-      console.log(`AlertManager: Updating prices for ${priceUpdates.length} coins`)
-
       AlertManager.dispatch(updateAlertPrices(priceUpdates))
     } catch (error) {
       console.error("AlertManager: Error updating alert prices:", error)
@@ -169,7 +160,7 @@ const AlertManager = {
   // Сброс состояния менеджера
   reset() {
     AlertManager.dispatch = null
-    console.log("AlertManager reset")
+    // AlertManager reset
   }
 }
 

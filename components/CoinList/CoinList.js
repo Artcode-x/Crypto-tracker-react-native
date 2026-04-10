@@ -122,7 +122,6 @@ const CoinList = ({
 
   const addToFavorite = (coinData) => {
     if (isButtonPressed.current) {
-      console.log("Блокировка: слишком быстрое нажатие")
       return
     }
 
@@ -265,7 +264,6 @@ const CoinList = ({
       return
     }
 
-    console.log("CoinList: Подгрузка дополнительных данных...")
     onEndReachedCalledDuringMomentum.current = true
     loadMoreData()
 
@@ -412,7 +410,6 @@ const CoinList = ({
             !search &&
             !isSearching
           ) {
-            console.log("CoinList: Скролл близко к низу, запускаем загрузку")
             handleEndReached()
           }
         }}

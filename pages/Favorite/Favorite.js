@@ -114,7 +114,6 @@ const Favorite = () => {
   // Мониторинг состояния приложения
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextAppState) => {
-      console.log(`Состояние приложения: ${appState} → ${nextAppState}`)
       setAppState(nextAppState)
 
       // Обновляем состояние на сервере
@@ -124,7 +123,6 @@ const Favorite = () => {
 
       if (nextAppState === "active") {
         // Приложение вернулось на передний план
-        console.log("Приложение активно, проверяем алерты")
 
         // Проверяем серверную доступность
         checkServerAvailability()
@@ -142,7 +140,7 @@ const Favorite = () => {
       } else if (nextAppState === "background" || nextAppState === "inactive") {
         // Приложение сворачивается - синхронизируем с сервером
         if (fcmToken && priceAlerts.length > 0) {
-          console.log("Синхронизация алертов с сервером...")
+          // Синхронизация алертов с сервером...
           ServerSyncService.syncAlertsWithServer(priceAlerts)
         }
       }
@@ -174,7 +172,6 @@ const Favorite = () => {
       try {
         // 1. Проверяем текущие разрешения
         const { granted, status } = await Notifications.getPermissionsAsync()
-        console.log(`Текущий статус уведомлений: ${status}, granted: ${granted}`)
 
         setNotificationPermission(granted)
 
@@ -201,7 +198,6 @@ const Favorite = () => {
                 const data = response.notification.request.content.data
                 if (data?.type === "price-alert" && data?.alertId) {
                   dispatch(markAlertAsRead(data.alertId))
-                  console.log("Алёрт помечен как прочитанный:", data.alertId)
                 }
               } catch (error) {
                 console.warn("Ошибка обработки ответа:", error)
@@ -219,16 +215,10 @@ const Favorite = () => {
 
                 // Определяем тип токена
                 const isExpoToken = token.startsWith("ExponentPushToken[")
-                console.log(`Токен получен: ${isExpoToken ? "Expo Token" : "FCM Token"}`)
-                console.log(`Token: ${token.substring(0, 20)}...`)
 
                 // Логируем предупреждение если это Expo токен
                 if (isExpoToken) {
-                  console.log("ВНИМАНИЕ: Получен Expo токен. Для FCM токена:")
-                  console.log(
-                    "   - Создайте development build: eas build --profile development --platform android"
-                  )
-                  console.log("   - Или обновите сервер для работы с Expo токенами")
+                  console.log("ВНИМАНИЕ: Получен Expo токен.")
                 }
 
                 // Инициализируем синхронизацию с сервером
@@ -275,18 +265,17 @@ const Favorite = () => {
   // Обработчик ручного обновления
   const handleManualUpdate = useCallback(async () => {
     if (isUpdating) {
-      console.log("Обновление уже выполняется")
+      // Обновление уже выполняется
       return
     }
 
-    console.log("Ручное обновление избранного")
+    // Ручное обновление избранного
     setIsUpdating(true)
     setLastUpdateTime(new Date().toLocaleTimeString())
 
     try {
       await updateFavoritePrices()
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-      console.log("Обновление завершено успешно")
     } catch (error) {
       console.error("Ошибка обновления:", error)
     } finally {
@@ -315,7 +304,6 @@ const Favorite = () => {
   // Функция открытия модалки алерта
   const openAlertModal = useCallback(
     async (coin) => {
-      console.log(`Открытие алерта для: ${coin.name}`)
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
 
       const openModal = () => {
@@ -336,7 +324,6 @@ const Favorite = () => {
               const token = await NotificationService.getFCMToken()
               if (token) {
                 setFcmToken(token)
-                console.log("FCM Token получен при создании алерта")
 
                 // Инициализация серверной синхронизации
                 ServerSyncService.initialize(token)
@@ -358,7 +345,6 @@ const Favorite = () => {
               text: "Not Now",
               style: "cancel",
               onPress: () => {
-                console.log("User declined notifications")
                 Alert.alert(
                   "Notifications Disabled",
                   "Alert will be saved locally, but you won't receive push notifications when it triggers.",
@@ -398,7 +384,7 @@ const Favorite = () => {
                         const token = await NotificationService.getFCMToken()
                         if (token) {
                           setFcmToken(token)
-                          console.log("FCM Token получен после разрешения")
+
                           ServerSyncService.initialize(token)
                         }
                       } catch (tokenError) {
@@ -435,8 +421,6 @@ const Favorite = () => {
   // Обработчик сохранения алерта
   const handleSaveAlert = useCallback(
     async (alertData) => {
-      console.log(`Сохранение алерта: ${alertData.coinName} @ $${alertData.targetPrice}`)
-
       const currentCoinPrice = alertData.currentPrice || 0
 
       const payload = {
@@ -446,9 +430,6 @@ const Favorite = () => {
         syncStatus: fcmToken ? "pending_sync" : "local_only",
         source: "local"
       }
-
-      console.log(`Начальная цена для прогресса: $${currentCoinPrice}`)
-      console.log(`FCM синхронизация: ${fcmToken ? "Включена" : "Не доступна"}`)
 
       // Сохраняем алерт в Redux
       dispatch(addPriceAlert(payload))
@@ -506,9 +487,6 @@ const Favorite = () => {
   // Удаление монеты из избранного
   const removeFromFav = useCallback(
     (coin) => {
-      console.log(`\n ==== УДАЛЕНИЕ МОНЕТЫ ====`)
-      console.log(`Монета: ${coin.name} (${coin.symbol.toUpperCase()})`)
-
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
       setRemovingCoinId(coin.id)
 
@@ -530,7 +508,7 @@ const Favorite = () => {
       setTimeout(() => {
         setRemovingCoinId(null)
         dispatch(removeCoin(coin))
-        console.log(`Монета успешно удалена из избранного`)
+
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       }, 1500)
     },
@@ -539,21 +517,18 @@ const Favorite = () => {
 
   // Открытие графика
   const openChartModal = useCallback((coin) => {
-    console.log(`Открытие графика для: ${coin.name}`)
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     setSelectedCoin(coin)
     setModalVisible(true)
   }, [])
 
   const closeChartModal = useCallback(() => {
-    console.log(`Закрытие графика`)
     setModalVisible(false)
     setSelectedCoin(null)
   }, [])
 
   // Открытие формы ввода количества
   const openAmountInput = (coin) => {
-    console.log(`Открытие формы ввода количества: ${coin.name}`)
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     setSelectedCoinForInput(coin)
     setInputModalVisible(true)
@@ -873,10 +848,7 @@ const Favorite = () => {
           contentContainerStyle={[
             styles.premiumList,
             {
-              paddingBottom:
-                bottomInsets.bottom > 0
-                  ? bottomInsets.bottom + 60
-                  : styles.premiumList.paddingBottom
+              paddingBottom: bottomInsets.bottom > 0 ? bottomInsets.bottom + 70 : 60
             }
           ]}
           columnWrapperStyle={

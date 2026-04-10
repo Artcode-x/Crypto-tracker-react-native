@@ -49,7 +49,6 @@ const reducersSlice = createSlice({
         const newAssets = { ...state.userAssets }
         delete newAssets[nameCoinForRemove.id]
         state.userAssets = newAssets
-        console.log(`🗑️ Удален актив для ${nameCoinForRemove.name}`)
       }
     },
     setChartDays: (state, action) => {
@@ -73,10 +72,6 @@ const reducersSlice = createSlice({
           }
         }
       })
-
-      console.log(
-        `Redux: Обновлено ${updatedCoins.length} из ${state.coinItem.length} избранных монет`
-      )
     },
     setFlagForView: (state, action) => {
       state.flagForView = action.payload

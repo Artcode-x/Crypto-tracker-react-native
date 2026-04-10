@@ -165,8 +165,6 @@ const StorageSync = () => {
         appStateRef.current === "active" &&
         (nextAppState === "background" || nextAppState === "inactive")
       ) {
-        console.log("Приложение сворачивается - немедленное сохранение...")
-
         if (saveTimeoutRef.current) {
           clearTimeout(saveTimeoutRef.current)
           saveTimeoutRef.current = null

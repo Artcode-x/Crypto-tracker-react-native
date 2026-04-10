@@ -20,7 +20,6 @@ export const useAlertChecker = (coinData, checkInterval = 60000) => {
         )
 
         if (activeAlerts.length > 0) {
-          console.log(`Checking ${activeAlerts.length} active alerts`)
           AlertManager.checkAlerts(activeAlerts, coinData)
         }
       }

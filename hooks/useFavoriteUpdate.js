@@ -20,11 +20,7 @@ export const useFavoriteUpdate = (intervalMinutes = 1) => {
 
     if (timeSinceLastUpdate < 60000) {
       // Минимум 60 секунд между обновлениями
-      console.log(
-        `Слишком рано для обновления, ждем... (${Math.round(
-          (60000 - timeSinceLastUpdate) / 1000
-        )} сек)`
-      )
+
       return
     }
 
@@ -33,12 +29,10 @@ export const useFavoriteUpdate = (intervalMinutes = 1) => {
 
     // Если нет избранных монет или уже идет обновление
     if (!favoriteCoins || favoriteCoins.length === 0) {
-      // console.log(`Обновление #${updateNumber}: Нет избранных монет`)
       return
     }
 
     if (isUpdatingRef.current) {
-      // console.log(`Обновление #${updateNumber}: Уже идет обновление`)
       return
     }
 
@@ -53,7 +47,6 @@ export const useFavoriteUpdate = (intervalMinutes = 1) => {
       // Добавляем задержку между запросами
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      console.log(`Отправляем запрос на обновление...`)
       const updatedCoins = await UpdateFavoriteCoins(coinIds)
 
       if (updatedCoins && updatedCoins.length > 0) {
@@ -61,7 +54,7 @@ export const useFavoriteUpdate = (intervalMinutes = 1) => {
         const duration = endTime - startTime
 
         // Объединяем старые данные с новыми
-        console.log(`Объединяем данные...`)
+
         const mergedCoins = favoriteCoins.map((oldCoin) => {
           const updatedCoin = updatedCoins.find((c) => c.id === oldCoin.id)
 
@@ -82,9 +75,8 @@ export const useFavoriteUpdate = (intervalMinutes = 1) => {
         })
 
         // Обновляем в Redux
-        console.log(`Отправляем обновление в Redux...`)
+
         dispatch(rewriteFavorite(mergedCoins))
-        console.log(`Redux обновлен успешно`)
       } else {
         console.log(`Обновленные данные пусты или не получены`)
       }
@@ -93,48 +85,36 @@ export const useFavoriteUpdate = (intervalMinutes = 1) => {
 
       // При ошибке 429 увеличиваем интервал
       if (error.message.includes("429")) {
-        console.log(`Обнаружена ошибка 429, увеличиваем интервал обновления`)
+        console.log(`Ошибка 429, увеличиваем интервал обновления`)
         if (updateIntervalRef.current) {
           clearInterval(updateIntervalRef.current)
           // Устанавливаем новый интервал - 5 минут
           updateIntervalRef.current = setInterval(updateFavoritePrices, 5 * 60 * 1000)
-          console.log(`Новый интервал: 5 минут`)
         }
       }
     } finally {
       isUpdatingRef.current = false
       const totalTime = Date.now() - startTime
-      console.log(`Обновление #${updateNumber} завершено за ${totalTime}ms`)
-      console.log(`==== КОНЕЦ ОБНОВЛЕНИЯ #${updateNumber} ====\n`)
     }
   }, [favoriteCoins, dispatch])
 
   // Запускаем интервал обновления - ТОЛЬКО ПРИ ИЗМЕНЕНИИ КОЛИЧЕСТВА МОНЕТ
   useEffect(() => {
-    console.log(`Инициализация автообновления избранного`)
-    // console.log(`Количество монет: ${favoriteCoins?.length || 0}`)
-
     // Очищаем предыдущий интервал
     if (updateIntervalRef.current) {
       clearInterval(updateIntervalRef.current)
     }
 
     if (favoriteCoins && favoriteCoins.length > 0) {
-      console.log(`Устанавливаем интервал: ${intervalMinutes} минут`)
-
       // Первое обновление с задержкой в 5 секунд
       setTimeout(() => {
-        console.log(`Первое обновление через 5 секунд...`)
         updateFavoritePrices()
       }, 5000)
 
       // Устанавливаем интервал
       updateIntervalRef.current = setInterval(() => {
-        console.log(`Таймер сработал, запускаем обновление...`)
         updateFavoritePrices()
       }, intervalMinutes * 60 * 1000)
-
-      console.log(`Интервал обновления установлен`)
     } else {
       console.log(`Автообновление не запущено: нет избранных монет`)
     }
@@ -142,7 +122,6 @@ export const useFavoriteUpdate = (intervalMinutes = 1) => {
     // Очистка интервала при размонтировании
     return () => {
       if (updateIntervalRef.current) {
-        console.log(`Очистка интервала обновления`)
         clearInterval(updateIntervalRef.current)
       }
     }

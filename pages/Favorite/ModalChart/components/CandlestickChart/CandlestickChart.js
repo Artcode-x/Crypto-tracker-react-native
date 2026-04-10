@@ -89,7 +89,7 @@ const CandlestickChart = ({
 
   const onDoubleTap = (event) => {
     if (event.nativeEvent.state === State.ACTIVE) {
-      console.log("Double tap detected, resetting to full data")
+      // Double tap detected, resetting to full data
       setLimit(100)
       triggerHaptic()
     }

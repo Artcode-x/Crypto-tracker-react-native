@@ -84,7 +84,6 @@ const Main = () => {
 
   // Функция очистки таймеров
   const clearAllTimers = useCallback(() => {
-    console.log("Очистка всех таймеров")
     if (retryTimeoutRef.current) {
       clearTimeout(retryTimeoutRef.current)
       retryTimeoutRef.current = null
@@ -98,8 +97,6 @@ const Main = () => {
   //  Для скрытия баннера при окончании отсчета
   useEffect(() => {
     if (retryCountdown === 0 && is429Error) {
-      console.log("Отсчет закончился, скрываем баннер через 2 секунды")
-
       const timeout = setTimeout(() => {
         if (isMountedRef.current) {
           setIs429Error(false)
@@ -113,7 +110,6 @@ const Main = () => {
   // Функция запуска обратного отсчета
   const startCountdown = useCallback(
     (seconds, retryCallback) => {
-      console.log(`Запуск отсчета: ${seconds} секунд`)
       clearAllTimers()
       setIs429Error(true)
       setRetryCountdown(seconds)
@@ -130,7 +126,6 @@ const Main = () => {
         if (currentCount <= 0) {
           clearInterval(countdownIntervalRef.current)
           countdownIntervalRef.current = null
-          console.log("Отсчет закончился")
 
           // Запуск повтора через 1 секунду после окончания
           if (retryCallback) {
@@ -162,16 +157,13 @@ const Main = () => {
   // Функция загрузки первой страницы
   const fetchInitialMarketData = useCallback(async () => {
     if (flagForLoader || !isMountedRef.current) {
-      console.log("Загрузка уже идет или компонент размонтирован")
       return
     }
 
     if (initialLoadDoneRef.current && marketData.length > 0) {
-      console.log("Данные уже загружены")
       return
     }
 
-    console.log("Начало загрузки первой страницы")
     setFlagForLoader(true)
     setInitialLoadAttempted(true)
     dispatch(setMarketError(null))
@@ -191,13 +183,12 @@ const Main = () => {
       initialLoadDoneRef.current = true
 
       // При успешной загрузке - сбрасываем баннер 429
-      console.log("Загрузка успешна, скрываем баннер 429")
+
       setIs429Error(false)
       setRetryCountdown(0)
       clearAllTimers()
 
       consecutiveErrorsRef.current = 0
-      console.log(`Успешно загружено ${firstPageData.length} монет`)
     } catch (error) {
       console.error("Ошибка загрузки:", error.message)
 
@@ -212,11 +203,8 @@ const Main = () => {
 
         const delayInSeconds = Math.ceil(delay / 1000)
 
-        console.log(`Ошибка 429. Устанавливаем отсчет ${delayInSeconds} секунд`)
-
         // Запуск обратного отсчета с функцией повтора
         startCountdown(delayInSeconds, () => {
-          console.log("Автоматический повтор после отсчета")
           fetchInitialMarketData()
         })
 
@@ -245,12 +233,11 @@ const Main = () => {
       isLoadingMoreRef.current ||
       !isMountedRef.current
     ) {
-      console.log("Не загружаем: нет данных или уже идет загрузка")
+     // Не загружаем: нет данных или уже идет загрузка
       return
     }
 
     const pageToLoad = marketCurrentPage
-    console.log(`Начало загрузки страницы ${pageToLoad}`)
 
     isLoadingMoreRef.current = true
 
@@ -259,7 +246,7 @@ const Main = () => {
       const nextPageData = await GetMarketData(pageToLoad)
 
       if (nextPageData.length === 0) {
-        console.log("Больше данных для загрузки нет")
+        // Больше данных для загрузки нет
         dispatch(setMarketHasMore(false))
       } else {
         const existingIds = new Set(marketData.map((item) => item.id))
@@ -270,16 +257,13 @@ const Main = () => {
           const nextPage = pageToLoad + 1
           dispatch(setMarketCurrentPage(nextPage))
           dispatch(setMarketLastUpdated(Date.now()))
-          console.log(`Добавлено ${newItems.length} новых монет`)
         } else {
-          console.log("Все монеты уже есть, увеличиваем счетчик")
           dispatch(setMarketCurrentPage(pageToLoad + 1))
         }
       }
 
       // Успешная загрузка - сбрасываем баннер 429
       if (is429Error) {
-        console.log("Подгрузка успешна, скрываем баннер 429")
         setIs429Error(false)
         setRetryCountdown(0)
         clearAllTimers()
@@ -301,13 +285,9 @@ const Main = () => {
 
         const delayInSeconds = Math.ceil(delay / 1000)
 
-        console.log(
-          `Ошибка 429 при подгрузке. Устанавливаем отсчет ${delayInSeconds} секунд`
-        )
-
         // Запуск обратного отсчета с функцией повтора
         startCountdown(delayInSeconds, () => {
-          console.log("Автоматический повтор подгрузки после отсчета")
+          // Автоматический повтор подгрузки после отсчета
           loadMoreData()
         })
 
@@ -343,7 +323,6 @@ const Main = () => {
   const handleRefresh = useCallback(async () => {
     if (!isMountedRef.current) return
 
-    console.log("🌀 Pull-to-refresh")
     setRefreshing(true)
     try {
       clearAllTimers()
@@ -371,7 +350,6 @@ const Main = () => {
 
   // Первая загрузка при монтировании - Только один раз!
   useEffect(() => {
-    console.log("🏁 Компонент монтируется")
     isMountedRef.current = true
 
     // Загружаем только если еще не пытались
@@ -380,7 +358,6 @@ const Main = () => {
     }
 
     return () => {
-      console.log("🧹 Компонент размонтируется")
       isMountedRef.current = false
       clearAllTimers()
     }
@@ -390,7 +367,6 @@ const Main = () => {
   const handleManualRetry = useCallback(async () => {
     if (!isMountedRef.current) return
 
-    console.log("Ручной повтор...")
     clearAllTimers()
     setIs429Error(false)
     setRetryCountdown(0)
