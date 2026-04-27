@@ -253,15 +253,6 @@ function AppContent() {
       setAppState(nextAppState)
 
       // При сворачивании приложения синхронизация алертов с сервером (с проверкой согласия)
-      if (nextAppState === "background" || nextAppState === "inactive") {
-        AsyncStorage.getItem("@background_alerts_consent").then((consent) => {
-          if (consent === "agreed") {
-            ServerSyncService.syncAlertsWithServer(priceAlerts)
-          } else {
-            console.log("Пропускаем синхронизацию: нет согласия на фоновые уведомления")
-          }
-        })
-      }
 
       // Обновление состояния на сервере (только если есть согласие)
       AsyncStorage.getItem("@background_alerts_consent").then((consent) => {

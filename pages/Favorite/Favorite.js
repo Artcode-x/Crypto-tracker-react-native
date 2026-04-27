@@ -42,6 +42,7 @@ import EmptyState from "./FavoriteComponents/EmptyState/EmptyState"
 import FavoriteHeader from "./FavoriteHeader/FavoriteHeader"
 import AmountInputModal from "./FavoriteComponents/AmountInputModal/AmountInputModal"
 import FavoriteStatsPanel from "./FavoriteStatsPanel/FavoriteStatsPanel"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 const Favorite = () => {
   const dispatch = useDispatch()
@@ -113,7 +114,7 @@ const Favorite = () => {
 
   // Мониторинг состояния приложения
   useEffect(() => {
-    const subscription = AppState.addEventListener("change", (nextAppState) => {
+    const handleAppStateChange = async (nextAppState) => {
       setAppState(nextAppState)
 
       // Обновляем состояние на сервере
@@ -138,13 +139,23 @@ const Favorite = () => {
         // Обновляем цены
         handleManualUpdate()
       } else if (nextAppState === "background" || nextAppState === "inactive") {
-        // Приложение сворачивается - синхронизируем с сервером
-        if (fcmToken && priceAlerts.length > 0) {
-          // Синхронизация алертов с сервером...
-          ServerSyncService.syncAlertsWithServer(priceAlerts)
+        // Приложение сворачивается - синхронизируем с сервером с проверкой согласия
+
+        try {
+          const consent = await AsyncStorage.getItem("@background_alerts_consent")
+          if (consent === "agreed" && fcmToken && priceAlerts.length > 0) {
+            console.log("Согласие получено")
+            await ServerSyncService.syncAlertsWithServer(priceAlerts)
+          } else if (consent !== "agreed") {
+            console.log("Нет согласия на фоновые уведомления")
+          }
+        } catch (error) {
+          console.warn("Ошибка при проверке согласия", error)
         }
       }
-    })
+    }
+
+    const subscription = AppState.addEventListener("change", handleAppStateChange)
 
     return () => {
       subscription.remove()
