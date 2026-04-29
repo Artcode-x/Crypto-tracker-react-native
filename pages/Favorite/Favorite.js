@@ -43,7 +43,7 @@ import FavoriteHeader from "./FavoriteHeader/FavoriteHeader"
 import AmountInputModal from "./FavoriteComponents/AmountInputModal/AmountInputModal"
 import FavoriteStatsPanel from "./FavoriteStatsPanel/FavoriteStatsPanel"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import ShimmerCard from "./ShimmerCard"
+import ShimmerCard from "./FavoriteComponents/ShimmerCard/ShimmerCard"
 
 const Favorite = () => {
   const dispatch = useDispatch()

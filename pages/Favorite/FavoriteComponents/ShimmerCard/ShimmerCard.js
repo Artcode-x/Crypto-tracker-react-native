@@ -6,7 +6,6 @@ const ShimmerCard = memo(
   ({ children, style, isLoading = true, shimmerIntensity = "medium" }) => {
     const shimmerAnimation = useRef(new Animated.Value(-1)).current
 
-    // Настройки интенсивности
     const intensityMap = {
       low: {
         primary: "rgba(255, 255, 255, 0.04)",
@@ -31,7 +30,6 @@ const ShimmerCard = memo(
       let animation1 = null
 
       if (isLoading) {
-        // Основная анимация с easing для плавности
         animation1 = Animated.loop(
           Animated.timing(shimmerAnimation, {
             toValue: 1,
@@ -72,7 +70,6 @@ const ShimmerCard = memo(
         {children}
 
         <View style={StyleSheet.absoluteFillObject} pointerEvents='none'>
-          {/* Первый слой - основной шиммер */}
           <Animated.View
             style={[
               styles.shimmerOverlay,
@@ -90,7 +87,6 @@ const ShimmerCard = memo(
             />
           </Animated.View>
 
-          {/* Третий слой - эффект мягкого края (статичный) */}
           <LinearGradient
             colors={[
               "rgba(255, 255, 255, 0.02)",
