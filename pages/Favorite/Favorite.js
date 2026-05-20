@@ -31,6 +31,7 @@ import AmountInputModal from "./FavoriteComponents/AmountInputModal/AmountInputM
 import FavoriteStatsPanel from "./FavoriteStatsPanel/FavoriteStatsPanel"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import PremiumCoinCard from "./PremiumCoinCard/PremiumCoinCard"
+import { LIST_INNER_CONTAINER_WIDTH } from "./Favorite.styles"
 
 const Favorite = () => {
   const dispatch = useDispatch()
@@ -656,7 +657,8 @@ const Favorite = () => {
             numColumns > 1
               ? {
                   justifyContent: "flex-start",
-                  width: styles.listInnerContainer.width
+                  // width: styles.listInnerContainer.width
+                  width: LIST_INNER_CONTAINER_WIDTH
                 }
               : null
           }

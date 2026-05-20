@@ -65,7 +65,7 @@ const getListInnerContainerWidth = () => {
   }
 }
 
-const LIST_INNER_CONTAINER_WIDTH = getListInnerContainerWidth()
+export const LIST_INNER_CONTAINER_WIDTH = getListInnerContainerWidth()
 
 // Адаптивные отступы
 const spacing = {
