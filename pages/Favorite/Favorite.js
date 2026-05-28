@@ -580,8 +580,6 @@ const Favorite = () => {
     }
   }
 
-  // Компонент карточки монеты
-
   return (
     <LinearGradient
       colors={["#0A0A0F", "#121218", "#0A0A0F"]}

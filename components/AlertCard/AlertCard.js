@@ -55,26 +55,6 @@ const AlertCard = ({ alert, onDelete }) => {
     }
   }
 
-  //   const calculateProgress = () => {
-  //     if (isTriggered) return 1.0
-
-  //     if (!createdPrice || createdPrice === 0) return 0
-
-  //     if (isAbove) {
-  //       // Для алерта "above": цена должна вырасти от createdPrice до targetPrice
-  //       if (currentPrice >= targetPrice) return 1.0
-  //       const totalRange = targetPrice - createdPrice
-  //       const progress = currentPrice - createdPrice
-  //       return Math.max(0, Math.min(progress / totalRange, 1))
-  //     } else {
-  //       // Для алерта "below": цена должна упасть от createdPrice до targetPrice
-  //       if (currentPrice <= targetPrice) return 1.0
-  //       const totalRange = createdPrice - targetPrice
-  //       const progress = createdPrice - currentPrice
-  //       return Math.max(0, Math.min(progress / totalRange, 1))
-  //     }
-  //   }
-
   const progress = calculateProgress()
   const difference = Math.abs(currentPrice - targetPrice)
   const percentDiff = (difference / targetPrice) * 100
