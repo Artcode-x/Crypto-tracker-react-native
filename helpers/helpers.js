@@ -1,11 +1,26 @@
+import { Dimensions } from "react-native"
+
 export const removeYearFromDate = (datesArray) => {
+  const screenWidth = Dimensions.get("window").width
+  const isTablet = screenWidth >= 600
+
+  // Если уникальных дат меньше 5, генерируем нормальные метки
+  // if (datesArray.length < 1) {
+  //   return datesArray.map((_, index) => `${index + 1}`)
+  // }
+
   return datesArray.map((date) => {
-    // Разделяем строку даты по точке
     const parts = date.split("/")
-    // Преобразуем день в число, чтобы удалить ведущие нули
-    const day = parseInt(parts[0], 10)
-    // Возвращаем только день в формате строки
-    return day.toString()
+    const day = parseInt(parts[1], 10)
+    const month = parseInt(parts[0], 10)
+
+    const monthStr = month.toString().padStart(2, "0")
+
+    if (isTablet) {
+      return `${day}.${monthStr}`
+    } else {
+      return `${month}`
+    }
   })
 }
 
