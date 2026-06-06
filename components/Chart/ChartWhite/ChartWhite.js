@@ -75,27 +75,33 @@ export const ChartWhite = ({ coinHistoryData, chartData, is30DSelected }) => {
     return 4
   }
 
-  // Ключевая функция: фильтрация меток чтобы не выезжали (такая же как в ChartBlack)
   const getFilteredLabels = () => {
     const labels = chartData.labelDate || []
     if (labels.length === 0) return []
 
-    // Для 30 дней оставляем меньше меток
-    if (is30DSelected) {
-      // Берем каждую 4-ю метку, но не более 6 меток всего
-      const step = Math.max(4, Math.floor(labels.length / 6))
-      const filtered = labels.filter((_, index) => index % step === 0)
+    const screenWidth = Dimensions.get("window").width
 
-      // Удаляем последние 2 метки которые могут выезжать
-      return filtered.length > 3 ? filtered.slice(0, -2) : filtered
+    // Определяем желаемое количество меток
+    let desiredLabelsCount = 6 // По умолчанию
+    if (screenWidth >= 400) desiredLabelsCount = 8
+    if (screenWidth >= 500) desiredLabelsCount = 10
+
+    // Для 30 дней меньше меток
+    if (is30DSelected) {
+      desiredLabelsCount = Math.floor(desiredLabelsCount * 0.8)
     }
 
-    // Для других периодов
-    const step = Math.max(3, Math.floor(labels.length / 5))
+    // Расчет шага
+    const step = Math.max(1, Math.floor(labels.length / desiredLabelsCount))
+
+    // Берем метки с рассчитанным шагом
     const filtered = labels.filter((_, index) => index % step === 0)
 
-    // Удаляем последнюю метку которая может выезжать
-    return filtered.length > 2 ? filtered.slice(0, -1) : filtered
+    if (filtered.length > 10) {
+      return filtered.slice(0, -1)
+    }
+
+    return filtered
   }
 
   // Определяем размер шрифта в зависимости от ширины экрана
