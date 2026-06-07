@@ -6,13 +6,12 @@ import {
   TouchableOpacity,
   View,
   ScrollView,
-  Animated,
-  Platform
+  Animated
 } from "react-native"
 import { useState, useEffect, useRef } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { setChartDays } from "../../store/reducersSlice"
-import { daysSelector } from "../../store/toolkitSelectors"
+import { setChartDaysMain } from "../../store/reducersSlice"
+import { mainDaySelector } from "../../store/toolkitSelectors"
 import { ChartBlack } from "./ChartBlack/ChartBlack"
 import { ChartWhite } from "./ChartWhite/ChartWhite"
 import { LinearGradient } from "expo-linear-gradient"
@@ -34,7 +33,7 @@ export const Chart = ({
   const scaleAnim = useRef(new Animated.Value(0.9)).current
   const scrollViewRef = useRef(null)
 
-  const chartDays = useSelector(daysSelector)
+  const chartDays = useSelector(mainDaySelector)
   const dispatch = useDispatch()
 
   useEffect(() => {
@@ -68,7 +67,7 @@ export const Chart = ({
     } else {
       setIs30DSelected(false)
     }
-    dispatch(setChartDays(days))
+    dispatch(setChartDaysMain(days))
   }
 
   const toggleTheme = () => {

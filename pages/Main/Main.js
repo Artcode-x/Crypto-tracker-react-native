@@ -6,15 +6,14 @@ import {
   StatusBar,
   TextInput,
   ActivityIndicator,
-  TouchableOpacity,
-  Animated
+  TouchableOpacity
 } from "react-native"
 import CoinList from "../../components/CoinList/CoinList"
 import prepareChartData from "../../components/PrepareChartData/PrepareChartData"
 import { Chart } from "../../components/Chart/Chart"
 import { useSelector, useDispatch } from "react-redux"
 import {
-  daysSelector,
+  mainDaySelector,
   marketCurrentPageSelector,
   marketDataSelector,
   marketErrorSelector,
@@ -79,7 +78,7 @@ const Main = () => {
   const marketIsLoadingMore = useSelector(marketIsLoadingMoreSelector)
   const marketHasMore = useSelector(marketHasMoreSelector)
   const marketError = useSelector(marketErrorSelector)
-  const switchChartDays = useSelector(daysSelector)
+  const switchChartDays = useSelector(mainDaySelector)
   const marketViewFlag = useSelector(viewMarketFlagSelector)
 
   // Функция очистки таймеров
@@ -233,7 +232,7 @@ const Main = () => {
       isLoadingMoreRef.current ||
       !isMountedRef.current
     ) {
-     // Не загружаем: нет данных или уже идет загрузка
+      // Не загружаем: нет данных или уже идет загрузка
       return
     }
 

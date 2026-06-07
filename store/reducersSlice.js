@@ -6,6 +6,7 @@ const initialState = {
   userAssets: {},
   flag: false,
   chartDays: "1h",
+  chartDaysMain: 1,
   flagForView: false,
   duplicate: false,
 
@@ -53,6 +54,9 @@ const reducersSlice = createSlice({
     },
     setChartDays: (state, action) => {
       state.chartDays = action.payload
+    },
+    setChartDaysMain: (state, action) => {
+      state.chartDaysMain = action.payload
     },
     rewriteFavorite: (state, action) => {
       const updatedCoins = action.payload
@@ -148,6 +152,7 @@ export const {
   setFlag,
   removeCoin,
   setChartDays,
+  setChartDaysMain,
   rewriteFavorite,
   setFlagForView,
   setDuplicate,
