@@ -80,17 +80,27 @@ export const styles = StyleSheet.create({
   // Sentiment badge
   sentimentBadge: {
     backgroundColor: "rgba(50, 48, 49, 0.8)",
-    paddingVertical: 6,
+    paddingVertical: 4,
     paddingHorizontal: 16,
     borderRadius: 16,
     alignSelf: "center",
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "rgba(212, 175, 55, 0.3)"
+    borderColor: "rgba(212, 175, 55, 0.3)",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4
+  },
+
+  sentimentLabel: {
+    fontSize: RFValue(10),
+    fontWeight: "500",
+    color: "rgba(255, 255, 255, 0.5)"
+    // lineHeight: RFValue(13)
   },
 
   sentimentText: {
-    fontSize: RFValue(11),
+    fontSize: RFValue(10),
     fontWeight: "600",
     color: "wheat"
   },
@@ -113,6 +123,7 @@ export const styles = StyleSheet.create({
 
   infoBlock: {
     flex: 1,
+
     backgroundColor: "rgba(50, 48, 49, 0.8)",
     paddingVertical: 8,
     paddingHorizontal: 8,

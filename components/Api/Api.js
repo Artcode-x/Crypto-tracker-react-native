@@ -86,21 +86,22 @@ export async function FetchCandleData(symbol, days, limit) {
   }
 }
 
-export async function GetSantiment(coin) {
+export async function GetSantiment() {
   try {
-    const response = await axios.get(
-      `https://min-api.cryptocompare.com/data/tradingsignals/intotheblock/latest?fsym=${coin}`,
-      {
-        headers: {
-          Authorization:
-            "5e4ebfa6af8446ed0cfc6f15d1399827cc201ae9c570976381c13b4d06278080"
-        }
-      }
-    )
+    const response = await axios.get("https://api.alternative.me/fng/?limit=1")
 
-    return response.data
+    if (!response.data?.data?.[0]) {
+      throw new Error("Empty response from API")
+    }
+    const data = response.data.data[0]
+
+    return {
+      value: data.value,
+      classification: data.value_classification
+    }
   } catch (error) {
-    console.log(error.message)
+    console.log("Ошибка получения настроений:", error.message)
+    return null
   }
 }
 

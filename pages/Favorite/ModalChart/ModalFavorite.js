@@ -34,6 +34,7 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
   const [loadingChart, setLoadingChart] = useState(false)
   const [limit, setLimit] = useState(100)
   const [santiment, setSantiment] = useState(null)
+  const [coinName, setCoinName] = useState(null)
 
   const bottomInsets = useSelector(bottomInset)
 
@@ -86,6 +87,7 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
 
       try {
         const symbol = coin.symbol.toUpperCase()
+        setCoinName(symbol)
         const days = chartDays
 
         const [minMaxPrice, candlePrices] = await Promise.all([
@@ -93,9 +95,11 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
           FetchCandleData(symbol, days, limit)
         ])
 
-        if (symbol === "BTC" || symbol === "ETH") {
-          const response = await GetSantiment(symbol)
-          setSantiment(response.Data.inOutVar.sentiment)
+        const response = await GetSantiment()
+        const { value, classification } = response || {}
+
+        if (value && classification) {
+          setSantiment(classification)
         } else {
           setSantiment(null)
         }
@@ -113,6 +117,7 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
       } catch (error) {
         console.error(error.message)
         setPrices([])
+        setSantiment(null)
       }
     },
     [chartDays, limit]
@@ -167,6 +172,7 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
               selectedCoin={selectedCoin}
               chartDays={chartDays}
               santiment={santiment}
+              coinName={coinName}
               minMax={minMax}
               loadingChart={loadingChart}
               prices={prices}
@@ -197,6 +203,7 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
               selectedCoin={selectedCoin}
               chartDays={chartDays}
               santiment={santiment}
+              coinName={coinName}
               minMax={minMax}
               loadingChart={loadingChart}
               prices={prices}
@@ -218,6 +225,7 @@ const Content = ({
   selectedCoin,
   chartDays,
   santiment,
+  coinName,
   minMax,
   loadingChart,
   prices,
@@ -245,16 +253,19 @@ const Content = ({
           <Ionicons name='close' size={20} color='#D4AF37' />
         </TouchableOpacity>
       </View>
-
-      {/* Sentiment badge */}
-      {santiment && (
-        <View style={styles.sentimentBadge}>
-          <Text style={[styles.sentimentText, styles[santiment]]}>
-            {santiment.toUpperCase()}
-          </Text>
-        </View>
+      {(coinName === "BTC" || coinName === "ETH") && (
+        <>
+          {/* Sentiment badge */}
+          {santiment && (
+            <View style={styles.sentimentBadge}>
+              <Text style={styles.sentimentLabel}>Market Fear and Greed Index:</Text>
+              <Text style={[styles.sentimentText, styles[santiment]]}>
+                {santiment.toUpperCase()}
+              </Text>
+            </View>
+          )}
+        </>
       )}
-
       {/* Инфо строка */}
       {prices.length > 0 && (
         <View style={styles.infoRow}>
