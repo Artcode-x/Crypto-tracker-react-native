@@ -25,6 +25,7 @@ import { VolumeChart } from "./components/VolumeChart/VolumeChart"
 import CandlestickChart from "./components/CandlestickChart/CandlestickChart"
 import { useSelector } from "react-redux"
 import { bottomInset } from "../../../store/toolkitSelectors"
+import FearGreedMeter from "./components/FearGreedMeter/FearGreedMeter"
 
 const { width, height } = Dimensions.get("window")
 
@@ -34,6 +35,7 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
   const [loadingChart, setLoadingChart] = useState(false)
   const [limit, setLimit] = useState(100)
   const [santiment, setSantiment] = useState(null)
+  const [fearGreedValue, setFearGreedValue] = useState(null)
   const [coinName, setCoinName] = useState(null)
 
   const bottomInsets = useSelector(bottomInset)
@@ -97,9 +99,10 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
 
         const response = await GetSantiment()
         const { value, classification } = response || {}
-
+        //  проверка на undefined
         if (value && classification) {
           setSantiment(classification)
+          setFearGreedValue(parseInt(value))
         } else {
           setSantiment(null)
         }
@@ -118,6 +121,7 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
         console.error(error.message)
         setPrices([])
         setSantiment(null)
+        setFearGreedValue(null)
       }
     },
     [chartDays, limit]
@@ -172,6 +176,7 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
               selectedCoin={selectedCoin}
               chartDays={chartDays}
               santiment={santiment}
+              fearGreedValue={fearGreedValue}
               coinName={coinName}
               minMax={minMax}
               loadingChart={loadingChart}
@@ -203,6 +208,7 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
               selectedCoin={selectedCoin}
               chartDays={chartDays}
               santiment={santiment}
+              fearGreedValue={fearGreedValue}
               coinName={coinName}
               minMax={minMax}
               loadingChart={loadingChart}
@@ -225,6 +231,7 @@ const Content = ({
   selectedCoin,
   chartDays,
   santiment,
+  fearGreedValue,
   coinName,
   minMax,
   loadingChart,
@@ -253,7 +260,7 @@ const Content = ({
           <Ionicons name='close' size={20} color='#D4AF37' />
         </TouchableOpacity>
       </View>
-      {(coinName === "BTC" || coinName === "ETH") && (
+      {coinName === "BTC" && (
         <>
           {/* Sentiment badge */}
           {santiment && (
@@ -262,6 +269,12 @@ const Content = ({
               <Text style={[styles.sentimentText, styles[santiment]]}>
                 {santiment.toUpperCase()}
               </Text>
+            </View>
+          )}
+
+          {santiment && fearGreedValue && (
+            <View style={styles.meterContainer}>
+              <FearGreedMeter value={fearGreedValue} size={200} />
             </View>
           )}
         </>
