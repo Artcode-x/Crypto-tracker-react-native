@@ -35,8 +35,8 @@ const FearGreedMeter = memo(({ value }) => {
       {/* Маркер текущего значения */}
       <View style={[styles.marker, { left: `${value}%` }]}>
         <View style={styles.markerCrystal}>
-          <View style={styles.crystalPoint} />
-          <View style={styles.crystalCenter} />
+          <View style={[styles.crystalPoint, { opacity: 0.9 }]} />
+          <View style={[styles.crystalCenter, { opacity: 0.8 }]} />
         </View>
         <View style={styles.markerValueContainer}>
           <Text style={styles.markerValue}>{value}</Text>

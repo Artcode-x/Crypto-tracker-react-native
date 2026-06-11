@@ -26,6 +26,7 @@ import CandlestickChart from "./components/CandlestickChart/CandlestickChart"
 import { useSelector } from "react-redux"
 import { bottomInset } from "../../../store/toolkitSelectors"
 import FearGreedMeter from "./components/FearGreedMeter/FearGreedMeter"
+import AnimatedGoldenSkeleton from "./components/AnimatedGoldenSkeleton/AnimatedGoldenSkeleton"
 
 const { width, height } = Dimensions.get("window")
 
@@ -86,7 +87,8 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
   const fetchChartData = useCallback(
     async (coin) => {
       if (!coin) return
-
+      // setPrices([])
+      setMinMax({ minPrice: null, maxPrice: null })
       try {
         const symbol = coin.symbol.toUpperCase()
         setCoinName(symbol)
@@ -279,26 +281,43 @@ const Content = ({
           )}
         </>
       )}
+
       {/* Инфо строка */}
       {prices.length > 0 && (
         <View style={styles.infoRow}>
           <View style={styles.infoBlock}>
             <Text style={styles.infoText}>24h Low</Text>
-            <Text style={[styles.infoValue, { color: "lightblue" }]}>
-              {minMax.minPrice && !isNaN(minMax.minPrice) ? `${minMax.minPrice}$` : "N/A"}
-            </Text>
+            {loadingChart || !minMax.minPrice ? (
+              <AnimatedGoldenSkeleton />
+            ) : (
+              <Text style={[styles.infoValue, { color: "lightblue" }]}>
+                {minMax.minPrice && !isNaN(minMax.minPrice)
+                  ? `${minMax.minPrice}$`
+                  : "N/A"}
+              </Text>
+            )}
           </View>
           <View style={styles.infoBlock}>
             <Text style={styles.infoText}>Current</Text>
-            <Text style={styles.infoValue}>
-              ${selectedCoin?.current_price?.toFixed(2) || "0.00"}
-            </Text>
+            {loadingChart || !selectedCoin?.current_price ? (
+              <AnimatedGoldenSkeleton />
+            ) : (
+              <Text style={styles.infoValue}>
+                ${selectedCoin?.current_price?.toFixed(2) || "0.00"}
+              </Text>
+            )}
           </View>
           <View style={styles.infoBlock}>
             <Text style={styles.infoText}>24h High</Text>
-            <Text style={[styles.infoValue, { color: "wheat" }]}>
-              {minMax.maxPrice && !isNaN(minMax.maxPrice) ? `${minMax.maxPrice}$` : "N/A"}
-            </Text>
+            {loadingChart || !minMax.minPrice ? (
+              <AnimatedGoldenSkeleton />
+            ) : (
+              <Text style={[styles.infoValue, { color: "wheat" }]}>
+                {minMax.maxPrice && !isNaN(minMax.maxPrice)
+                  ? `${minMax.maxPrice}$`
+                  : "N/A"}
+              </Text>
+            )}
           </View>
         </View>
       )}
@@ -371,7 +390,6 @@ const Content = ({
           </View>
         )}
       </View>
-
       {/* Volume - показываем только если есть данные графика */}
       {prices.length > 0 && (
         <View style={styles.volumeSection}>
@@ -381,7 +399,6 @@ const Content = ({
           </View>
         </View>
       )}
-
       {/* Timeframe */}
       <View style={styles.timeframeSection}>
         <View style={styles.timeframeHeader}>
@@ -390,7 +407,6 @@ const Content = ({
         </View>
         <SwitchTimeframeButtons chartDays={chartDays} />
       </View>
-
       {/* Кнопка закрытия */}
       <View style={styles.buttonsContainer}>
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>

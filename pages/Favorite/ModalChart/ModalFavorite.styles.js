@@ -144,7 +144,8 @@ export const styles = StyleSheet.create({
     fontSize: RFValue(11),
     fontWeight: "600",
     color: "#FFF",
-    textAlign: "center"
+    textAlign: "center",
+    paddingTop: 2
   },
 
   // График цены
