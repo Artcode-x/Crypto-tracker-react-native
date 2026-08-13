@@ -10,6 +10,8 @@ import {
   State
 } from "react-native-gesture-handler"
 import * as Haptics from "expo-haptics"
+import { useDispatch } from "react-redux"
+import { setDoubleTap } from "../../../../../store/reducersSlice"
 
 const CandlestickChart = ({
   data,
@@ -26,6 +28,8 @@ const CandlestickChart = ({
 
   const pinchRef = useRef()
   const doubleTapRef = useRef()
+
+  const dispatch = useDispatch()
 
   // Функция для легкой вибрации
   const triggerHaptic = () => {
@@ -92,6 +96,7 @@ const CandlestickChart = ({
       // Double tap detected, resetting to full data
       setLimit(100)
       triggerHaptic()
+      dispatch(setDoubleTap())
     }
   }
 

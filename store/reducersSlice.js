@@ -10,6 +10,8 @@ const initialState = {
   flagForView: false,
   duplicate: false,
 
+  // для сброса графика в дефолт избранном
+  onDoubleTap: false,
   // для рыночных данных
   marketData: [], // Все загруженные монеты
   marketCurrentPage: 1, // Текущая страница
@@ -143,6 +145,9 @@ const reducersSlice = createSlice({
         ...state.insets,
         ...action.payload
       }
+    },
+    setDoubleTap: (state) => {
+      state.onDoubleTap = !state.onDoubleTap
     }
   }
 })
@@ -167,7 +172,8 @@ export const {
   setMarketError,
   resetMarketData,
   updateMarketDataItem,
-  setInsets
+  setInsets,
+  setDoubleTap
 } = reducersSlice.actions
 
 export default reducersSlice.reducer

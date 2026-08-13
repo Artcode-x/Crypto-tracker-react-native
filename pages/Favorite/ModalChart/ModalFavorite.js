@@ -16,7 +16,7 @@ import {
   GetSantiment
 } from "../../../components/Api/Api"
 import { useSelector } from "react-redux"
-import { bottomInset } from "../../../store/toolkitSelectors"
+import { bottomInset, doubleTap } from "../../../store/toolkitSelectors"
 import Content from "./Content"
 
 const { width, height } = Dimensions.get("window")
@@ -31,7 +31,9 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
   const [coinName, setCoinName] = useState(null)
 
   const bottomInsets = useSelector(bottomInset)
+  const flagDoubleTap = useSelector(doubleTap)
 
+  // Вспомогательные функции для форматирования времени
   const formatTime = (prices) => {
     if (!prices || !prices.length) return []
     return prices.map((item) => {
@@ -54,6 +56,7 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
     })
   }
 
+  // Данные для графика объёма
   const volumeData = {
     labels:
       chartDays === "1h" || chartDays === "4h"
@@ -75,78 +78,61 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
 
   const currentCandle = getCurrentCandle()
 
-  const fetchChartData = useCallback(
-    async (coin) => {
-      if (!coin) return
-      try {
-        const symbol = coin.symbol.toUpperCase()
-        setCoinName(symbol)
-        const days = chartDays
+  // Основная функция загрузки данных
+  const fetchChartData = useCallback(async (coin, days, limitParam) => {
+    if (!coin) return
+    setLoadingChart(true)
+    try {
+      const symbol = coin.symbol.toUpperCase()
+      setCoinName(symbol)
 
-        const [minMaxPrice, candlePrices] = await Promise.all([
-          Get24hrMinMaxPrices(symbol),
-          FetchCandleData(symbol, days, limit)
-        ])
+      const [minMaxPrice, candlePrices] = await Promise.all([
+        Get24hrMinMaxPrices(symbol),
+        FetchCandleData(symbol, days, limitParam)
+      ])
 
-        const response = await GetSantiment()
-        const { value, classification } = response || {}
-        //  проверка на undefined
-        if (value && classification) {
-          setSantiment(classification)
-          setFearGreedValue(parseInt(value))
-        } else {
-          setSantiment(null)
-        }
-
-        if (candlePrices?.length > 0) {
-          setPrices(candlePrices)
-        } else {
-          setPrices([])
-        }
-
-        setMinMax({
-          minPrice: minMaxPrice.minPrice,
-          maxPrice: minMaxPrice.maxPrice
-        })
-      } catch (error) {
-        console.error(error.message)
-        setPrices([])
+      // Получение индекса страха и жадности (только для BTC)
+      const response = await GetSantiment()
+      if (response?.value != null && response?.classification) {
+        setSantiment(response.classification)
+        setFearGreedValue(parseInt(response.value))
+      } else {
         setSantiment(null)
-        setFearGreedValue(null)
       }
-    },
-    [chartDays, limit]
-  )
 
+      setPrices(candlePrices || [])
+      setMinMax({
+        minPrice: minMaxPrice.minPrice,
+        maxPrice: minMaxPrice.maxPrice
+      })
+    } catch (error) {
+      console.error(error.message)
+      setPrices([])
+      setSantiment(null)
+      setFearGreedValue(null)
+    } finally {
+      setLoadingChart(false)
+    }
+  }, [])
+
+  // Сброс состояния при смене монеты
   useEffect(() => {
     if (selectedCoin) {
-      // Сброс всего, что связано с предыдущей монетой
+      setPrices([])
       setMinMax({ minPrice: null, maxPrice: null })
+      setSantiment(null)
+      setFearGreedValue(null)
+      setCoinName(null)
     }
   }, [selectedCoin])
 
   useEffect(() => {
     if (selectedCoin && visible) {
-      fetchChartData(selectedCoin)
+      fetchChartData(selectedCoin, chartDays, limit)
     }
-  }, [chartDays, limit, selectedCoin, visible, fetchChartData])
+  }, [chartDays, selectedCoin, visible, flagDoubleTap])
 
-  const handleOpenModal = useCallback(
-    async (coin) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-      setLoadingChart(true)
-      await fetchChartData(coin)
-      setLoadingChart(false)
-    },
-    [fetchChartData]
-  )
-
-  useEffect(() => {
-    if (selectedCoin && visible) {
-      handleOpenModal(selectedCoin)
-    }
-  }, [selectedCoin, visible])
-
+  // Высота экрана для графиков
   const screenHeight = height + (Platform.OS === "android" ? StatusBar.currentHeight : 0)
 
   return (
