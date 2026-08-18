@@ -1,11 +1,8 @@
-// Исправление CoinList
-
-import React, { useEffect, useState, useCallback, useRef } from "react"
+import React, { useEffect, useState, useCallback, useRef, useMemo } from "react"
 import {
   FlatList,
   Modal,
   Text,
-  TouchableOpacity,
   View,
   ActivityIndicator,
   RefreshControl,
@@ -22,6 +19,8 @@ import {
   duplicateSelector
 } from "../../store/toolkitSelectors"
 import { LinearGradient } from "expo-linear-gradient"
+
+import CoinCard from "./CoinCard/CoinCard"
 
 const CoinList = ({
   data,
@@ -59,7 +58,7 @@ const CoinList = ({
   }, [])
 
   // Функция определения планшета
-  const isTablet = useCallback(() => {
+  const isTablet = useMemo(() => {
     const width = windowWidth
     const height = Dimensions.get("window").height
 
@@ -77,20 +76,20 @@ const CoinList = ({
 
   const onEndReachedCalledDuringMomentum = useRef(true)
 
-  const getCardHeight = () => {
-    const tablet = isTablet()
+  const getCardHeight = useMemo(() => {
+    const tablet = isTablet
     if (tablet) return 120
     if (isSmallScreen) return 80
     return 100
-  }
+  }, [isTablet, isSmallScreen])
 
-  const getCardWidth = () => {
-    const tablet = isTablet()
+  const getCardWidth = useMemo(() => {
+    const tablet = isTablet
     const numColumns = tablet ? 3 : 2
     const containerPadding = isSmallScreen ? 16 : 24
     const totalMargin = (numColumns + 1) * 8
     return (windowWidth - containerPadding - totalMargin) / numColumns
-  }
+  }, [isTablet, isSmallScreen, windowWidth])
 
   useEffect(() => {
     if (data) {
@@ -122,34 +121,37 @@ const CoinList = ({
     }
   }, [data])
 
-  const addToFavorite = (coinData) => {
-    if (isButtonPressed.current) {
-      return
-    }
+  const addToFavorite = useCallback(
+    (coinData) => {
+      if (isButtonPressed.current) {
+        return
+      }
 
-    isButtonPressed.current = true
+      isButtonPressed.current = true
 
-    const isDuplicate = favoriteCoins.some(
-      (favoriteCoin) => favoriteCoin.id === coinData.id
-    )
+      const isDuplicate = favoriteCoins.some(
+        (favoriteCoin) => favoriteCoin.id === coinData.id
+      )
 
-    if (isDuplicate) {
-      dispatch(setDuplicate(coinData.id))
-      setMsgDouble(true)
-      setTimeout(() => {
-        setMsgDouble(false)
-        isButtonPressed.current = false
-      }, 1000)
-    } else {
-      dispatch(setCoin(coinData))
-      setModalVisible(true)
+      if (isDuplicate) {
+        dispatch(setDuplicate(coinData.id))
+        setMsgDouble(true)
+        setTimeout(() => {
+          setMsgDouble(false)
+          isButtonPressed.current = false
+        }, 1000)
+      } else {
+        dispatch(setCoin(coinData))
+        setModalVisible(true)
 
-      setTimeout(() => {
-        setModalVisible(false)
-        isButtonPressed.current = false
-      }, 1800)
-    }
-  }
+        setTimeout(() => {
+          setModalVisible(false)
+          isButtonPressed.current = false
+        }, 1800)
+      }
+    },
+    [favoriteCoins, dispatch]
+  )
 
   // Очистка данных от невалидных элементов
   const validData = React.useMemo(() => {
@@ -161,98 +163,34 @@ const CoinList = ({
     ({ item }) => {
       if (!item || !item.id) return null
 
-      const tablet = isTablet()
-      const cardWidth = getCardWidth()
-      const cardHeight = getCardHeight()
+      const tablet = isTablet
+      const cardWidth = getCardWidth
+      const cardHeight = getCardHeight
       const isFavorite = favoriteCoins.some((fav) => fav.id === item.id)
 
       return (
-        <View
-          style={[
-            styles.itemContainer,
-            {
-              height: cardHeight,
-              width: cardWidth
-            }
-          ]}
-        >
-          <LinearGradient
-            colors={["rgba(70,72,74,0.99)", "rgba(32,34,38,0.8)"]}
-            style={styles.cardGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          />
-
-          <View style={styles.cardBorder} />
-
-          {isFavorite && (
-            <View
-              style={{
-                position: "absolute",
-                left: 0,
-                top: 1,
-                bottom: 0,
-                width: 4,
-                backgroundColor: "#4CAF50",
-                borderTopLeftRadius: 18,
-                borderBottomLeftRadius: 18,
-                borderTopRightRadius: 0,
-                borderBottomRightRadius: 0,
-                zIndex: 5
-              }}
-            />
-          )}
-
-          <View style={styles.contentWrapper}>
-            <CoinItem
-              coin={item}
-              onPress={() => openModal(item)}
-              cardHeight={cardHeight}
-              cardWidth={cardWidth}
-              isSmallScreen={isSmallScreen}
-              isTablet={tablet}
-            />
-          </View>
-
-          <TouchableOpacity
-            onPress={() => {
-              const coinData = {
-                name: item.name,
-                current_price: item.current_price,
-                price_change_percentage_24h: item.price_change_percentage_24h,
-                image: item.image,
-                otherInfo: item.otherInfo,
-                market_cap_rank: item.market_cap_rank,
-                symbol: item.symbol,
-                id: item.id
-              }
-              addToFavorite(coinData)
-            }}
-            style={[
-              styles.addButton,
-              tablet && styles.tabletAddButton,
-              isSmallScreen && styles.smallAddButton,
-              isFavorite && styles.addButtonActive
-            ]}
-          >
-            {isFavorite ? (
-              <Ionicons
-                name='checkmark-circle'
-                size={tablet ? 24 : isSmallScreen ? 18 : 22}
-                color='#4CAF50'
-              />
-            ) : (
-              <Ionicons
-                name='add-circle-outline'
-                size={tablet ? 24 : isSmallScreen ? 18 : 22}
-                color='rgba(198, 165, 60, 0.75)'
-              />
-            )}
-          </TouchableOpacity>
-        </View>
+        <CoinCard
+          item={item}
+          isFavorite={isFavorite}
+          openModal={openModal}
+          addToFavorite={addToFavorite}
+          cardHeight={cardHeight}
+          cardWidth={cardWidth}
+          isSmallScreen={isSmallScreen}
+          isTablet={tablet}
+        />
       )
     },
-    [favoriteCoins, isSmallScreen, isTablet, openModal]
+
+    [
+      isTablet,
+      favoriteCoins,
+      openModal,
+      addToFavorite,
+      isSmallScreen,
+      getCardWidth,
+      getCardHeight
+    ]
   )
 
   const handleEndReached = useCallback(() => {
@@ -318,7 +256,7 @@ const CoinList = ({
     return `${item.id}_${index}`
   }, [])
 
-  const numColumns = isTablet() ? 3 : 2
+  const numColumns = useMemo(() => (isTablet ? 3 : 2), [isTablet])
 
   const renderSearchStatus = useCallback(() => {
     if (!search || search.length < 2) return null
