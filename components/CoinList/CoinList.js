@@ -1,3 +1,5 @@
+// Исправление CoinList
+
 import React, { useEffect, useState, useCallback, useRef } from "react"
 import {
   FlatList,
@@ -40,7 +42,7 @@ const CoinList = ({
   const doubles = useSelector(duplicateSelector)
   const [msgDouble, setMsgDouble] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
-  const [flag, setFlag] = useState({})
+
   const dispatch = useDispatch()
   const bottomInsets = useSelector(bottomInset)
   const isButtonPressed = useRef(false)
@@ -142,10 +144,7 @@ const CoinList = ({
       dispatch(setCoin(coinData))
       setModalVisible(true)
 
-      setFlag((prevFlag) => ({ ...prevFlag, [coinData.id]: true }))
-
       setTimeout(() => {
-        setFlag((prevFlag) => ({ ...prevFlag, [coinData.id]: false }))
         setModalVisible(false)
         isButtonPressed.current = false
       }, 1800)
@@ -165,6 +164,7 @@ const CoinList = ({
       const tablet = isTablet()
       const cardWidth = getCardWidth()
       const cardHeight = getCardHeight()
+      const isFavorite = favoriteCoins.some((fav) => fav.id === item.id)
 
       return (
         <View
@@ -185,7 +185,7 @@ const CoinList = ({
 
           <View style={styles.cardBorder} />
 
-          {flag[item.id] && (
+          {isFavorite && (
             <View
               style={{
                 position: "absolute",
@@ -232,10 +232,10 @@ const CoinList = ({
               styles.addButton,
               tablet && styles.tabletAddButton,
               isSmallScreen && styles.smallAddButton,
-              flag[item.id] && styles.addButtonActive
+              isFavorite && styles.addButtonActive
             ]}
           >
-            {flag[item.id] ? (
+            {isFavorite ? (
               <Ionicons
                 name='checkmark-circle'
                 size={tablet ? 24 : isSmallScreen ? 18 : 22}
@@ -252,7 +252,7 @@ const CoinList = ({
         </View>
       )
     },
-    [flag, isSmallScreen, isTablet, openModal]
+    [favoriteCoins, isSmallScreen, isTablet, openModal]
   )
 
   const handleEndReached = useCallback(() => {
