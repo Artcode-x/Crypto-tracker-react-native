@@ -1,132 +1,230 @@
-import { StyleSheet } from "react-native"
-import { RFPercentage, RFValue } from "react-native-responsive-fontsize"
+// Favorite.styles.js
+import { StyleSheet, Dimensions, Platform, PixelRatio } from "react-native"
+import { RFValue } from "react-native-responsive-fontsize"
+
+// Динамическое получение размеров
+const { width: windowWidth, height: screenHeight } = Dimensions.get("window")
+
+// Функция для определения планшета
+const isTablet = () => {
+  const width = windowWidth
+  const height = screenHeight
+
+  if (width >= 768) return true
+
+  const screenRatio = Math.max(width, height) / Math.min(width, height)
+  const pixelRatio = windowWidth / 360
+
+  if (width / pixelRatio >= 600 && screenRatio < 1.6) {
+    return true
+  }
+
+  return false
+}
+
+// Определяем количество колонок
+const COLUMNS = isTablet() ? 3 : 2
+
+// Базовые константы для масштабирования
+const BASE_WIDTH = 375
+const BASE_HEIGHT = 812
+const scale = windowWidth / BASE_WIDTH
+
+// Универсальная функция для адаптации размеров
+const normalize = (size, factor = 0.5) => {
+  const newSize = size * Math.min(scale, 1.2)
+  return Platform.OS === "ios"
+    ? Math.round(PixelRatio.roundToNearestPixel(newSize))
+    : Math.round(PixelRatio.roundToNearestPixel(newSize)) - factor
+}
+
+// Динамический расчет ширины карточки (нужно для listInnerContainer)
+const getCardWidth = () => {
+  if (isTablet()) {
+    const listPadding = normalize(20) * 2
+    const cardMargin = normalize(4)
+    const totalMargins = cardMargin * (COLUMNS * 2)
+    return (windowWidth - listPadding - totalMargins) / COLUMNS
+  } else {
+    const listPadding = normalize(12) * 2
+    const cardMargin = normalize(4)
+    const totalMargins = cardMargin * 4
+    return (windowWidth - listPadding - totalMargins) / 2
+  }
+}
+
+const CARD_WIDTH = getCardWidth()
+
+// Функция для расчета ширины внутреннего контейнера
+const getListInnerContainerWidth = () => {
+  const cardMargin = normalize(4)
+  if (isTablet()) {
+    return CARD_WIDTH * 3 + cardMargin * 6
+  } else {
+    return CARD_WIDTH * 2 + cardMargin * 4
+  }
+}
+
+export const LIST_INNER_CONTAINER_WIDTH = getListInnerContainerWidth()
+
+// Адаптивные отступы
+const spacing = {
+  xs: normalize(4),
+  sm: normalize(6),
+  md: normalize(8),
+  lg: normalize(12),
+  xl: normalize(16),
+  xxl: normalize(20)
+}
+
+// Адаптивные размеры шрифтов
+const fontSize = {
+  tiny: RFValue(7.5),
+  small: RFValue(8.5),
+  medium: RFValue(9.5),
+  large: RFValue(10.5),
+  xlarge: RFValue(12),
+  xxlarge: RFValue(13)
+}
 
 export const styles = StyleSheet.create({
-  favlist: {
-    backgroundColor: "#141414",
+  premiumContainer: {
     flex: 1,
-    alignItems: "center"
-  },
-  favCoins: {
-    marginTop: "2%",
-    width: "90%"
+    backgroundColor: "#0A0A0F"
   },
 
-  itemContainer: {
-    flex: 1,
-    margin: 5,
-    // backgroundColor: "#696969",
-    backgroundColor: "rgba(50, 48, 49, 0.8)",
+  // Внешний контейнер списка - занимает всю ширину с отступами
+  premiumList: {
+    paddingHorizontal: isTablet() ? spacing.xxl : spacing.lg,
+    paddingBottom: spacing.xxl * 5,
+    width: "100%",
+    alignItems: "center"
+  },
+
+  // Внутренний контейнер - фиксированной ширины, центрируется внутри premiumList
+  listInnerContainer: {
+    width: LIST_INNER_CONTAINER_WIDTH,
+    alignSelf: "center"
+  },
+
+  updateStatus: {
+    marginTop: 6,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#D4AF37",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3
+      },
+      android: {
+        elevation: 2
+      }
+    })
+  },
+
+  updateStatusText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#D4AF37",
+    letterSpacing: 0.3,
+    marginLeft: 8
+  },
+
+  // ===== СТИЛИ ДЛЯ ИНДИКАТОРА СЕРВЕРА =====
+  fcmIndicator: {
+    marginHorizontal: spacing.xl,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+    borderRadius: spacing.md,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: normalize(1) },
+        shadowOpacity: 0.1,
+        shadowRadius: normalize(2)
+      },
+      android: {
+        elevation: 1
+      }
+    })
+  },
+
+  fcmIndicatorOffline: {
+    borderColor: "rgba(255, 152, 0, 0.3)"
+  },
+
+  fcmIndicatorGradient: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.lg
+  },
+
+  fcmIndicatorContent: {
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    padding: 5,
-    borderRadius: 5
+    gap: spacing.md
   },
-  list: {},
-  cont: {
+
+  fcmStatusDot: {
+    width: normalize(8),
+    height: normalize(8),
+    borderRadius: normalize(4)
+  },
+
+  fcmStatusDotOnline: {
+    backgroundColor: "#4CAF50",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#4CAF50",
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: normalize(2)
+      }
+    })
+  },
+
+  fcmStatusDotOffline: {
+    backgroundColor: "#FF9800",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#FF9800",
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.5,
+        shadowRadius: normalize(2)
+      }
+    })
+  },
+
+  fcmIndicatorText: {
+    color: "#FFF",
+    fontSize: fontSize.large,
+    fontWeight: "500",
     flex: 1,
-    justifyContent: "center",
-    padding: 20
+    textAlign: "center"
   },
-  chartContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    // paddingTop: "15%",
-    // backgroundColor: "white",
-    // backgroundColor: "rgba(50, 48, 49, 0.8)",
-    backgroundColor: "rgba(75, 73, 74, 0.9)",
-    elevation: 5,
-    padding: 20,
-    justifyContent: "center",
-    alignItems: "center"
-  },
-  textUp: {
-    fontWeight: "300",
-    color: "white",
-    fontSize: RFValue(11)
-  },
-  modalTitle: {
-    // fontSize: 24,
-    fontSize: RFValue(23),
-    fontWeight: "bold",
-    // color: "#333",
-    color: "white",
-    paddingBottom: "10"
-  },
-  text0: { color: "white", paddingBottom: 0, paddingTop: 2, fontSize: RFValue(10) },
-  text: { color: "white", paddingBottom: 5, fontSize: RFValue(10) },
-  text1: { color: "white", paddingTop: 5, fontSize: RFValue(9) },
-  textTit: { color: "white", fontSize: RFValue(10), paddingBottom: 5 },
-  textZ: {
-    color: "wheat",
-    fontSize: RFValue(10)
-  },
-  chartButtonsClose: {
-    marginTop: 10,
-    flexDirection: "row",
-    gap: 10,
-    backgroundColor: "rgba(50, 48, 49, 0.8)",
-    // borderWidth: 0.5,
-    // borderColor: "wheat",
-    // padding: 3,
-    // borderRadius: 15,
 
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 2,
-      height: 4
+  fcmIndicatorIcon: {
+    marginLeft: "auto"
+  },
+
+  // Адаптация для очень маленьких экранов
+  ...(windowWidth < 350 && {
+    premiumList: {
+      paddingHorizontal: spacing.md,
+      paddingBottom: spacing.xxl * 4,
+      width: "100%",
+      alignItems: "center"
     },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 5 // Для Android
-  },
-  buttonClose: {
-    marginTop: 0,
-    backgroundColor: "lightgray",
-    borderRadius: 5,
-    borderColor: "wheat",
-    borderWidth: 0.5,
-    paddingVertical: 5,
-    paddingHorizontal: 15,
-    alignItems: "center"
-  },
-  closeb: { color: "black", fontSize: RFValue(14) },
 
-  minmaxBlock: {
-    flexDirection: "row",
-    borderRadius: 20,
-    backgroundColor: "rgba(75, 73, 74, 0.9)",
-    gap: 10,
-    paddingLeft: 5,
-    paddingRight: 5
-  },
-  priceRange: {
-    color: "white",
-    color: "wheat"
-  },
-  priceBlock: {
-    flexDirection: "row",
-    gap: 10
-  },
-  priceContainer: {
-    alignItems: "center"
-  },
-  label: {
-    fontWeight: "bold",
-    color: "wheat",
-    fontSize: RFValue(9)
-  },
-  priceValue: {
-    fontSize: RFValue(9),
-    color: "wheat"
-  },
-  limits: {
-    textAlign: "center",
-    fontSize: RFValue(8),
-    color: "wheat",
-    paddingTop: 10
-  }
+    listInnerContainer: {
+      width: CARD_WIDTH * 2 + spacing.xs * 4,
+      alignSelf: "center"
+    }
+  })
 })
