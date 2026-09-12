@@ -1,8 +1,8 @@
 import { useEffect, useRef, useCallback } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { coinSelector } from "../store/toolkitSelectors"
 import { UpdateFavoriteCoins } from "../components/Api/Api"
 import { rewriteFavorite } from "../store/reducersSlice"
+import { coinSelector } from "../store/toolkitSelectors"
 
 export const useFavoriteUpdate = (intervalMinutes = 1) => {
   const dispatch = useDispatch()
@@ -112,9 +112,12 @@ export const useFavoriteUpdate = (intervalMinutes = 1) => {
       }, 5000)
 
       // Устанавливаем интервал
-      updateIntervalRef.current = setInterval(() => {
-        updateFavoritePrices()
-      }, intervalMinutes * 60 * 1000)
+      updateIntervalRef.current = setInterval(
+        () => {
+          updateFavoritePrices()
+        },
+        intervalMinutes * 60 * 1000
+      )
     } else {
       console.log(`Автообновление не запущено: нет избранных монет`)
     }

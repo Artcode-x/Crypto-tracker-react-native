@@ -1,7 +1,7 @@
-import * as Notifications from "expo-notifications"
+import Constants from "expo-constants"
 import * as Device from "expo-device"
+import * as Notifications from "expo-notifications"
 import { Platform, AppState } from "react-native"
-import * as Application from "expo-application"
 
 class NotificationService {
   // Инициализация уведомлений с поддержкой FCM
@@ -101,6 +101,11 @@ class NotificationService {
   // Регистрация для push-уведомлений через FCM
   static async registerForPushNotificationsAsync() {
     try {
+      // На web push-токены требуют VAPID-ключ в app.json — пропускаем
+      if (Platform.OS === "web") {
+        return null
+      }
+
       // Проверяем, что устройство физическое
       if (!Device.isDevice) {
         console.warn("Физическое устройство требуется для push-уведомлений")
@@ -133,6 +138,10 @@ class NotificationService {
 
   // Получение токена устройства для push-уведомлений
   static async getDevicePushToken() {
+    if (Platform.OS === "web") {
+      return null
+    }
+
     try {
       // Попытка получить нативный FCM токен
       let token = await this.getNativeFCMToken()
@@ -164,6 +173,11 @@ class NotificationService {
   // Попытка получить нативный FCM токен
   static async getNativeFCMToken() {
     try {
+      // На web нативный токен требует VAPID-ключ в app.json — пропускаем
+      if (Platform.OS === "web") {
+        return null
+      }
+
       // Способ 1: Используем getDevicePushTokenAsync для нативного токена
       // Этот метод возвращает нативный токен в development/production builds
       if (Device.isDevice) {
@@ -197,7 +211,7 @@ class NotificationService {
   static async getExpoToken() {
     try {
       const expoToken = await Notifications.getExpoPushTokenAsync({
-        projectId: "8a1401d1-7ebd-4be4-b520-7b18ad4517ba"
+        projectId: Constants.expoConfig?.extra?.eas?.projectId
       })
 
       return expoToken.data
@@ -289,8 +303,8 @@ class NotificationService {
       // Планируем уведомление
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
-          title: title,
-          body: body,
+          title,
+          body,
           data: notificationData,
           sound: true,
           badge: 1,
@@ -315,10 +329,7 @@ class NotificationService {
 
       return true
     } catch (error) {
-      console.error(
-        `Ошибка отправки локального уведомления для алерта ${alert?.id}:`,
-        error
-      )
+      console.error(`Ошибка отправки локального уведомления для алерта ${alert?.id}:`, error)
       return false
     }
   }
@@ -339,7 +350,7 @@ class NotificationService {
         await this.showLocalNotificationFromFCM({
           title: title || `🚨 ${data.coinSymbol?.toUpperCase() || "Crypto"} Alert!`,
           // body: body || "Price alert triggered",
-          data: data
+          data
         })
 
         return {
@@ -391,28 +402,24 @@ class NotificationService {
 
     // Обработчик получения уведомления
     if (onReceived) {
-      const receivedSubscription = Notifications.addNotificationReceivedListener(
-        (notification) => {
-          console.log("Уведомление получено в приложении:", {
-            id: notification.request.identifier,
-            source: notification.request.content.data?.source || "local"
-          })
+      const receivedSubscription = Notifications.addNotificationReceivedListener((notification) => {
+        console.log("Уведомление получено в приложении:", {
+          id: notification.request.identifier,
+          source: notification.request.content.data?.source || "local"
+        })
 
-          onReceived(notification)
-        }
-      )
+        onReceived(notification)
+      })
       subscriptions.push(receivedSubscription)
     }
 
     // Обработчик нажатия на уведомление
     if (onResponse) {
-      const responseSubscription = Notifications.addNotificationResponseReceivedListener(
-        (response) => {
-          // Нажатие на уведомление
+      const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
+        // Нажатие на уведомление
 
-          onResponse(response)
-        }
-      )
+        onResponse(response)
+      })
       subscriptions.push(responseSubscription)
     }
 
@@ -590,7 +597,7 @@ class NotificationService {
       return {
         success: true,
         permissions: permissions.granted,
-        tokenType: tokenType,
+        tokenType,
         token: token ? `${token.substring(0, 20)}...` : null,
         testNotificationSent: testResult,
         status: {

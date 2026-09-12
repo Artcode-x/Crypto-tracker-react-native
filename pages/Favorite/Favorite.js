@@ -1,37 +1,27 @@
-import React, { useState, useCallback, useRef, useEffect } from "react"
-import { View, FlatList, Text, Dimensions, Alert, Platform, AppState } from "react-native"
-import { LinearGradient } from "expo-linear-gradient"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs"
+import { useNavigation } from "@react-navigation/native"
 import * as Haptics from "expo-haptics"
 import * as Notifications from "expo-notifications"
+import React, { useState, useCallback, useRef, useEffect } from "react"
+import { View, FlatList, Alert, AppState, StyleSheet, RefreshControl, Platform } from "react-native"
 import { useDispatch, useSelector } from "react-redux"
-
-import {
-  bottomInset,
-  coinSelector,
-  daysSelector,
-  userAssetsSelector
-} from "../../store/toolkitSelectors"
-import {
-  priceAlertsSelector,
-  unreadAlertsCountSelector
-} from "../../store/alertsSelectors"
-import { removeCoin, updateUserAsset } from "../../store/reducersSlice"
-import { addPriceAlert, deletePriceAlert, markAlertAsRead } from "../../store/alertsSlice"
-import { styles } from "./Favorite.styles"
+import FavoriteStatsPanel from "./FavoriteStatsPanel/FavoriteStatsPanel"
 import ModalFavorite from "./ModalChart/ModalFavorite"
+import PremiumCoinCard from "./PremiumCoinCard/PremiumCoinCard"
 import AlertModal from "../../components/Alerts/AlertModal/AlertModal"
+import { Screen, ScreenHeader, EmptyState, IconButton, PriceText, PercentBadge } from "../../components/ui"
+import { useAlertChecker } from "../../hooks/useAlertChecker"
 import { useFavoriteUpdate } from "../../hooks/useFavoriteUpdate"
+import AlertManager from "../../services/AlertManager"
 import NotificationService from "../../services/NotificationService"
 import ServerSyncService from "../../services/ServerSyncService"
-import AlertManager from "../../services/AlertManager"
-import { useAlertChecker } from "../../hooks/useAlertChecker"
-import EmptyState from "./FavoriteComponents/EmptyState/EmptyState"
-import FavoriteHeader from "./FavoriteHeader/FavoriteHeader"
+import { priceAlertsSelector, unreadAlertsCountSelector } from "../../store/alertsSelectors"
+import { addPriceAlert, deletePriceAlert, markAlertAsRead } from "../../store/alertsSlice"
+import { removeCoin, updateUserAsset } from "../../store/reducersSlice"
+import { coinSelector, daysSelector, userAssetsSelector } from "../../store/toolkitSelectors"
+import { colors, space, responsive } from "../../theme"
 import AmountInputModal from "./FavoriteComponents/AmountInputModal/AmountInputModal"
-import FavoriteStatsPanel from "./FavoriteStatsPanel/FavoriteStatsPanel"
-import AsyncStorage from "@react-native-async-storage/async-storage"
-import PremiumCoinCard from "./PremiumCoinCard/PremiumCoinCard"
-import { LIST_INNER_CONTAINER_WIDTH } from "./Favorite.styles"
 
 const Favorite = () => {
   const dispatch = useDispatch()
@@ -40,8 +30,8 @@ const Favorite = () => {
   const userAssets = useSelector(userAssetsSelector) || {}
   const priceAlerts = useSelector(priceAlertsSelector)
   const unreadAlertsCount = useSelector(unreadAlertsCountSelector)
-  // Для корректного отступа при наличии вирт панели на уст-ве
-  const bottomInsets = useSelector(bottomInset)
+  const tabBarHeight = useBottomTabBarHeight()
+  const navigation = useNavigation()
 
   const [removingCoinId, setRemovingCoinId] = useState(null)
   const [isModalVisible, setModalVisible] = useState(false)
@@ -59,42 +49,7 @@ const Favorite = () => {
   const [appState, setAppState] = useState(AppState.currentState)
   const [serverStatus, setServerStatus] = useState(null)
 
-  // Динамическое определение ширины экрана
-  const [windowWidth, setWindowWidth] = useState(Dimensions.get("window").width)
-
-  // Для анимации
-  const [forceShimmer, setForceShimmer] = useState(false)
-
-  useEffect(() => {
-    const subscription = Dimensions.addEventListener("change", ({ window }) => {
-      setWindowWidth(window.width)
-    })
-
-    return () => subscription?.remove()
-  }, [])
-
-  // Функция определения планшета
-  const isTablet = useCallback(() => {
-    const width = windowWidth
-    const height = Dimensions.get("window").height
-
-    // Основная логика для Expo Go
-    if (width >= 768) return true
-
-    // Для Nexus 9 и подобных устройств
-    const screenRatio = Math.max(width, height) / Math.min(width, height)
-    const pixelRatio = windowWidth / 360 // базовая ширина телефона
-
-    // Если ширина в dp больше 600 и соотношение сторон меньше 1.6
-    if (width / pixelRatio >= 600 && screenRatio < 1.6) {
-      return true
-    }
-
-    return false
-  }, [windowWidth])
-
-  // Определяем количество колонок
-  const numColumns = isTablet() ? 3 : 2
+  const numColumns = responsive.columns
 
   const amountInputRef = useRef("")
 
@@ -274,7 +229,6 @@ const Favorite = () => {
 
     // Ручное обновление избранного
     setIsUpdating(true)
-    setForceShimmer(true)
     setLastUpdateTime(new Date().toLocaleTimeString())
 
     try {
@@ -284,9 +238,6 @@ const Favorite = () => {
       console.error("Ошибка обновления:", error)
     } finally {
       setIsUpdating(false)
-      setTimeout(() => {
-        setForceShimmer(false)
-      }, 2500)
     }
   }, [updateFavoritePrices, isUpdating])
 
@@ -304,8 +255,7 @@ const Favorite = () => {
     top10: coinData.filter((c) => c.market_cap_rank <= 10).length,
     activeAlerts: priceAlerts.filter((a) => a.isActive && !a.triggeredAt).length,
     triggeredAlerts: priceAlerts.filter((a) => a.triggeredAt).length,
-    serverSynced: priceAlerts.filter((a) => a.serverId || a.syncStatus === "synced")
-      .length
+    serverSynced: priceAlerts.filter((a) => a.serverId || a.syncStatus === "synced").length
   }
 
   // Функция открытия модалки алерта
@@ -321,7 +271,8 @@ const Favorite = () => {
       try {
         const { granted, status, canAskAgain } = await Notifications.getPermissionsAsync()
 
-        if (granted) {
+        // На web Alert.alert недоступен — открываем модалку напрямую (локальный режим)
+        if (granted || Platform.OS === "web") {
           if (!notificationPermission) {
             setNotificationPermission(true)
           }
@@ -433,7 +384,7 @@ const Favorite = () => {
       const payload = {
         ...alertData,
         currentPrice: currentCoinPrice,
-        fcmToken: fcmToken,
+        fcmToken,
         syncStatus: fcmToken ? "pending_sync" : "local_only",
         source: "local"
       }
@@ -449,9 +400,7 @@ const Favorite = () => {
         if (serverAvailable) {
           try {
             // Синхронизируем все алерты с сервером
-            const syncedAlerts = [...priceAlerts, payload].filter(
-              (a) => a.isActive && !a.triggeredAt
-            )
+            const syncedAlerts = [...priceAlerts, payload].filter((a) => a.isActive && !a.triggeredAt)
             await ServerSyncService.syncAlertsWithServer(syncedAlerts)
 
             Alert.alert(
@@ -461,11 +410,9 @@ const Favorite = () => {
             )
           } catch (syncError) {
             console.warn("Не удалось синхронизировать с сервером:", syncError)
-            Alert.alert(
-              "⚠️ Alert Saved",
-              `Alert saved locally. Push notifications require app to be open.`,
-              [{ text: "OK" }]
-            )
+            Alert.alert("⚠️ Alert Saved", `Alert saved locally. Push notifications require app to be open.`, [
+              { text: "OK" }
+            ])
           }
         } else {
           Alert.alert(
@@ -544,13 +491,13 @@ const Favorite = () => {
   // Сохранение количества
   const saveAmount = () => {
     if (selectedCoinForInput && amountInputRef.current) {
-      let text = amountInputRef.current.replace(/,/g, ".")
+      const text = amountInputRef.current.replace(/,/g, ".")
       const amount = parseFloat(text) || 0
 
       dispatch(
         updateUserAsset({
           coinId: selectedCoinForInput.id,
-          amount: amount
+          amount
         })
       )
 
@@ -580,85 +527,86 @@ const Favorite = () => {
     }
   }
 
+  // Изменение стоимости портфеля за 24ч (взвешенное по позициям)
+  const portfolioChange24h = (() => {
+    let prev = 0
+    coinData.forEach((coin) => {
+      const amount = (userAssets && userAssets[coin.id]) || 0
+      const pct = coin.price_change_percentage_24h || 0
+      prev += (amount * (coin.current_price || 0)) / (1 + pct / 100)
+    })
+    return prev > 0 ? ((totalPortfolioValue - prev) / prev) * 100 : 0
+  })()
+
   return (
-    <LinearGradient
-      colors={["#0A0A0F", "#121218", "#0A0A0F"]}
-      style={styles.premiumContainer}
-    >
-      {/* Заголовок с Portfolio */}
-      {coinData.length > 0 && (
-        <FavoriteHeader
-          stats={stats}
-          lastUpdateTime={lastUpdateTime}
-          priceAlerts={priceAlerts}
-          notificationPermission={notificationPermission}
-          totalPortfolioValue={totalPortfolioValue}
-          isUpdating={isUpdating}
-          handleManualUpdate={handleManualUpdate}
-          fcmToken={fcmToken}
-          testFCMNotification={testServerConnection}
-          serverStatus={serverStatus}
-        />
-      )}
+    <Screen>
+      <ScreenHeader
+        large
+        eyebrow='Portfolio'
+        title={coinData.length ? undefined : "Portfolio"}
+        subtitle={
+          lastUpdateTime
+            ? `Updated ${lastUpdateTime}`
+            : `${coinData.length} asset${coinData.length === 1 ? "" : "s"}`
+        }
+        left={
+          coinData.length ? (
+            <View style={{ flex: 1 }}>
+              <View style={styles.valueRow}>
+                <PriceText value={totalPortfolioValue} money variant='h1' />
+                <PercentBadge value={portfolioChange24h} size='md' style={{ marginLeft: space[3] }} />
+              </View>
+            </View>
+          ) : null
+        }
+        right={
+          coinData.length ? (
+            <IconButton
+              name='refresh'
+              onPress={handleManualUpdate}
+              disabled={isUpdating}
+              active={isUpdating}
+            />
+          ) : null
+        }
+      />
 
-      {/* Панель статистики */}
-      {coinData.length > 0 && (
-        <FavoriteStatsPanel
-          priceAlerts={priceAlerts}
-          stats={stats}
-          unreadAlertsCount={unreadAlertsCount}
-          notificationPermission={notificationPermission}
-          fcmToken={fcmToken}
-          serverStatus={serverStatus}
-        />
-      )}
-
-      {/* Информация о статусе обновления */}
-      {isUpdating && (
-        <View style={styles.updateStatus}>
-          <Text style={styles.updateStatusText}>Updating prices...</Text>
-        </View>
-      )}
-
-      {/* Пустое состояние или список */}
       {coinData.length === 0 ? (
         <EmptyState
-          notificationPermission={notificationPermission}
-          fcmToken={fcmToken}
-          serverAvailable={serverStatus?.serverAvailable}
+          icon='star-outline'
+          eyebrow='Your holdings'
+          title='Your portfolio is empty'
+          body='Star coins on the Markets tab to track them here, set alerts and see analytics.'
+          action={{ label: "Browse markets", icon: "pulse", onPress: () => navigation.navigate("Home") }}
         />
       ) : (
         <FlatList
           data={coinData}
+          ListHeaderComponent={<FavoriteStatsPanel stats={stats} />}
           renderItem={({ item }) => (
             <PremiumCoinCard
               item={item}
-              isUpdating={forceShimmer}
               removingCoinId={removingCoinId}
               userAssets={userAssets}
               priceAlerts={priceAlerts}
-              notificationPermission={notificationPermission}
               openChartModal={openChartModal}
               openAlertModal={openAlertModal}
               openAmountInput={openAmountInput}
               removeFromFav={removeFromFav}
             />
           )}
+          key={numColumns}
           numColumns={numColumns}
-          contentContainerStyle={[
-            styles.premiumList,
-            {
-              paddingBottom: bottomInsets.bottom > 0 ? bottomInsets.bottom + 70 : 60
-            }
-          ]}
-          columnWrapperStyle={
-            numColumns > 1
-              ? {
-                  justifyContent: "flex-start",
-                  // width: styles.listInnerContainer.width
-                  width: LIST_INNER_CONTAINER_WIDTH
-                }
-              : null
+          columnWrapperStyle={numColumns > 1 ? { paddingHorizontal: space[3] } : null}
+          contentContainerStyle={{ paddingBottom: tabBarHeight + space[4] }}
+          refreshControl={
+            <RefreshControl
+              refreshing={false}
+              onRefresh={handleManualUpdate}
+              tintColor={colors.gold[500]}
+              colors={[colors.gold[500]]}
+              progressBackgroundColor={colors.bg[2]}
+            />
           }
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
@@ -668,7 +616,6 @@ const Favorite = () => {
         />
       )}
 
-      {/* Модалка ввода количества */}
       <AmountInputModal
         inputModalVisible={inputModalVisible}
         setInputModalVisible={setInputModalVisible}
@@ -678,7 +625,6 @@ const Favorite = () => {
         amountInputRef={amountInputRef}
       />
 
-      {/* Модалка алерта */}
       {selectedCoinForAlert && (
         <AlertModal
           visible={alertModalVisible}
@@ -695,15 +641,18 @@ const Favorite = () => {
         />
       )}
 
-      {/* Модалка с графиком */}
       <ModalFavorite
         visible={isModalVisible}
         onClose={closeChartModal}
         selectedCoin={selectedCoin}
         chartDays={chartDays}
       />
-    </LinearGradient>
+    </Screen>
   )
 }
+
+const styles = StyleSheet.create({
+  valueRow: { flexDirection: "row", alignItems: "center" }
+})
 
 export default Favorite

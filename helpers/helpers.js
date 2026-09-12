@@ -63,20 +63,7 @@ export const getTimeLabels = (prices) => {
 
 // для больших ТФ
 export const formatTime = (prices) => {
-  const monthNames = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec"
-  ]
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
   return prices
     .map((item) => {
@@ -170,9 +157,7 @@ export const smartFormatNumber = (num, isPrice = false, isCrypto = false) => {
           // Показываем как 0.0000...123
           const significant = str.substring(zerosBefore + 2)
           const firstSix = significant.substring(0, Math.min(6, significant.length))
-          return `0.${"0".repeat(zerosBefore)}${firstSix}${
-            firstSix.length === 6 ? "…" : ""
-          }`
+          return `0.${"0".repeat(zerosBefore)}${firstSix}${firstSix.length === 6 ? "…" : ""}`
         }
       }
       return num.toFixed(8).replace(/(\.\d*?[1-9])0+$/, "$1")
@@ -205,9 +190,7 @@ export const smartFormatNumber = (num, isPrice = false, isCrypto = false) => {
         if (zerosBefore >= 4) {
           const significant = formatted.substring(zerosBefore + 2)
           const firstSix = significant.substring(0, Math.min(6, significant.length))
-          return `$0.${"0".repeat(zerosBefore)}${firstSix}${
-            firstSix.length === 6 ? "…" : ""
-          }`
+          return `$0.${"0".repeat(zerosBefore)}${firstSix}${firstSix.length === 6 ? "…" : ""}`
         }
       }
       return `$${num.toFixed(8)}`

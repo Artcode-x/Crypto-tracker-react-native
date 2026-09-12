@@ -1,17 +1,22 @@
 import React, { useEffect, useState, useCallback, useRef } from "react"
-import { styles } from "./Main.styles"
-import {
-  View,
-  Text,
-  StatusBar,
-  TextInput,
-  ActivityIndicator,
-  TouchableOpacity
-} from "react-native"
-import CoinList from "../../components/CoinList/CoinList"
-import prepareChartData from "../../components/PrepareChartData/PrepareChartData"
-import { Chart } from "../../components/Chart/Chart"
+import { View, StyleSheet } from "react-native"
 import { useSelector, useDispatch } from "react-redux"
+import { FetchCoinHistoricalData, GetMarketData, SearchCoins } from "../../components/Api/Api"
+import { Chart } from "../../components/Chart/Chart"
+import CoinList from "../../components/CoinList/CoinList"
+import { prepareChartData } from "../../components/PrepareChartData/PrepareChartData"
+import { Screen, ScreenHeader, IconButton, Text, Surface, Button } from "../../components/ui"
+import {
+  setMarketData,
+  addMoreMarketData,
+  setMarketCurrentPage,
+  setMarketIsLoadingMore,
+  setMarketHasMore,
+  setMarketLastUpdated,
+  setMarketError,
+  resetMarketData,
+  setFlagForView
+} from "../../store/reducersSlice"
 import {
   mainDaySelector,
   marketCurrentPageSelector,
@@ -21,25 +26,7 @@ import {
   marketIsLoadingMoreSelector,
   viewMarketFlagSelector
 } from "../../store/toolkitSelectors"
-import {
-  setMarketData,
-  addMoreMarketData,
-  setMarketCurrentPage,
-  setMarketIsLoadingMore,
-  setMarketHasMore,
-  setMarketLastUpdated,
-  setMarketError,
-  resetMarketData
-} from "../../store/reducersSlice"
-import {
-  FetchCoinHistoricalData,
-  GetMarketData,
-  SearchCoins
-} from "../../components/Api/Api"
-import { Ionicons } from "@expo/vector-icons"
-import { ModalView } from "../../components/ModalView/ModalView"
-import CoinList2 from "../../components/CoinList2/Coinlist2"
-import { LinearGradient } from "react-native-svg"
+import { colors, space, goldAlpha } from "../../theme"
 
 const Main = () => {
   const dispatch = useDispatch()
@@ -52,7 +39,7 @@ const Main = () => {
   const [modalVisible, setModalVisible] = useState(false)
   const [isloading, setIsLoading] = useState(false)
   const [flagForLoader, setFlagForLoader] = useState(false)
-  const [modal, setModal] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
 
   // Стейты для обработки ошибки 429
   const [is429Error, setIs429Error] = useState(false)
@@ -208,11 +195,7 @@ const Main = () => {
         })
 
         // Сообщение для пользователя
-        dispatch(
-          setMarketError(
-            `Too many requests. Automatically repeat after ${delayInSeconds} sec...`
-          )
-        )
+        dispatch(setMarketError(`Too many requests. Automatically repeat after ${delayInSeconds} sec...`))
       } else {
         // Другие ошибки
         dispatch(setMarketError(error.message || "Ошибка загрузки данных"))
@@ -226,12 +209,7 @@ const Main = () => {
 
   // Функция подгрузки следующей страницы
   const loadMoreData = useCallback(async () => {
-    if (
-      !marketHasMore ||
-      marketIsLoadingMore ||
-      isLoadingMoreRef.current ||
-      !isMountedRef.current
-    ) {
+    if (!marketHasMore || marketIsLoadingMore || isLoadingMoreRef.current || !isMountedRef.current) {
       // Не загружаем: нет данных или уже идет загрузка
       return
     }
@@ -277,10 +255,7 @@ const Main = () => {
         consecutiveErrorsRef.current += 1
 
         // Минимальная задержка 1 минута
-        const delay = Math.max(
-          60000,
-          2000 * Math.pow(2, Math.min(consecutiveErrorsRef.current - 1, 5))
-        )
+        const delay = Math.max(60000, 2000 * Math.pow(2, Math.min(consecutiveErrorsRef.current - 1, 5)))
 
         const delayInSeconds = Math.ceil(delay / 1000)
 
@@ -290,11 +265,7 @@ const Main = () => {
           loadMoreData()
         })
 
-        dispatch(
-          setMarketError(
-            `Too many requests. Automatic repeat after ${delayInSeconds}sec...`
-          )
-        )
+        dispatch(setMarketError(`Too many requests. Automatic repeat after ${delayInSeconds}sec...`))
 
         return
       } else {
@@ -415,10 +386,7 @@ const Main = () => {
     const fetchHistoricalData = async () => {
       setIsLoading(true)
       try {
-        const historicalData = await FetchCoinHistoricalData(
-          selectedCoinData.id,
-          switchChartDays
-        )
+        const historicalData = await FetchCoinHistoricalData(selectedCoinData.id, switchChartDays)
         setCoinHistoryData(historicalData || [])
       } catch (error) {
         console.error("Ошибка:", error)
@@ -433,10 +401,6 @@ const Main = () => {
   }, [switchChartDays, selectedCoinData])
 
   const chartData = prepareChartData(coinHistoryData)
-  const toggleModal = () => {
-    if (!isMountedRef.current) return
-    setModal(!modal)
-  }
 
   const handleSearch = (text) => {
     setSearch(text)
@@ -446,13 +410,12 @@ const Main = () => {
       clearTimeout(retryTimeoutRef.current)
     }
 
-    // Если текст пустой - очищаем результаты поиска
     if (!text.trim()) {
       setSearchResults([])
       return
     }
 
-    // Добавляем задержку перед поиском (debounce)
+    // debounce 500мс
     retryTimeoutRef.current = setTimeout(async () => {
       if (!isMountedRef.current || text.length < 2) return
 
@@ -468,203 +431,95 @@ const Main = () => {
         } else {
           setSearchError("Search failed, please try again")
         }
-        setSearchResults([]) // Очищаем результаты при ошибке
+        setSearchResults([])
       } finally {
         if (isMountedRef.current) {
           setIsSearching(false)
         }
       }
-    }, 500) // Ждем 500мс после ввода
+    }, 500)
   }
 
-  return (
-    <View style={styles.container}>
-      {/* Баннер с ошибкой 429 */}
-      {is429Error && (
-        <View style={styles.compactPremiumBanner}>
-          {/* Левая часть - индикатор ошибки */}
-          <View style={styles.compactLeft}>
-            <View style={styles.compactIconWrapper}>
-              <Ionicons name='alert-circle' size={18} color='#FFD700' />
-              <View style={styles.compactIconGlow} />
-            </View>
+  const toggleSearch = () => {
+    if (searchOpen) {
+      handleSearch("")
+    }
+    setSearchOpen(!searchOpen)
+  }
 
-            <View style={styles.compactTextWrapper}>
-              <Text style={styles.compactTitle}>Rate Limit</Text>
-              <Text style={styles.compactSubtitle}>
-                Retry in <Text style={styles.compactTimer}>{retryCountdown}s</Text>
+  const isInitialLoading = flagForLoader && marketData.length === 0
+  const listData = search.trim().length >= 2 ? searchResults : marketData
+
+  return (
+    <Screen>
+      <ScreenHeader
+        large
+        eyebrow='Crypto Tracker'
+        title='Markets'
+        subtitle={marketData.length ? `Top ${marketData.length} by market cap` : "Live prices by market cap"}
+        right={
+          <>
+            <IconButton name='search' active={searchOpen} onPress={toggleSearch} />
+            <IconButton
+              name={marketViewFlag ? "grid-outline" : "list-outline"}
+              onPress={() => dispatch(setFlagForView(!marketViewFlag))}
+            />
+          </>
+        }
+        search={{
+          visible: searchOpen,
+          value: search,
+          onChange: handleSearch,
+          placeholder: "Search by name or ticker",
+          autoFocus: true
+        }}
+      />
+
+      {is429Error && (
+        <Surface level={2} radius='md' style={styles.banner}>
+          <View style={styles.bannerRow}>
+            <View style={styles.bannerIcon}>
+              <Text variant='h3' color='gold'>
+                {retryCountdown}
               </Text>
             </View>
-
-            {/* Баннер с рекламой - правее текста ошибки */}
-            <View style={styles.adBannerContainer}>
-              <View style={styles.premiumBanner}>
-                <View style={styles.bannerGradient}>
-                  <Ionicons
-                    name='sparkles'
-                    size={12}
-                    color='#FFD700'
-                    style={styles.bannerIcon}
-                  />
-                  <Text style={styles.bannerText}>Premium Ad Space</Text>
-                  {/* <View style={styles.bannerBadge}>
-                    <Text style={styles.bannerBadgeText}>Premium</Text>
-                  </View> */}
-                </View>
-              </View>
+            <View style={{ flex: 1 }}>
+              <Text variant='bodyStrong'>Rate limit reached</Text>
+              <Text variant='caption' color='tertiary'>
+                Retrying automatically in {retryCountdown}s
+              </Text>
             </View>
+            <Button variant='outline' size='sm' title='Retry' onPress={handleManualRetry} />
           </View>
-
-          {/* Кнопка ретрая */}
-          <TouchableOpacity
-            style={styles.compactRetryButton}
-            onPress={handleManualRetry}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.compactButtonText}>Retry</Text>
-          </TouchableOpacity>
-
-          {/* Прогресс-бар */}
-          <View style={styles.compactProgressTrack}>
+          <View style={styles.progressTrack}>
             <View
               style={[
-                styles.compactProgressBar,
-                {
-                  width: `${((60 - retryCountdown) / 60) * 100}%`
-                }
+                styles.progressFill,
+                { width: `${Math.min(100, ((60 - retryCountdown) / 60) * 100)}%` }
               ]}
             />
           </View>
-        </View>
+        </Surface>
       )}
-      {/* Информация о состоянии */}
-      {/*  <View style={styles.infoContainer}>
-        <Text style={styles.infoText}>
-          Coins: {marketData.length} | Page:{" "}
-          {marketCurrentPage === 1
-            ? "1 (loaded)"
-            : `${marketCurrentPage - 1} (loaded), next: ${marketCurrentPage}`}{" "}
-          | Loading: {marketIsLoadingMore ? "Yes" : "No"} | More pages:{" "}
-          {marketHasMore ? "Yes" : "No"}
-          {is429Error && ` | Retry in: ${retryCountdown} sec`}
-        </Text>
-      </View> */}
-      <View style={styles.infoContainer}>
-        <Text style={styles.infoText}>
-          <Text style={styles.infoLabel}>Coins:</Text>
-          <Text style={styles.infoValue}> {marketData.length}</Text>
 
-          <Text style={styles.infoLabel}> • Page:</Text>
-          <Text style={styles.infoValue}>
-            {marketCurrentPage === 1
-              ? " 1 (loaded)"
-              : ` ${marketCurrentPage - 1} → ${marketCurrentPage}`}
-          </Text>
+      <CoinList
+        data={listData}
+        layout={marketViewFlag ? "row" : "grid"}
+        search={search}
+        openModal={openModal}
+        refreshing={refreshing}
+        setRefreshing={setRefreshing}
+        fetchMarketData={handleRefresh}
+        errorMessage={is429Error ? null : marketError}
+        loadMoreData={loadMoreData}
+        isLoadingMore={marketIsLoadingMore}
+        hasMore={marketHasMore}
+        isSearching={isSearching}
+        searchResultsCount={searchResults.length}
+        searchError={searchError}
+        initialLoading={isInitialLoading}
+      />
 
-          <Text style={styles.infoLabel}> • Loading:</Text>
-          <Text
-            style={[
-              styles.infoValue,
-              marketIsLoadingMore ? styles.active : styles.inactive
-            ]}
-          >
-            {marketIsLoadingMore ? " ✓" : " ✗"}
-          </Text>
-
-          <Text style={styles.infoLabel}> • More:</Text>
-          <Text
-            style={[
-              styles.infoValue,
-              marketHasMore ? styles.available : styles.unavailable
-            ]}
-          >
-            {marketHasMore ? " ✓" : " ✗"}
-          </Text>
-        </Text>
-      </View>
-
-      <StatusBar backgroundColor='#0e0275' />
-      <View style={styles.header}>
-        <Text style={styles.title}>CryptoCurrencies</Text>
-
-        <TextInput
-          style={styles.searchInput}
-          placeholder='Search Crypto'
-          placeholderTextColor='#858585'
-          onChangeText={handleSearch}
-        />
-
-        <View style={styles.openMenu}>
-          <TouchableOpacity onPress={toggleModal}>
-            <Ionicons style={styles.changeView} name='list' size={20} />
-          </TouchableOpacity>
-        </View>
-      </View>
-      <ModalView modal={modal} setModal={setModal} />
-      {/* Основной контент */}
-      {flagForLoader && marketData.length === 0 ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size='large' color='#FFD700' />
-          <Text style={styles.loadingText}>Loading data...</Text>
-        </View>
-      ) : (
-        <>
-          {marketData.length === 0 &&
-            !flagForLoader &&
-            !marketError &&
-            !is429Error &&
-            initialLoadAttempted && (
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No data</Text>
-                <TouchableOpacity
-                  style={styles.retryButton}
-                  onPress={fetchInitialMarketData}
-                >
-                  <Text style={styles.retryButtonText}>Load data</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-          {/* Всегда показываем CoinList если есть данные, даже при ошибке 429 */}
-          {(marketData.length > 0 || is429Error) && (
-            <>
-              {!marketViewFlag ? (
-                <CoinList
-                  data={search.trim().length >= 2 ? searchResults : marketData}
-                  search={search}
-                  openModal={openModal}
-                  refreshing={refreshing}
-                  setRefreshing={setRefreshing}
-                  fetchMarketData={handleRefresh}
-                  errorMessage={is429Error ? null : marketError}
-                  loadMoreData={loadMoreData}
-                  isLoadingMore={marketIsLoadingMore}
-                  hasMore={marketHasMore}
-                  isSearching={isSearching}
-                  searchResultsCount={searchResults.length}
-                  searchError={searchError}
-                />
-              ) : (
-                <CoinList2
-                  data={search.trim().length >= 2 ? searchResults : marketData}
-                  search={search}
-                  openModal={openModal}
-                  refreshing={refreshing}
-                  setRefreshing={setRefreshing}
-                  fetchMarketData={handleRefresh}
-                  errorMessage={is429Error ? null : marketError}
-                  loadMoreData={loadMoreData}
-                  isLoadingMore={marketIsLoadingMore}
-                  hasMore={marketHasMore}
-                  isSearching={isSearching}
-                  searchResultsCount={searchResults.length}
-                  searchError={searchError}
-                />
-              )}
-            </>
-          )}
-        </>
-      )}
       <Chart
         selectedCoinData={selectedCoinData}
         chartData={chartData}
@@ -673,8 +528,25 @@ const Main = () => {
         isloading={isloading}
         coinHistoryData={coinHistoryData}
       />
-    </View>
+    </Screen>
   )
 }
+
+const styles = StyleSheet.create({
+  banner: { marginHorizontal: space[4], marginBottom: space[3] },
+  bannerRow: { flexDirection: "row", alignItems: "center", gap: space[3], padding: space[3] },
+  bannerIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 0,
+    backgroundColor: goldAlpha(0.12),
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: goldAlpha(0.35)
+  },
+  progressTrack: { height: 2, backgroundColor: colors.surface[3] },
+  progressFill: { height: 2, backgroundColor: colors.gold[500] }
+})
 
 export default Main

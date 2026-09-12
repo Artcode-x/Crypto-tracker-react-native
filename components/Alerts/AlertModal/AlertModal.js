@@ -1,28 +1,13 @@
-import React, { useState, useEffect, useRef } from "react"
-import {
-  Modal,
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  Platform,
-  KeyboardAvoidingView,
-  TouchableWithoutFeedback,
-  Keyboard,
-  ScrollView,
-  Animated,
-  Dimensions,
-  Alert
-} from "react-native"
-import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
 import * as Haptics from "expo-haptics"
+import React, { useState, useEffect, useRef, useMemo } from "react"
+import { View, TextInput, Keyboard, ScrollView, StyleSheet, Image } from "react-native"
+import { colors, space, goldAlpha, font } from "../../../theme"
+import { Sheet, Text, Button, Chip, Badge, PressableScale, PriceText, formatPrice } from "../../ui"
 
-import { styles } from "./AlertModal.styles"
+const PRESETS = [1, 5, 10, 25]
 
-const { height } = Dimensions.get("window")
-const isAndroid = Platform.OS === "android"
-
+// Создание ценового алерта
 const AlertModal = ({
   visible,
   onClose,
@@ -35,121 +20,62 @@ const AlertModal = ({
   const [targetPrice, setTargetPrice] = useState("")
   const [condition, setCondition] = useState("above")
   const [error, setError] = useState("")
-  const [keyboardVisible, setKeyboardVisible] = useState(false)
-  const [keyboardHeight, setKeyboardHeight] = useState(0)
-  const [suggestedPrices, setSuggestedPrices] = useState([])
   const inputRef = useRef(null)
-  const fadeAnim = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
     if (visible) {
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true
-      }).start()
-
-      setTimeout(() => {
-        inputRef.current?.focus()
-      }, 350)
-
-      generatePriceSuggestions()
-    } else {
-      fadeAnim.setValue(0)
+      setTargetPrice("")
+      setCondition("above")
+      setError("")
+      setTimeout(() => inputRef.current?.focus(), 400)
     }
   }, [visible, currentPrice])
 
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener("keyboardDidShow", (e) => {
-      setKeyboardVisible(true)
-      setKeyboardHeight(e.endCoordinates.height)
-    })
+  const decimals = currentPrice < 1 ? 6 : 2
+  const suggestions = useMemo(
+    () =>
+      PRESETS.map((p) => {
+        const sign = condition === "above" ? 1 : -1
+        return {
+          label: `${sign > 0 ? "+" : "−"}${p}%`,
+          price: parseFloat((currentPrice * (1 + (sign * p) / 100)).toFixed(decimals))
+        }
+      }),
+    [condition, currentPrice, decimals]
+  )
 
-    const keyboardDidHideListener = Keyboard.addListener("keyboardDidHide", () => {
-      setKeyboardVisible(false)
-      setKeyboardHeight(0)
-    })
+  const parsed = parseFloat(targetPrice)
+  const diffPct = parsed > 0 && currentPrice ? ((parsed - currentPrice) / currentPrice) * 100 : null
 
-    return () => {
-      keyboardDidShowListener.remove()
-      keyboardDidHideListener.remove()
-    }
-  }, [])
-
-  // Вычисление максимальной высоты для модалки при открытой клавиатуре
-  const getModalMaxHeight = () => {
-    if (!keyboardVisible || !isAndroid) {
-      return height * 0.7
-    }
-
-    // Вычитание высоты клавиатуры и + отступ сверху
-    const availableHeight = height - keyboardHeight - 50
-    return Math.min(availableHeight, height * 0.7)
-  }
-
-  const generatePriceSuggestions = () => {
-    if (!currentPrice) return
-
-    const suggestions = []
-    const percentages = isAndroid ? [2, 5, 10] : [1, 5, 10, 25]
-
-    percentages.forEach((percent) => {
-      const abovePrice = currentPrice * (1 + percent / 100)
-      suggestions.push({
-        price: parseFloat(abovePrice.toFixed(coin.price < 1 ? 6 : 2)),
-        label: `+${percent}%`,
-        condition: "above"
-      })
-
-      if (percent > 1) {
-        const belowPrice = currentPrice * (1 - percent / 100)
-        suggestions.push({
-          price: parseFloat(belowPrice.toFixed(coin.price < 1 ? 6 : 2)),
-          label: `-${percent}%`,
-          condition: "below"
-        })
-      }
-    })
-
-    setSuggestedPrices(suggestions.slice(0, isAndroid ? 4 : 6))
-  }
+  const notif = !notificationPermission
+    ? { icon: "notifications-off-outline", tone: "down", text: "Notifications off" }
+    : fcmToken
+      ? { icon: "cloud-done-outline", tone: "up", text: "Push 24/7" }
+      : { icon: "notifications-outline", tone: "warning", text: "Local only" }
 
   const handleSave = () => {
-    const price = parseFloat(targetPrice)
-
     if (!targetPrice.trim()) {
-      setError("Please enter a price")
+      setError("Enter a target price")
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
       return
     }
-
-    if (!price || price <= 0) {
-      setError("Please enter a valid price (greater than 0)")
+    if (!parsed || parsed <= 0) {
+      setError("Price must be greater than 0")
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
       return
     }
-
-    saveAlert(price)
-  }
-
-  const saveAlert = (price) => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-
     onSave({
       coinId: coin.id,
       coinName: coin.name,
       coinSymbol: coin.symbol,
-      targetPrice: price,
-      currentPrice: currentPrice,
-      condition: condition,
-      fcmToken: fcmToken,
+      targetPrice: parsed,
+      currentPrice,
+      condition,
+      fcmToken,
       syncStatus: fcmToken && notificationPermission ? "pending" : "local_only",
-      priceDifference: (((price - currentPrice) / currentPrice) * 100).toFixed(2)
+      priceDifference: (((parsed - currentPrice) / currentPrice) * 100).toFixed(2)
     })
-
-    setTargetPrice("")
-    setCondition("above")
-    setError("")
     Keyboard.dismiss()
     onClose()
   }
@@ -159,571 +85,183 @@ const AlertModal = ({
     onClose()
   }
 
-  const formatPrice = (price) => {
-    if (!price) return "0.00"
-    if (price >= 1000)
-      return price.toLocaleString(undefined, { maximumFractionDigits: 2 })
-    if (price >= 1)
-      return price.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 4
-      })
-    if (price >= 0.001)
-      return price.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 6
-      })
-    return price.toFixed(8)
-  }
-
-  const getNotificationType = () => {
-    if (!notificationPermission) {
-      return {
-        icon: "notifications-off",
-        color: "#FF6B6B",
-        text: "Notifications disabled",
-        type: "disabled"
-      }
-    }
-
-    if (fcmToken) {
-      return {
-        icon: "cloud",
-        color: "#4CAF50",
-        text: "Push notifications enabled",
-        type: "fcm"
-      }
-    }
-
-    return {
-      icon: "notifications",
-      color: "#FFA000",
-      text: "Local notifications",
-      type: "local"
-    }
-  }
-
-  const notificationType = getNotificationType()
-
   return (
-    <Modal
+    <Sheet
       visible={visible}
-      transparent={true}
-      animationType='slide'
-      onRequestClose={handleClose}
-      statusBarTranslucent={true}
+      onClose={handleClose}
+      snapHeight={0.82}
+      keyboardAvoiding
+      title='New price alert'
+      headerRight={<Badge tone={notif.tone} icon={notif.icon} label={notif.text} />}
     >
-      <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]}>
-        {/* Для iOS  */}
-        {!isAndroid ? (
-          <KeyboardAvoidingView
-            behavior='padding'
-            style={styles.keyboardAvoidingView}
-            keyboardVerticalOffset={20}
-          >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-              <View style={styles.modalContainer}>
-                <ModalContent
-                  coin={coin}
-                  currentPrice={currentPrice}
-                  formatPrice={formatPrice}
-                  notificationType={notificationType}
-                  handleClose={handleClose}
-                  condition={condition}
-                  setCondition={setCondition}
-                  targetPrice={targetPrice}
-                  setTargetPrice={setTargetPrice}
-                  setError={setError}
-                  error={error}
-                  suggestedPrices={suggestedPrices}
-                  keyboardVisible={keyboardVisible}
-                  // condition={condition}
-                  handleSave={handleSave}
-                  isAndroid={isAndroid}
-                  fcmToken={fcmToken}
-                  notificationPermission={notificationPermission}
-                  inputRef={inputRef}
-                />
-              </View>
-            </TouchableWithoutFeedback>
-          </KeyboardAvoidingView>
-        ) : (
-          // Для Android
-          <KeyboardAvoidingView
-            behavior='padding'
-            style={styles.keyboardAvoidingView}
-            keyboardVerticalOffset={10} // Положительное зн-ие = выше
-          >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-              <View
-                style={[
-                  styles.modalContainer,
-                  {
-                    maxHeight: getModalMaxHeight(),
-                    marginBottom: keyboardVisible ? 15 : 0 // Доп отступ снизу
-                  }
-                ]}
-              >
-                <ModalContent
-                  coin={coin}
-                  currentPrice={currentPrice}
-                  formatPrice={formatPrice}
-                  notificationType={notificationType}
-                  handleClose={handleClose}
-                  condition={condition}
-                  setCondition={setCondition}
-                  targetPrice={targetPrice}
-                  setTargetPrice={setTargetPrice}
-                  setError={setError}
-                  error={error}
-                  suggestedPrices={suggestedPrices}
-                  keyboardVisible={keyboardVisible}
-                  // condition={condition}
-                  handleSave={handleSave}
-                  isAndroid={isAndroid}
-                  fcmToken={fcmToken}
-                  notificationPermission={notificationPermission}
-                  inputRef={inputRef}
-                />
-              </View>
-            </TouchableWithoutFeedback>
-          </KeyboardAvoidingView>
-        )}
-      </Animated.View>
-    </Modal>
-  )
-}
-
-// Вынос содержимого модалки в отдельный компонент
-const ModalContent = React.memo(
-  ({
-    coin,
-    currentPrice,
-    formatPrice,
-    notificationType,
-    handleClose,
-    condition,
-    setCondition,
-    targetPrice,
-    setTargetPrice,
-    setError,
-    error,
-    suggestedPrices,
-    keyboardVisible,
-    handleSave,
-    isAndroid,
-    fcmToken,
-    notificationPermission,
-    inputRef
-  }) => {
-    return (
-      <LinearGradient
-        colors={["rgba(26, 26, 26, 0.98)", "rgba(40, 40, 40, 0.95)"]}
-        style={[styles.modalGradient, isAndroid && styles.modalGradientAndroid]}
+      <ScrollView
+        keyboardShouldPersistTaps='handled'
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.body}
       >
-        {/* Заголовок с кнопкой закрытия */}
-        <View style={styles.compactHeader}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={handleClose}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name='close' size={20} color='rgba(255,255,255,0.7)' />
-          </TouchableOpacity>
-
-          <View style={styles.compactCoinInfo}>
-            <View style={styles.coinHeader}>
-              <Text
-                style={[styles.coinName, isAndroid && styles.coinNameAndroid]}
-                numberOfLines={1}
-              >
-                {coin.name}
-              </Text>
-              <Text style={[styles.coinSymbol, isAndroid && styles.coinSymbolAndroid]}>
-                {coin.symbol?.toUpperCase()}
-              </Text>
-            </View>
-
-            <View style={styles.compactPriceInfo}>
-              <View style={styles.currentPriceContainer}>
-                <Text
-                  style={[
-                    styles.currentPriceLabel,
-                    isAndroid && styles.currentPriceLabelAndroid
-                  ]}
-                >
-                  Current:
-                </Text>
-                <Text
-                  style={[styles.currentPrice, isAndroid && styles.currentPriceAndroid]}
-                >
-                  ${formatPrice(currentPrice)}
-                </Text>
-              </View>
-
-              {/* Индикатор уведомлений */}
-              <View style={styles.compactNotificationStatus}>
-                <Ionicons
-                  name={notificationType.icon}
-                  size={isAndroid ? 10 : 11}
-                  color={notificationType.color}
-                />
-                <Text
-                  style={[
-                    styles.compactNotificationText,
-                    { color: notificationType.color },
-                    isAndroid && styles.compactNotificationTextAndroid
-                  ]}
-                >
-                  {notificationType.type === "fcm"
-                    ? "Push"
-                    : notificationType.type === "local"
-                    ? "Local"
-                    : "Off"}
-                </Text>
-              </View>
-            </View>
+        <View style={styles.coinRow}>
+          <View style={styles.logoWrap}>
+            {coin?.image ? (
+              <Image source={{ uri: coin.image }} style={styles.logo} />
+            ) : (
+              <Ionicons name='logo-bitcoin' size={18} color={colors.gold[400]} />
+            )}
+          </View>
+          <View style={{ flex: 1, marginLeft: space[3] }}>
+            <Text variant='bodyStrong'>{coin?.name}</Text>
+            <Text variant='caption' color='tertiary'>
+              {coin?.symbol?.toUpperCase()} · now{" "}
+              <PriceText value={currentPrice} variant='caption' color='gold' />
+            </Text>
           </View>
         </View>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[
-            styles.scrollContainer,
-            isAndroid && styles.scrollContainerAndroid
-          ]}
-          keyboardShouldPersistTaps='handled'
-          bounces={false}
-        >
-          {/* Условие алерта */}
-          <View
-            style={[styles.conditionSection, isAndroid && styles.conditionSectionAndroid]}
-          >
-            <Text style={[styles.sectionTitle, isAndroid && styles.sectionTitleAndroid]}>
-              Alert when price is:
-            </Text>
-            <View
-              style={[
-                styles.conditionButtons,
-                isAndroid && styles.conditionButtonsAndroid
-              ]}
-            >
-              {[
-                {
-                  value: "above",
-                  label: "Above",
-                  icon: "trending-up",
-                  color: "#00C853"
-                },
-                {
-                  value: "below",
-                  label: "Below",
-                  icon: "trending-down",
-                  color: "#FF3B30"
-                }
-              ].map((item) => (
-                <TouchableOpacity
-                  key={item.value}
-                  onPress={() => {
-                    setCondition(item.value)
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                  }}
-                  style={[
-                    styles.conditionButton,
-                    condition === item.value && styles.conditionButtonActive,
-                    isAndroid && styles.conditionButtonAndroid
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.conditionButtonContent,
-                      isAndroid && styles.conditionButtonContentAndroid
-                    ]}
-                  >
-                    <Ionicons
-                      name={item.icon}
-                      size={isAndroid ? 16 : 18}
-                      color={condition === item.value ? "#FFF" : `${item.color}AA`}
-                    />
-                    <Text
-                      style={[
-                        styles.conditionButtonText,
-                        condition === item.value && styles.conditionButtonTextActive,
-                        isAndroid && styles.conditionButtonTextAndroid
-                      ]}
-                    >
-                      {item.label}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+        <Text variant='label' color='tertiary' style={styles.label}>
+          Notify me when price is
+        </Text>
+        <View style={styles.conditions}>
+          <Chip
+            label='Above'
+            icon='trending-up'
+            selected={condition === "above"}
+            onPress={() => setCondition("above")}
+            style={{ flex: 1, justifyContent: "center" }}
+          />
+          <Chip
+            label='Below'
+            icon='trending-down'
+            selected={condition === "below"}
+            onPress={() => setCondition("below")}
+            style={{ flex: 1, justifyContent: "center" }}
+          />
+        </View>
 
-          {/* Ввод целевой цены */}
-          <View
-            style={[
-              styles.priceInputSection,
-              isAndroid && styles.priceInputSectionAndroid
-            ]}
-          >
-            <Text style={[styles.sectionTitle, isAndroid && styles.sectionTitleAndroid]}>
-              Target Price (USD):
-            </Text>
-
-            <View
-              style={[
-                styles.priceInputContainer,
-                isAndroid && styles.priceInputContainerAndroid
-              ]}
-            >
-              <View
-                style={[
-                  styles.currencyContainer,
-                  isAndroid && styles.currencyContainerAndroid
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.currencySymbol,
-                    isAndroid && styles.currencySymbolAndroid
-                  ]}
-                >
-                  $
-                </Text>
-              </View>
-
-              <TextInput
-                ref={inputRef}
-                style={[styles.priceInput, isAndroid && styles.priceInputAndroid]}
-                value={targetPrice}
-                onChangeText={(text) => {
-                  let filteredText = text
-                    .replace(/[^0-9.]/g, "")
-                    .replace(/(\..*)\./g, "$1")
-
-                  if (filteredText.length > 15) {
-                    filteredText = filteredText.slice(0, 15)
-                  }
-
-                  setTargetPrice(filteredText)
-                  setError("")
-                  // автоматический выбор ABOVE или BELOW
-                  if (filteredText && parseFloat(filteredText) > 0) {
-                    const numPrice = parseFloat(filteredText)
-                    const newCondition = numPrice > currentPrice ? "above" : "below"
-                    setCondition(newCondition)
-                  }
-                }}
-                placeholder='0.00'
-                placeholderTextColor='rgba(255, 255, 255, 0.3)'
-                keyboardType='decimal-pad'
-                returnKeyType='done'
-                onSubmitEditing={handleSave}
-                blurOnSubmit={true}
-                contextMenuHidden={true}
-                // selectTextOnFocus={true}
-                textAlign='center'
-              />
-
-              {targetPrice.length > 0 && (
-                <TouchableOpacity
-                  style={[styles.clearButton, isAndroid && styles.clearButtonAndroid]}
-                  onPress={() => setTargetPrice("")}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Ionicons
-                    name='close-circle'
-                    size={isAndroid ? 16 : 18}
-                    color='rgba(255,255,255,0.5)'
-                  />
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {error ? (
-              <View style={styles.errorContainer}>
-                <Ionicons name='warning' size={12} color='#FF6B6B' />
-                <Text style={[styles.errorText, isAndroid && styles.errorTextAndroid]}>
-                  {error}
-                </Text>
-              </View>
-            ) : null}
-
-            {/* Быстрые предложения */}
-            {suggestedPrices.length > 0 && !keyboardVisible && (
-              <View
-                style={[
-                  styles.quickSuggestions,
-                  isAndroid && styles.quickSuggestionsAndroid
-                ]}
-              >
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.suggestionsScroll}
-                  contentContainerStyle={styles.suggestionsContent}
-                >
-                  {suggestedPrices.map((suggestion, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={[
-                        styles.suggestionButton,
-                        condition === suggestion.condition &&
-                          styles.suggestionButtonActive,
-                        isAndroid && styles.suggestionButtonAndroid
-                      ]}
-                      onPress={() => {
-                        setTargetPrice(suggestion.price.toString())
-                        setCondition(suggestion.condition)
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                      }}
-                    >
-                      <Text
-                        style={[
-                          styles.suggestionPrice,
-                          isAndroid && styles.suggestionPriceAndroid
-                        ]}
-                      >
-                        ${formatPrice(suggestion.price)}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.suggestionLabel,
-                          isAndroid && styles.suggestionLabelAndroid
-                        ]}
-                      >
-                        {suggestion.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-          </View>
-
-          {/* Информация о разнице цены */}
-          {targetPrice && parseFloat(targetPrice) > 0 && (
-            <View
-              style={[
-                styles.priceDifferenceSection,
-                isAndroid && styles.priceDifferenceSectionAndroid
-              ]}
-            >
-              <View
-                style={[
-                  styles.priceDifferenceContainer,
-                  isAndroid && styles.priceDifferenceContainerAndroid
-                ]}
-              >
-                <Ionicons
-                  name={condition === "above" ? "arrow-up" : "arrow-down"}
-                  size={isAndroid ? 12 : 14}
-                  color={condition === "above" ? "#00C853" : "#FF3B30"}
-                />
-                <Text
-                  style={[
-                    styles.priceDifferenceText,
-                    { color: condition === "above" ? "#00C853" : "#FF3B30" },
-                    isAndroid && styles.priceDifferenceTextAndroid
-                  ]}
-                >
-                  {condition === "above" ? "+" : "-"}$
-                  {Math.abs(parseFloat(targetPrice) - currentPrice).toFixed(2)}{" "}
-                  <Text
-                    style={[
-                      styles.percentageText,
-                      isAndroid && styles.percentageTextAndroid
-                    ]}
-                  >
-                    (
-                    {Math.abs(
-                      ((parseFloat(targetPrice) - currentPrice) / currentPrice) * 100
-                    ).toFixed(2)}
-                    %)
-                  </Text>
-                </Text>
-              </View>
-            </View>
+        <Text variant='label' color='tertiary' style={styles.label}>
+          Target price (USD)
+        </Text>
+        <View style={[styles.inputWrap, error && { borderColor: colors.down.border }]}>
+          <Text variant='h2' color='gold'>
+            $
+          </Text>
+          <TextInput
+            ref={inputRef}
+            value={targetPrice}
+            onChangeText={(t) => {
+              setTargetPrice(t.replace(",", "."))
+              setError("")
+            }}
+            placeholder={formatPrice(currentPrice).replace("$", "")}
+            placeholderTextColor={colors.text.disabled}
+            keyboardType='decimal-pad'
+            selectionColor={colors.gold[500]}
+            style={styles.input}
+          />
+          {!!targetPrice && (
+            <PressableScale onPress={() => setTargetPrice("")} hitSlop={8}>
+              <Ionicons name='close-circle' size={18} color={colors.text.tertiary} />
+            </PressableScale>
           )}
+        </View>
+        {error ? (
+          <Text variant='caption' color='down' style={{ marginTop: space[2] }}>
+            {error}
+          </Text>
+        ) : diffPct !== null ? (
+          <Text
+            variant='caption'
+            color={diffPct >= 0 ? "up" : "down"}
+            style={{ marginTop: space[2] }}
+            tabular
+          >
+            {diffPct >= 0 ? "+" : ""}
+            {diffPct.toFixed(2)}% from current price
+          </Text>
+        ) : null}
 
-          {/* Кнопки действий */}
-          <View style={[styles.actionButtons, isAndroid && styles.actionButtonsAndroid]}>
-            <TouchableOpacity
-              onPress={handleClose}
-              style={[styles.cancelButton, isAndroid && styles.cancelButtonAndroid]}
-              activeOpacity={0.8}
+        <View style={styles.presets}>
+          {suggestions.map((s) => (
+            <PressableScale
+              key={s.label}
+              haptic='selection'
+              onPress={() => {
+                setTargetPrice(String(s.price))
+                setError("")
+              }}
+              style={styles.preset}
             >
-              <View
-                style={[
-                  styles.cancelButtonContent,
-                  isAndroid && styles.cancelButtonContentAndroid
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.cancelButtonText,
-                    isAndroid && styles.cancelButtonTextAndroid
-                  ]}
-                >
-                  Cancel
-                </Text>
-              </View>
-            </TouchableOpacity>
+              <Text variant='caption' color='gold'>
+                {s.label}
+              </Text>
+              <Text variant='small' color='secondary' tabular numberOfLines={1}>
+                {formatPrice(s.price)}
+              </Text>
+            </PressableScale>
+          ))}
+        </View>
 
-            <TouchableOpacity
-              onPress={handleSave}
-              style={[styles.saveButton, isAndroid && styles.saveButtonAndroid]}
-              disabled={!targetPrice}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={
-                  !targetPrice
-                    ? ["#666", "#444"]
-                    : fcmToken && notificationPermission
-                    ? ["#4CAF50", "#388E3C"]
-                    : notificationPermission
-                    ? ["#D4AF37", "#B8860B"]
-                    : ["#757575", "#616161"]
-                }
-                style={[
-                  styles.saveButtonGradient,
-                  isAndroid && styles.saveButtonGradientAndroid
-                ]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Ionicons
-                  name={
-                    !targetPrice
-                      ? "notifications-off"
-                      : fcmToken && notificationPermission
-                      ? "cloud"
-                      : "notifications"
-                  }
-                  size={isAndroid ? 16 : 18}
-                  color='#FFF'
-                />
-                <Text
-                  style={[
-                    styles.saveButtonText,
-                    isAndroid && styles.saveButtonTextAndroid
-                  ]}
-                >
-                  {!targetPrice
-                    ? "Enter Price"
-                    : fcmToken && notificationPermission
-                    ? "Set Alert"
-                    : "Set Alert"}
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </LinearGradient>
-    )
-  }
-)
+        <View style={styles.actions}>
+          <Button variant='ghost' title='Cancel' onPress={handleClose} style={{ flex: 1 }} />
+          <Button
+            title='Set alert'
+            icon='notifications'
+            onPress={handleSave}
+            disabled={!targetPrice}
+            style={{ flex: 1.4 }}
+          />
+        </View>
+      </ScrollView>
+    </Sheet>
+  )
+}
+
+const styles = StyleSheet.create({
+  body: { paddingHorizontal: space[4], paddingBottom: space[6] },
+  coinRow: { flexDirection: "row", alignItems: "center", marginBottom: space[4] },
+  logoWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 0,
+    backgroundColor: colors.bg[3],
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: goldAlpha(0.35)
+  },
+  logo: { width: 28, height: 28, borderRadius: 14 },
+  label: { marginTop: space[3], marginBottom: space[2] },
+  conditions: { flexDirection: "row", gap: space[2] },
+  inputWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 60,
+    paddingHorizontal: space[4],
+    borderRadius: 0,
+    backgroundColor: colors.surface[2],
+    borderWidth: 1,
+    borderColor: goldAlpha(0.4)
+  },
+  input: {
+    flex: 1,
+    marginLeft: space[2],
+    color: colors.text.primary,
+    fontSize: 24,
+    fontFamily: font.bold,
+    fontVariant: ["tabular-nums"],
+    paddingVertical: 0,
+    minWidth: 0,
+    outlineStyle: "none"
+  },
+  presets: { flexDirection: "row", gap: space[2], marginTop: space[4] },
+  preset: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: space[2],
+    borderRadius: 0,
+    backgroundColor: colors.surface[1],
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.line.default
+  },
+  actions: { flexDirection: "row", gap: space[3], marginTop: space[6] }
+})
 
 export default AlertModal

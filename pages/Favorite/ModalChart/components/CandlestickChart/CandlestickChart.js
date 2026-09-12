@@ -1,30 +1,22 @@
-import React, { useState, useRef, useEffect, useCallback } from "react"
-import { View, Text, Dimensions } from "react-native"
-import Svg, { Rect, Line, G } from "react-native-svg"
-import { RFValue } from "react-native-responsive-fontsize"
-import { styles } from "./CandlestickChart.styles"
+import * as Haptics from "expo-haptics"
+import React, { useState, useRef, useEffect } from "react"
+import { View, StyleSheet } from "react-native"
 import {
   GestureHandlerRootView,
   PinchGestureHandler,
   TapGestureHandler,
   State
 } from "react-native-gesture-handler"
-import * as Haptics from "expo-haptics"
+import Svg, { Rect, Line, G, Text as SvgText } from "react-native-svg"
 import { useDispatch } from "react-redux"
+import { Text } from "../../../../../components/ui"
 import { setDoubleTap } from "../../../../../store/reducersSlice"
+import { colors, space } from "../../../../../theme"
 
-const CandlestickChart = ({
-  data,
-  width: chartWidth,
-  height: chartHeight,
-  limit,
-  setLimit
-}) => {
-  if (!data || data.length === 0) return null
-
-  const [zoomScale, setZoomScale] = useState(1)
+const CandlestickChart = ({ data, width: chartWidth, height: chartHeight, limit, setLimit }) => {
+  const [, setZoomScale] = useState(1)
   const [lastScale, setLastScale] = useState(1)
-  const [internalLimit, setInternalLimit] = useState(limit || data.length)
+  const [internalLimit, setInternalLimit] = useState(limit || data?.length || 0)
 
   const pinchRef = useRef()
   const doubleTapRef = useRef()
@@ -36,7 +28,7 @@ const CandlestickChart = ({
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     } catch (error) {
-      console.log("Haptic not available:", error)
+      console.warn("Haptic not available:", error)
     }
   }
 
@@ -47,13 +39,16 @@ const CandlestickChart = ({
     }
   }, [limit])
 
+  // Хуки выше — ранний выход только после них
+  if (!data || data.length === 0) return null
+
   // Используем либо limit, либо internalLimit
   const currentLimit = limit !== undefined ? limit : internalLimit
 
   // Ограничение количества отображаемых свечей
   const displayData = data.slice(0, Math.min(currentLimit, data.length))
 
-  const margin = { top: 15, right: 15, bottom: 15, left: 45 }
+  const margin = { top: 10, right: 12, bottom: 10, left: 56 }
   const innerWidth = chartWidth - margin.left - margin.right
   const innerHeight = chartHeight - margin.top - margin.bottom
 
@@ -61,10 +56,8 @@ const CandlestickChart = ({
   const maxPrice = Math.max(...displayData.map((d) => Math.max(d.high, d.open, d.close)))
   const priceRange = maxPrice - minPrice
 
-  const xScale = (index) =>
-    margin.left + (index / (displayData.length - 1)) * innerWidth + 1
-  const yScale = (price) =>
-    margin.top + innerHeight - ((price - minPrice) / priceRange) * innerHeight
+  const xScale = (index) => margin.left + (index / (displayData.length - 1)) * innerWidth + 1
+  const yScale = (price) => margin.top + innerHeight - ((price - minPrice) / priceRange) * innerHeight
 
   // Обработка жеста pinch для зума
   const onPinchGestureEvent = (event) => {
@@ -144,131 +137,77 @@ const CandlestickChart = ({
   const yAxisLabels = generateYAxisLabels()
   const candleWidth = Math.max(2, (innerWidth / displayData.length) * 0.6)
 
-  const screenWidth = Dimensions.get("window").width
-  const yAxisLeftOffset = screenWidth > 600 ? 4 : 9
-  const axisLeftLine = screenWidth > 400 && screenWidth < 600 ? 3 : 0
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={styles.chartContainerStyle}>
-        <View style={styles.limitContainer}>
-          <Text style={styles.limitHint}>
+      <View style={styles.container}>
+        <View style={styles.hint}>
+          <Text variant='small' color='tertiary'>
             {currentLimit < data.length
-              ? `Showing ${currentLimit} of ${data.length} candles • Pinch to zoom • Double tap to reset`
-              : `Pinch to zoom • Double tap to reset`}
+              ? `${currentLimit} of ${data.length} candles · pinch to zoom · double tap to reset`
+              : "Pinch to zoom · double tap to reset"}
           </Text>
         </View>
 
-        <TapGestureHandler
-          ref={doubleTapRef}
-          onHandlerStateChange={onDoubleTap}
-          numberOfTaps={2}
-        >
-          <View style={styles.chartBox}>
+        <TapGestureHandler ref={doubleTapRef} onHandlerStateChange={onDoubleTap} numberOfTaps={2}>
+          <View>
             <PinchGestureHandler
               ref={pinchRef}
               onGestureEvent={onPinchGestureEvent}
               onHandlerStateChange={onPinchHandlerStateChange}
             >
               <View style={{ width: chartWidth, height: chartHeight }}>
-                {/* Метки оси Y */}
-                {yAxisLabels.map((label, index) => (
-                  <Text
-                    key={index}
-                    style={[
-                      styles.yAxisLabel,
-                      {
-                        position: "absolute",
-                        top: label.y - 8,
-                        left: yAxisLeftOffset,
-                        zIndex: 1,
-                        backgroundColor: "transparent",
-                        fontSize: RFValue(7)
-                      }
-                    ]}
-                  >
-                    {label.price}
-                  </Text>
-                ))}
-
-                {/* SVG график */}
-                <View style={{ paddingLeft: axisLeftLine }}>
-                  <Svg width={chartWidth} height={chartHeight}>
-                    {/* Горизонтальные линии сетки */}
-                    {yAxisLabels.map((label, index) => (
+                <Svg width={chartWidth} height={chartHeight}>
+                  {yAxisLabels.map((label, index) => (
+                    <G key={`grid-${index}`}>
                       <Line
-                        key={`grid-${index}`}
                         x1={margin.left}
                         y1={label.y}
                         x2={chartWidth - margin.right}
                         y2={label.y}
-                        stroke='rgba(255,255,255,0.15)'
-                        strokeWidth='0.5'
-                        strokeDasharray='2,2'
+                        stroke={colors.line.default}
+                        strokeWidth='1'
+                        strokeDasharray='3,5'
                       />
-                    ))}
+                      <SvgText
+                        x={margin.left - 6}
+                        y={label.y + 3}
+                        fill={colors.text.tertiary}
+                        fontSize='9'
+                        fontFamily='Manrope_500Medium'
+                        textAnchor='end'
+                      >
+                        {label.price}
+                      </SvgText>
+                    </G>
+                  ))}
 
-                    {/* Ось X */}
-                    <Line
-                      x1={margin.left}
-                      y1={chartHeight - margin.bottom}
-                      x2={chartWidth - margin.right}
-                      y2={chartHeight - margin.bottom}
-                      stroke='rgba(255,255,255,0.4)'
-                      strokeWidth='1'
-                    />
+                  {displayData.map((candle, index) => {
+                    const x = xScale(index) - candleWidth / 2
+                    const openY = yScale(candle.open)
+                    const closeY = yScale(candle.close)
+                    const highY = yScale(candle.high)
+                    const lowY = yScale(candle.low)
+                    const isBullish = candle.close >= candle.open
+                    const color = isBullish ? colors.up.fg : colors.down.fg
+                    const candleTopY = isBullish ? closeY : openY
+                    const candleBottomY = isBullish ? openY : closeY
+                    const candleHeight = Math.max(1, Math.abs(candleBottomY - candleTopY))
 
-                    {/* Ось Y */}
-                    <Line
-                      x1={margin.left}
-                      y1={margin.top}
-                      x2={margin.left}
-                      y2={chartHeight - margin.bottom}
-                      stroke='rgba(255,255,255,0.4)'
-                      strokeWidth='1'
-                    />
-
-                    {/* Свечи */}
-                    {displayData.map((candle, index) => {
-                      const x = xScale(index) - candleWidth / 2
-                      const openY = yScale(candle.open)
-                      const closeY = yScale(candle.close)
-                      const highY = yScale(candle.high)
-                      const lowY = yScale(candle.low)
-
-                      const isBullish = candle.close >= candle.open
-                      const color = isBullish ? "#4CAF50" : "#F44336"
-                      const candleTopY = isBullish ? closeY : openY
-                      const candleBottomY = isBullish ? openY : closeY
-                      const candleHeight = Math.max(
-                        1,
-                        Math.abs(candleBottomY - candleTopY)
-                      )
-
-                      return (
-                        <G key={index}>
-                          <Line
-                            x1={x + candleWidth / 2}
-                            y1={highY}
-                            x2={x + candleWidth / 2}
-                            y2={lowY}
-                            stroke={color}
-                            strokeWidth='0.8'
-                          />
-                          <Rect
-                            x={x}
-                            y={candleTopY}
-                            width={candleWidth}
-                            height={candleHeight}
-                            fill={color}
-                            stroke={color}
-                            strokeWidth='0.5'
-                          />
-                        </G>
-                      )
-                    })}
-                  </Svg>
-                </View>
+                    return (
+                      <G key={index}>
+                        <Line
+                          x1={x + candleWidth / 2}
+                          y1={highY}
+                          x2={x + candleWidth / 2}
+                          y2={lowY}
+                          stroke={color}
+                          strokeWidth='1'
+                        />
+                        <Rect x={x} y={candleTopY} width={candleWidth} height={candleHeight} fill={color} />
+                      </G>
+                    )
+                  })}
+                </Svg>
               </View>
             </PinchGestureHandler>
           </View>
@@ -277,5 +216,10 @@ const CandlestickChart = ({
     </GestureHandlerRootView>
   )
 }
+
+const styles = StyleSheet.create({
+  container: { alignItems: "center" },
+  hint: { alignSelf: "flex-end", paddingHorizontal: space[3], marginBottom: space[1] }
+})
 
 export default CandlestickChart

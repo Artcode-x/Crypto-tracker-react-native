@@ -1,7 +1,7 @@
-import { useEffect, useRef, useCallback } from "react"
-import { useDispatch, useSelector } from "react-redux"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { AppState, Platform } from "react-native"
+import { useEffect, useRef, useCallback } from "react"
+import { AppState } from "react-native"
+import { useDispatch, useSelector } from "react-redux"
 import { setCoin, updateUserAsset } from "../../store/reducersSlice"
 
 const StorageSync = () => {
@@ -50,8 +50,7 @@ const StorageSync = () => {
 
         if (Object.keys(loadedAssets).length > 0) {
           Object.entries(loadedAssets).forEach(([coinId, amount]) => {
-            const numericAmount =
-              typeof amount === "string" ? parseFloat(amount) || 0 : amount || 0
+            const numericAmount = typeof amount === "string" ? parseFloat(amount) || 0 : amount || 0
 
             if (numericAmount > 0) {
               dispatch(
@@ -136,11 +135,7 @@ const StorageSync = () => {
       return
     }
 
-    if (
-      hasLoadedRef.current &&
-      coinItem.length === 0 &&
-      Object.keys(userAssets).length === 0
-    ) {
+    if (hasLoadedRef.current && coinItem.length === 0 && Object.keys(userAssets).length === 0) {
       return
     }
 

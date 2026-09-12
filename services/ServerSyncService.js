@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { AppState, Platform } from "react-native"
+import { Platform } from "react-native"
 
 // Конфигурация сервера
 const SERVER_CONFIG = {
@@ -204,8 +204,8 @@ class ServerSyncService {
         },
         body: JSON.stringify({
           deviceToken: this.deviceToken,
-          alertId: alertId,
-          serverId: serverId,
+          alertId,
+          serverId,
           timestamp: new Date().toISOString()
         })
       })
@@ -295,10 +295,7 @@ class ServerSyncService {
             success = await this.syncAlertsWithServer(operation.data.alerts)
             break
           case "delete":
-            success = await this.deleteAlertFromServer(
-              operation.data.alertId,
-              operation.data.serverId
-            )
+            success = await this.deleteAlertFromServer(operation.data.alertId, operation.data.serverId)
             break
         }
 
@@ -319,9 +316,7 @@ class ServerSyncService {
     }
 
     // Удаление успешных операций из очереди
-    this.pendingOperations = this.pendingOperations.filter(
-      (op) => !successfulOperations.includes(op)
-    )
+    this.pendingOperations = this.pendingOperations.filter((op) => !successfulOperations.includes(op))
 
     await this.savePendingOperations()
   }
@@ -329,10 +324,7 @@ class ServerSyncService {
   // Сохранение очереди операций в AsyncStorage
   static async savePendingOperations() {
     try {
-      await AsyncStorage.setItem(
-        "pending_server_operations",
-        JSON.stringify(this.pendingOperations)
-      )
+      await AsyncStorage.setItem("pending_server_operations", JSON.stringify(this.pendingOperations))
     } catch (error) {
       console.warn("Не удалось сохранить очередь операций:", error)
     }

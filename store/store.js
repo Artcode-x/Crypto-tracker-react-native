@@ -1,7 +1,7 @@
-import { configureStore } from "@reduxjs/toolkit"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import reducersSlice from "./reducersSlice"
+import { configureStore } from "@reduxjs/toolkit"
 import alertsSlice from "./alertsSlice"
+import reducersSlice from "./reducersSlice"
 
 const ALERTS_STORAGE_KEY = "priceAlerts"
 

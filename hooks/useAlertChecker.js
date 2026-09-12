@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { priceAlertsSelector } from "../store/alertsSelectors"
 import AlertManager from "../services/AlertManager"
+import { priceAlertsSelector } from "../store/alertsSelectors"
 
 export const useAlertChecker = (coinData, checkInterval = 60000) => {
   const dispatch = useDispatch()
@@ -15,9 +15,7 @@ export const useAlertChecker = (coinData, checkInterval = 60000) => {
     // Функция для проверки алертов (только при активном приложении)
     const checkAlerts = () => {
       if (coinData.length > 0 && priceAlerts.length > 0) {
-        const activeAlerts = priceAlerts.filter(
-          (alert) => alert.isActive && !alert.triggeredAt
-        )
+        const activeAlerts = priceAlerts.filter((alert) => alert.isActive && !alert.triggeredAt)
 
         if (activeAlerts.length > 0) {
           AlertManager.checkAlerts(activeAlerts, coinData)
@@ -42,9 +40,7 @@ export const useAlertChecker = (coinData, checkInterval = 60000) => {
   return {
     checkAlerts: () => {
       if (coinData.length > 0 && priceAlerts.length > 0) {
-        const activeAlerts = priceAlerts.filter(
-          (alert) => alert.isActive && !alert.triggeredAt
-        )
+        const activeAlerts = priceAlerts.filter((alert) => alert.isActive && !alert.triggeredAt)
         return AlertManager.checkAlerts(activeAlerts, coinData)
       }
       return []

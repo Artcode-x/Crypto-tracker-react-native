@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 import { createSlice } from "@reduxjs/toolkit"
 
 const initialState = {
@@ -18,14 +17,7 @@ const initialState = {
   marketIsLoadingMore: false, // Флаг загрузки дополнительных данных
   marketHasMore: true, // Есть ли еще данные для загрузки
   marketLastUpdated: null, // Когда последний раз обновляли
-  marketError: null, // Ошибка загрузки
-
-  insets: {
-    bottom: 0,
-    top: 0,
-    left: 0,
-    right: 0
-  }
+  marketError: null // Ошибка загрузки
 }
 
 const reducersSlice = createSlice({
@@ -43,9 +35,7 @@ const reducersSlice = createSlice({
       const nameCoinForRemove = action.payload
 
       // Удаляем монету
-      state.coinItem = state.coinItem.filter(
-        (coin) => coin.name !== nameCoinForRemove.name
-      )
+      state.coinItem = state.coinItem.filter((coin) => coin.name !== nameCoinForRemove.name)
 
       //  удал монеты из userAssets
       if (state.userAssets[nameCoinForRemove.id]) {
@@ -140,12 +130,6 @@ const reducersSlice = createSlice({
         state.marketData[index] = { ...state.marketData[index], ...data }
       }
     },
-    setInsets: (state, action) => {
-      state.insets = {
-        ...state.insets,
-        ...action.payload
-      }
-    },
     setDoubleTap: (state) => {
       state.onDoubleTap = !state.onDoubleTap
     }
@@ -172,7 +156,6 @@ export const {
   setMarketError,
   resetMarketData,
   updateMarketDataItem,
-  setInsets,
   setDoubleTap
 } = reducersSlice.actions
 

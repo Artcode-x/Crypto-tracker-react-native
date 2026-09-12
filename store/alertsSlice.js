@@ -83,8 +83,7 @@ const alertsSlice = createSlice({
 
     // Установить время последней проверки
     setLastAlertCheck: (state, action) => {
-      state.lastCheckTime =
-        typeof action.payload === "string" ? action.payload : new Date().toISOString()
+      state.lastCheckTime = typeof action.payload === "string" ? action.payload : new Date().toISOString()
     },
 
     // Обновить текущие цены в алертах
@@ -196,14 +195,14 @@ const alertsSlice = createSlice({
           typeof alert.createdAt === "string"
             ? alert.createdAt
             : alert.createdAt?.toISOString
-            ? alert.createdAt.toISOString()
-            : new Date().toISOString(),
+              ? alert.createdAt.toISOString()
+              : new Date().toISOString(),
         triggeredAt: alert.triggeredAt
           ? typeof alert.triggeredAt === "string"
             ? alert.triggeredAt
             : alert.triggeredAt?.toISOString
-            ? alert.triggeredAt.toISOString()
-            : new Date().toISOString()
+              ? alert.triggeredAt.toISOString()
+              : new Date().toISOString()
           : null
       }))
 

@@ -1,129 +1,55 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
-import { LinearGradient } from "expo-linear-gradient"
-import { TouchableOpacity, View, Text, Dimensions } from "react-native"
-import { styles } from "./FavoriteStatsPanel.styles"
+import { Ionicons } from "@expo/vector-icons"
+import React from "react"
+import { View, StyleSheet } from "react-native"
+import { Surface, Text } from "../../../components/ui"
+import { colors, space, goldAlpha } from "../../../theme"
 
-const FavoriteStatsPanel = ({ priceAlerts, stats, unreadAlertsCount }) => {
-  const { width, height } = Dimensions.get("window")
-  const isTablet = () => width >= 768 || (width >= 600 && height >= 900)
-  const TABLET = isTablet()
-  const ICON_SIZE = TABLET ? 16 : 12
-
+const Tile = ({ icon, label, value, tone }) => {
+  const fg = tone ? colors[tone].fg : colors.text.primary
   return (
-    <View style={styles.atelier}>
-      {/* Корпус из матового стекла  */}
-      <LinearGradient
-        // colors={["rgba(25,25,30,0.95)", "rgba(15,15,20,0.98)"]}
-        // colors={["rgba(38,35,32,0.45)", "rgba(28,25,22,0.98)"]}
-        colors={["rgba(70,72,74,0.99)", "rgba(32,34,38,0.8)"]}
-        style={styles.case}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
-
-      {/* Световой рельеф */}
-      <LinearGradient
-        colors={["rgba(212,175,55,0.06)", "transparent"]}
-        style={styles.relief}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 0.6 }}
-      />
-
-      {/* Тиснение золотом  */}
-      <View style={styles.engraving} />
-
-      <View style={styles.movement}>
-        {/* Индикаторы  */}
-        <View style={styles.indicator}>
-          <View style={styles.markerGroup}>
-            <LinearGradient
-              colors={["rgba(212,175,55,0.15)", "rgba(212,175,55,0.03)"]}
-              style={styles.markerIcon}
-            >
-              <Ionicons name='trending-up' size={ICON_SIZE} color='#FFD700' />
-            </LinearGradient>
-            <View style={styles.markerData}>
-              <Text style={styles.markerValue}>{stats.bullish}</Text>
-              <Text style={styles.markerLabel}>BULLISH</Text>
-            </View>
-          </View>
+    <Surface variant='goldCase' radius='md' style={{ flex: 1 }}>
+      <View style={styles.tile}>
+        <View style={styles.iconWrap}>
+          <Ionicons name={icon} size={13} color={colors.gold[400]} />
         </View>
-
-        <View style={styles.markerDivider} />
-
-        <View style={styles.indicator}>
-          <View style={styles.markerGroup}>
-            <LinearGradient
-              colors={["rgba(212,175,55,0.15)", "rgba(212,175,55,0.03)"]}
-              style={styles.markerIcon}
-            >
-              <Ionicons name='trending-down' size={ICON_SIZE} color='#FFD700' />
-            </LinearGradient>
-            <View style={styles.markerData}>
-              <Text style={styles.markerValue}>{stats.bearish}</Text>
-              <Text style={styles.markerLabel}>BEARISH</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.markerDivider} />
-
-        <View style={styles.indicator}>
-          <View style={styles.markerGroup}>
-            <LinearGradient
-              colors={["rgba(212,175,55,0.15)", "rgba(212,175,55,0.03)"]}
-              style={styles.markerIcon}
-            >
-              <MaterialCommunityIcons
-                name='diamond-stone'
-                size={ICON_SIZE}
-                color='#FFD700'
-              />
-            </LinearGradient>
-            <View style={styles.markerData}>
-              <Text style={styles.markerValue}>{stats.top10}</Text>
-              <Text style={styles.markerLabel}>TOP 10</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.markerDivider} />
-
-        <TouchableOpacity style={styles.indicator} activeOpacity={0.7}>
-          <View style={styles.markerGroup}>
-            <View style={{ position: "relative" }}>
-              {/* Добавьте контейнер-обёртку */}
-              <LinearGradient
-                colors={["rgba(212,175,55,0.15)", "rgba(212,175,55,0.03)"]}
-                style={styles.markerIcon}
-              >
-                <Ionicons name='notifications' size={ICON_SIZE} color='#FFD700' />
-              </LinearGradient>
-              {/* {unreadAlertsCount > 0 && (
-                <View
-                  style={[
-                    styles.crownPulse,
-                    {
-                      position: "absolute",
-                      top: TABLET ? -4 : -3,
-                      right: TABLET ? -4 : -3
-                    }
-                  ]}
-                >
-                  <Text style={styles.pulseText}>{unreadAlertsCount}</Text>
-                </View>
-              )} */}
-            </View>
-
-            <View style={styles.markerData}>
-              <Text style={styles.markerValue}>{stats.activeAlerts || 0}</Text>
-              <Text style={styles.markerLabel}>ALERTS</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
+        <Text
+          variant='h3'
+          color={fg}
+          tabular
+          style={{ marginTop: space[2] }}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
+          {value}
+        </Text>
+        <Text variant='label' color='tertiary' numberOfLines={1}>
+          {label}
+        </Text>
       </View>
-    </View>
+    </Surface>
   )
 }
+
+// Сводка портфеля: три золотых тайла
+const FavoriteStatsPanel = ({ stats }) => (
+  <View style={styles.row}>
+    <Tile icon='trending-up' label='Gaining' value={stats.bullish} tone='up' />
+    <Tile icon='trending-down' label='Losing' value={stats.bearish} tone='down' />
+    <Tile icon='notifications' label='Alerts' value={stats.activeAlerts} />
+  </View>
+)
+
+const styles = StyleSheet.create({
+  row: { flexDirection: "row", gap: space[2], paddingHorizontal: space[4], marginBottom: space[3] },
+  tile: { padding: space[3] },
+  iconWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 0,
+    backgroundColor: goldAlpha(0.14),
+    alignItems: "center",
+    justifyContent: "center"
+  }
+})
 
 export default FavoriteStatsPanel

@@ -1,25 +1,17 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs"
+import { useNavigation } from "@react-navigation/native"
 import React, { useState, useEffect, useMemo, useCallback } from "react"
-import {
-  View,
-  Text,
-  ScrollView,
-  ActivityIndicator,
-  TouchableOpacity,
-  SafeAreaView
-} from "react-native"
+import { View, ScrollView, StyleSheet, ActivityIndicator } from "react-native"
 import { useSelector } from "react-redux"
-import { styles } from "./Analytics.styles"
-import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons"
-import { coinSelector, userAssetsSelector } from "../../store/toolkitSelectors"
 import { FetchCoinHistoricalData } from "../../components/Api/Api"
-import AssetAllocationChart from "./components/AllocationSection/AssetAllocationChart/AssetAllocationChart"
-import { generateProfessionalPalette } from "./components/AllocationSection/ChartUtils/ChartUtils"
-import AllocationList from "./components/AllocationSection/AllocationList/AllocationList"
-import RecommendSection from "./components/RecommendSection/RecommendSection"
-import RiskSection from "./components/RiskSection/RiskSection"
-import OverviewSection from "./components/OverviewSection/OverviewSection"
-import HeaderCard from "./components/HeaderCard/HeaderCard"
-import AnalyticsPlaceholder from "./AnalyticsPlaceholder"
+import { coinSelector, userAssetsSelector } from "../../store/toolkitSelectors"
+import { colors, space } from "../../theme"
+import { Screen, ScreenHeader, EmptyState, Text } from "../ui"
+import AllocationSection from "./sections/AllocationSection"
+import HeaderCard from "./sections/HeaderCard"
+import OverviewSection from "./sections/OverviewSection"
+import RecommendSection from "./sections/RecommendSection"
+import RiskSection from "./sections/RiskSection"
 
 const Analytics = () => {
   const coinData = useSelector(coinSelector)
@@ -27,11 +19,11 @@ const Analytics = () => {
 
   const [loading, setLoading] = useState(true)
   const [timeframe, setTimeframe] = useState("24h")
-  const [expandedSection, setExpandedSection] = useState("overview") // состояние, управляющее открытием/закрытием секций
   const [historicalChanges, setHistoricalChanges] = useState({})
   const [isCalculating, setIsCalculating] = useState(false)
   const [lastCalculationTime, setLastCalculationTime] = useState({})
-  const [showSmallAllocations, setShowSmallAllocations] = useState(false)
+  const tabBarHeight = useBottomTabBarHeight()
+  const navigation = useNavigation()
 
   // Маппинг timeframe на дни для CoinGecko API
   const getDaysForTimeframe = (tf) => {
@@ -283,9 +275,7 @@ const Analytics = () => {
     const sortedAssets = [...assetsWithAllocation].sort((a, b) => b.value - a.value)
 
     // Шаг 4: Находим лучший и худший актив (только с данными)
-    const assetsWithData = sortedAssets.filter(
-      (asset) => asset.hasData || timeframe === "24h"
-    )
+    const assetsWithData = sortedAssets.filter((asset) => asset.hasData || timeframe === "24h")
 
     const bestPerformer =
       assetsWithData.length > 0
@@ -319,10 +309,7 @@ const Analytics = () => {
       if (!assets.length) return 100
 
       const idealAllocation = 100 / assets.length
-      const deviation = assets.reduce(
-        (sum, asset) => sum + Math.abs(asset.allocation - idealAllocation),
-        0
-      )
+      const deviation = assets.reduce((sum, asset) => sum + Math.abs(asset.allocation - idealAllocation), 0)
 
       const maxDeviation = 200
       const score = Math.max(0, 100 - (deviation / maxDeviation) * 100)
@@ -356,128 +343,71 @@ const Analytics = () => {
     }
   }, [coinData, userAssets, timeframe, historicalChanges])
 
-  // Получение цвета в зависимости от значения
-  const getColorForValue = (value, isPositiveGood = true) => {
-    if (value > 0) {
-      return isPositiveGood ? "#4CAF50" : "#FF5252"
-    } else if (value < 0) {
-      return isPositiveGood ? "#FF5252" : "#4CAF50"
-    }
-    return "#FFD700"
-  }
+  const header = (
+    <ScreenHeader
+      large
+      eyebrow='Insights'
+      title='Analytics'
+      subtitle='Structure, performance and risk of your portfolio'
+    />
+  )
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size='large' color='#FFD700' />
-        <Text style={styles.loadingText}>Analyzing your portfolio...</Text>
-      </View>
+      <Screen>
+        {header}
+        <View style={styles.center}>
+          <ActivityIndicator size='large' color={colors.gold[500]} />
+          <Text variant='caption' color='tertiary' style={{ marginTop: space[3] }}>
+            Analyzing your portfolio…
+          </Text>
+        </View>
+      </Screen>
     )
   }
 
   if (!portfolioMetrics || portfolioMetrics.totalAssets === 0) {
-    return <AnalyticsPlaceholder />
+    return (
+      <Screen>
+        {header}
+        <EmptyState
+          icon='pie-chart-outline'
+          eyebrow='Portfolio analysis'
+          title='No data to analyze'
+          body='Add holding amounts to your portfolio coins to unlock allocation, performance and risk insights.'
+          action={{ label: "Open portfolio", icon: "star", onPress: () => navigation.navigate("Favorite") }}
+        />
+      </Screen>
+    )
   }
 
-  const colors = generateProfessionalPalette(portfolioMetrics.assets.length)
-
   return (
-    <SafeAreaView style={styles.safeAreaContainer} edges={["left", "right"]}>
+    <Screen>
+      {header}
       <ScrollView
-        style={styles.container}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{ paddingHorizontal: space[4], paddingBottom: tabBarHeight + space[4] }}
       >
-        {/* Шапка с основными метриками */}
         <HeaderCard
-          timeframe={timeframe} // текущий период
-          isCalculating={isCalculating} // флаг загрузки
-          portfolioMetrics={portfolioMetrics} // метрики портфеля
-          hasSimulatedData={portfolioMetrics.hasSimulatedData} // Флаг, покажет используются ли симулированные данные.
-          getColorForValue={getColorForValue} // цвет по значению
-          handleTimeframeChange={handleTimeframeChange} // смена периода
-        />
-        {/* Секция обзора */}
-        <OverviewSection
-          expandedSection={expandedSection}
-          setExpandedSection={setExpandedSection}
-          portfolioMetrics={portfolioMetrics}
           timeframe={timeframe}
-          getColorForValue={getColorForValue}
-        />
-        {/* Секция распределения активов  */}
-        <TouchableOpacity
-          onPress={() =>
-            setExpandedSection(expandedSection === "allocation" ? null : "allocation")
-          }
-          style={styles.sectionCard}
-        >
-          <View style={styles.sectionHeader}>
-            <MaterialCommunityIcons name='chart-pie' size={20} color='#FFD700' />
-            <Text style={styles.sectionTitle}>Asset Allocation</Text>
-            <Ionicons
-              name={expandedSection === "allocation" ? "chevron-up" : "chevron-down"}
-              size={20}
-              color='#FFD700'
-            />
-          </View>
-
-          {expandedSection === "allocation" && portfolioMetrics && (
-            <View style={styles.sectionContent}>
-              {/* Премиальная диаграмма */}
-              <View style={styles.premiumChartSection}>
-                <AssetAllocationChart portfolioMetrics={portfolioMetrics} />
-              </View>
-
-              {/* Объединенная легенда с маленькими аллокациями внутри */}
-              {portfolioMetrics.assets && portfolioMetrics.assets.length > 0 ? (
-                <AllocationList
-                  assets={portfolioMetrics.assets} // [{BTC: 35%}, {ETH: 28%}, {SOL: 15%}]
-                  colors={colors}
-                  showSmallAllocations={showSmallAllocations} // true/false
-                  onToggleSmallAllocations={() =>
-                    setShowSmallAllocations(!showSmallAllocations)
-                  }
-                  getColorForValue={getColorForValue}
-                />
-              ) : (
-                <View style={styles.emptyLegend}>
-                  <Text style={styles.emptyLegendText}>
-                    Add assets to see allocation chart
-                  </Text>
-                </View>
-              )}
-            </View>
-          )}
-        </TouchableOpacity>
-        {/* Секция риска */}
-        <RiskSection
-          expandedSection={expandedSection}
-          setExpandedSection={setExpandedSection}
+          isCalculating={isCalculating}
           portfolioMetrics={portfolioMetrics}
-          timeframe={timeframe}
-          getColorForValue={getColorForValue}
+          handleTimeframeChange={handleTimeframeChange}
         />
-        {/* Секция рекомендаций */}
+        <OverviewSection portfolioMetrics={portfolioMetrics} timeframe={timeframe} />
+        <AllocationSection portfolioMetrics={portfolioMetrics} />
+        <RiskSection portfolioMetrics={portfolioMetrics} />
         <RecommendSection portfolioMetrics={portfolioMetrics} timeframe={timeframe} />
-        {/* Футер с информацией */}
-        {(!portfolioMetrics.allDataLoaded || portfolioMetrics.hasSimulatedData) && (
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              {!portfolioMetrics.allDataLoaded &&
-                timeframe !== "24h" &&
-                "• Some data still loading\n"}
-              {portfolioMetrics.hasSimulatedData &&
-                "• Simulated data used where API failed\n"}
-              • Data updates every 10 minutes
-            </Text>
-          </View>
-        )}
-        {/* Пустой блок для отступа снизу */}
-        <View style={styles.bottomSpacer} />
+        <Text variant='small' color='tertiary' align='center'>
+          Data by CoinGecko · updates every 10 minutes
+        </Text>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   )
 }
+
+const styles = StyleSheet.create({
+  center: { flex: 1, alignItems: "center", justifyContent: "center" }
+})
 
 export default Analytics

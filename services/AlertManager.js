@@ -79,7 +79,7 @@ const AlertManager = {
         AlertManager.dispatch(
           triggerAlert({
             id: alert.id,
-            currentPrice: currentPrice
+            currentPrice
           })
         )
       }
@@ -92,7 +92,7 @@ const AlertManager = {
         // Если приложение активно, отправляем локальное уведомление
         const notificationSuccess = await NotificationService.sendPriceAlertNotification({
           ...alert,
-          currentPrice: currentPrice
+          currentPrice
         })
 
         if (notificationSuccess) {

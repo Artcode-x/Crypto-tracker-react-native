@@ -13,8 +13,7 @@ export const triggeredAlertsSelector = (store) =>
   priceAlertsSelector(store).filter((alert) => alert.triggeredAt)
 
 // Непрочитанные алерты
-export const unreadAlertsSelector = (store) =>
-  priceAlertsSelector(store).filter((alert) => !alert.isRead)
+export const unreadAlertsSelector = (store) => priceAlertsSelector(store).filter((alert) => !alert.isRead)
 
 // Количество непрочитанных алертов
 export const unreadAlertsCountSelector = (store) => alertsMainSelector(store).unreadCount
