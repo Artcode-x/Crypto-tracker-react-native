@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "231666037574",
+    "project_id": "crypto-tracker-259e2",
+    "storage_bucket": "crypto-tracker-259e2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:231666037574:android:ecb46caf4a66c77c486b47",
+        "android_client_info": {
+          "package_name": "com.crypto.artcode"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMt7wY_G5APZzwVvLihZZygbwRQoP82Cg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

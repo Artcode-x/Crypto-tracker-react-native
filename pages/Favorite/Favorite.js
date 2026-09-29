@@ -1,293 +1,708 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react"
-import { View, FlatList, Modal, Text, Dimensions } from "react-native"
+import React, { useState, useCallback, useRef, useEffect } from "react"
+import { View, FlatList, Text, Dimensions, Alert, Platform, AppState } from "react-native"
+import { LinearGradient } from "expo-linear-gradient"
+import * as Haptics from "expo-haptics"
+import * as Notifications from "expo-notifications"
 import { useDispatch, useSelector } from "react-redux"
-import { coinSelector, daysSelector } from "../../store/toolkitSelectors"
-import CoinItem from "../../components/CoinItem/CoinItem"
-import Ionicons from "react-native-vector-icons/Ionicons"
-import { TouchableOpacity } from "react-native"
-import { removeCoin } from "../../store/reducersSlice"
-import { styles } from "./Favorite.styles"
-import { formatTime, getTimeLabels } from "../../helpers/helpers"
+
 import {
-  FetchCandleData,
-  Get24hrMinMaxPrices,
-  GetSantiment
-} from "../../components/Api/Api"
-import { VolumeChart } from "./FavoriteCharts/VolumeChart/VolumeChart"
-import { SwitchTimeframeButtons } from "./SwitchTimeframeButtons/SwitchTimeframeButtons"
-import { CandlestickChart } from "react-native-wagmi-charts"
-import { PinchGestureHandler, TapGestureHandler } from "react-native-gesture-handler"
+  bottomInset,
+  coinSelector,
+  daysSelector,
+  userAssetsSelector
+} from "../../store/toolkitSelectors"
+import {
+  priceAlertsSelector,
+  unreadAlertsCountSelector
+} from "../../store/alertsSelectors"
+import { removeCoin, updateUserAsset } from "../../store/reducersSlice"
+import { addPriceAlert, deletePriceAlert, markAlertAsRead } from "../../store/alertsSlice"
+import { styles } from "./Favorite.styles"
+import ModalFavorite from "./ModalChart/ModalFavorite"
+import AlertModal from "../../components/Alerts/AlertModal/AlertModal"
+import { useFavoriteUpdate } from "../../hooks/useFavoriteUpdate"
+import NotificationService from "../../services/NotificationService"
+import ServerSyncService from "../../services/ServerSyncService"
+import AlertManager from "../../services/AlertManager"
+import { useAlertChecker } from "../../hooks/useAlertChecker"
+import EmptyState from "./FavoriteComponents/EmptyState/EmptyState"
+import FavoriteHeader from "./FavoriteHeader/FavoriteHeader"
+import AmountInputModal from "./FavoriteComponents/AmountInputModal/AmountInputModal"
+import FavoriteStatsPanel from "./FavoriteStatsPanel/FavoriteStatsPanel"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import PremiumCoinCard from "./PremiumCoinCard/PremiumCoinCard"
+import { LIST_INNER_CONTAINER_WIDTH } from "./Favorite.styles"
 
 const Favorite = () => {
   const dispatch = useDispatch()
   const coinData = useSelector(coinSelector)
   const chartDays = useSelector(daysSelector)
+  const userAssets = useSelector(userAssetsSelector) || {}
+  const priceAlerts = useSelector(priceAlertsSelector)
+  const unreadAlertsCount = useSelector(unreadAlertsCountSelector)
+  // Для корректного отступа при наличии вирт панели на уст-ве
+  const bottomInsets = useSelector(bottomInset)
 
-  const [flag, setFlag] = useState({})
-  const [prices, setPrices] = useState([])
+  const [removingCoinId, setRemovingCoinId] = useState(null)
   const [isModalVisible, setModalVisible] = useState(false)
-  const [minMax, setMinMax] = useState({ minPrice: null, maxPrice: null })
-  const [sant, setSant] = useState(null)
   const [selectedCoin, setSelectedCoin] = useState(null)
-  const [limit, setLimit] = useState(100)
-  const scaleRef = useRef(1) // Для накопления масштаба
+  const [inputModalVisible, setInputModalVisible] = useState(false)
+  const [selectedCoinForInput, setSelectedCoinForInput] = useState(null)
+  const [lastUpdateTime, setLastUpdateTime] = useState(null)
+  const [isUpdating, setIsUpdating] = useState(false)
 
-  const removeFromFav = (coin) => {
-    setFlag((prev) => ({ ...prev, [coin.id]: true }))
+  // Состояния для алертов и серверной синхронизации
+  const [alertModalVisible, setAlertModalVisible] = useState(false)
+  const [selectedCoinForAlert, setSelectedCoinForAlert] = useState(null)
+  const [notificationPermission, setNotificationPermission] = useState(false)
+  const [fcmToken, setFcmToken] = useState(null)
+  const [appState, setAppState] = useState(AppState.currentState)
+  const [serverStatus, setServerStatus] = useState(null)
 
-    setTimeout(() => {
-      setFlag({})
-      dispatch(removeCoin(coin))
-    }, 1500)
-  }
+  // Динамическое определение ширины экрана
+  const [windowWidth, setWindowWidth] = useState(Dimensions.get("window").width)
 
-  const openModal = (coin) => {
-    setSelectedCoin(coin)
-    setModalVisible(true)
-  }
-
-  const fetchData = async () => {
-    if (!selectedCoin) return
-
-    const symbol = selectedCoin.symbol.toUpperCase()
-
-    const days = chartDays
-
-    try {
-      const [minMaxPrice, candlePrices] = await Promise.all([
-        Get24hrMinMaxPrices(symbol),
-        FetchCandleData(symbol, days, limit)
-      ])
-
-      if (symbol === "BTC" || symbol === "ETH") {
-        const response = await GetSantiment(symbol)
-        setSant(response.Data.inOutVar.sentiment)
-      } else {
-        setSant(null)
-      }
-
-      if (candlePrices && candlePrices.length > 0) {
-        setPrices(candlePrices)
-      }
-
-      setMinMax({
-        minPrice: minMaxPrice.minPrice,
-        maxPrice: minMaxPrice.maxPrice
-      })
-    } catch (error) {
-      console.log(error.message)
-    }
-  }
-
-  const volumeData = {
-    labels:
-      chartDays === "1h" || chartDays === "4h"
-        ? getTimeLabels(prices)
-        : formatTime(prices),
-    datasets: [
-      {
-        data: prices.map((item) => Number(item.volume) || 0),
-        color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
-        strokeWidth: 2
-      }
-    ]
-  }
-
-  // Приведет к частым изменениям лимита при небольших колебаниях масштаба.
-  // const onPinchEvent = (event) => {
-  //   const scale = event.nativeEvent.scale
-  //   if (scale > 1) {
-  //     setLimit((prevLimit) => Math.min(prevLimit + 10, 200)) // Увеличиваем лимит
-  //   } else if (scale < 1) {
-  //     setLimit((prevLimit) => Math.max(prevLimit - 10, 10)) // Уменьшаем лимит
-  //   }
-  // }
-
-  // Масштабирование (Pinch gesture)
-  //  - Вычисляем изменение масштаба.
-  // - Если уменьшился больше 10%, уменьшаем цену.
-  // - Если масштаб вырос больше 10%, увеличиваем цену.
-  // - Ограничиваем значения от 10 до 200.
-
-  // Функция onPinchEvent:  обрабатывает изменение масштаба.
-  // ScaleChange: ожидает, насколько изменился масштаб относительно предыдущего.
-  // Если больше 1.1, значит произошло увеличение. Если меньше 0.9, значит уменьшение.
-  // В зависимости от изменения масштаба, изменяем limit на 10, ограничивая его значение от 10 до 200.
-  const onPinchEvent = (event) => {
-    // scaleRef для хранения предыдущего значения масштаба, что позволяет более точно отслеживать изменения.
-    const scaleChange = event.nativeEvent.scale / scaleRef.current
-    if (scaleChange > 1.1) {
-      // Изменяем limit при уменьшении масштаба на 10%
-      setLimit((prev) => Math.max(prev - 10, 10))
-
-      scaleRef.current = event.nativeEvent.scale
-    } else if (scaleChange < 0.9) {
-      // Изменяем limit при увеличении масштаба на 10%
-      setLimit((prev) => Math.min(prev + 10, 200))
-      scaleRef.current = event.nativeEvent.scale
-    }
-  }
-  // Сброс масштаба
-  // - При завершении жеста масштаб сбрасывается для корректной работы в следующем цикле.
-  // Этот обработчик реагирует на завершение жеста. Когда жест завершен, сбрасывается scaleRef.current обратно к 1, чтобы начать новый процесс масштабирования.
-  const onPinchStateChange = (event) => {
-    if (event.nativeEvent.state === 5) {
-      // STATE_END
-      scaleRef.current = 1
-    }
-  }
+  // Для анимации
+  const [forceShimmer, setForceShimmer] = useState(false)
 
   useEffect(() => {
-    if (isModalVisible) {
-      fetchData()
+    const subscription = Dimensions.addEventListener("change", ({ window }) => {
+      setWindowWidth(window.width)
+    })
+
+    return () => subscription?.remove()
+  }, [])
+
+  // Функция определения планшета
+  const isTablet = useCallback(() => {
+    const width = windowWidth
+    const height = Dimensions.get("window").height
+
+    // Основная логика для Expo Go
+    if (width >= 768) return true
+
+    // Для Nexus 9 и подобных устройств
+    const screenRatio = Math.max(width, height) / Math.min(width, height)
+    const pixelRatio = windowWidth / 360 // базовая ширина телефона
+
+    // Если ширина в dp больше 600 и соотношение сторон меньше 1.6
+    if (width / pixelRatio >= 600 && screenRatio < 1.6) {
+      return true
     }
-  }, [isModalVisible, selectedCoin, chartDays, limit])
+
+    return false
+  }, [windowWidth])
+
+  // Определяем количество колонок
+  const numColumns = isTablet() ? 3 : 2
+
+  const amountInputRef = useRef("")
+
+  // Хук обновления
+  const { updateFavoritePrices } = useFavoriteUpdate(1)
+
+  // Хук для периодической проверки алертов
+  useAlertChecker(coinData, 60000)
+
+  // Мониторинг состояния приложения
+  useEffect(() => {
+    const handleAppStateChange = async (nextAppState) => {
+      setAppState(nextAppState)
+
+      // Обновляем состояние на сервере
+      if (fcmToken) {
+        ServerSyncService.updateAppStateOnServer(nextAppState)
+      }
+
+      if (nextAppState === "active") {
+        // Приложение вернулось на передний план
+
+        // Проверяем серверную доступность
+        checkServerAvailability()
+
+        // Проверяем алерты
+        if (coinData.length > 0 && priceAlerts.length > 0) {
+          AlertManager.checkAlerts(
+            priceAlerts.filter((a) => a.isActive && !a.triggeredAt),
+            coinData
+          )
+        }
+
+        // Обновляем цены
+        handleManualUpdate()
+      } else if (nextAppState === "background" || nextAppState === "inactive") {
+        // Приложение сворачивается - синхронизируем с сервером с проверкой согласия
+
+        try {
+          const consent = await AsyncStorage.getItem("@background_alerts_consent")
+          if (consent === "agreed" && fcmToken && priceAlerts.length > 0) {
+            console.log("Согласие получено")
+            await ServerSyncService.syncAlertsWithServer(priceAlerts)
+          } else if (consent !== "agreed") {
+            console.log("Нет согласия на фоновые уведомления")
+          }
+        } catch (error) {
+          console.warn("Ошибка при проверке согласия", error)
+        }
+      }
+    }
+
+    const subscription = AppState.addEventListener("change", handleAppStateChange)
+
+    return () => {
+      subscription.remove()
+    }
+  }, [appState, fcmToken, coinData, priceAlerts])
+
+  const checkServerAvailability = useCallback(async () => {
+    try {
+      const status = await ServerSyncService.getStatus()
+      setServerStatus(status)
+
+      if (!status.serverAvailable) {
+        await ServerSyncService.checkServerAvailability()
+        const updatedStatus = await ServerSyncService.getStatus()
+        setServerStatus(updatedStatus)
+      }
+    } catch (error) {
+      console.warn("Ошибка проверки сервера:", error)
+    }
+  }, [])
+
+  // Инициализация уведомлений и FCM
+  useEffect(() => {
+    const initializeNotifications = async () => {
+      try {
+        // 1. Проверяем текущие разрешения
+        const { granted, status } = await Notifications.getPermissionsAsync()
+
+        setNotificationPermission(granted)
+
+        if (granted) {
+          // 2. Инициализируем AlertManager
+          AlertManager.initialize(dispatch)
+
+          // 3. Регистрируем обработчики уведомлений
+          const subscriptions = NotificationService.registerNotificationHandlers(
+            async (notification) => {
+              try {
+                if (!notification?.request?.content?.data) return
+                const data = notification.request.content.data
+                if (data?.type === "price-alert" && data?.alertId) {
+                  dispatch(markAlertAsRead(data.alertId))
+                }
+              } catch (error) {
+                console.warn("Ошибка обработки уведомления:", error)
+              }
+            },
+            (response) => {
+              try {
+                if (!response?.notification?.request?.content?.data) return
+                const data = response.notification.request.content.data
+                if (data?.type === "price-alert" && data?.alertId) {
+                  dispatch(markAlertAsRead(data.alertId))
+                }
+              } catch (error) {
+                console.warn("Ошибка обработки ответа:", error)
+              }
+            }
+          )
+
+          // 4. Регистрируемся для FCM с новым методом
+          if (Platform.OS !== "web") {
+            try {
+              // Используем новый метод getFCMToken
+              const token = await NotificationService.getFCMToken()
+              if (token) {
+                setFcmToken(token)
+
+                // Определяем тип токена
+                const isExpoToken = token.startsWith("ExponentPushToken[")
+
+                // Логируем предупреждение если это Expo токен
+                if (isExpoToken) {
+                  console.log("ВНИМАНИЕ: Получен Expo токен.")
+                }
+
+                // Инициализируем синхронизацию с сервером
+                ServerSyncService.initialize(token)
+
+                // Проверяем доступность сервера
+                checkServerAvailability()
+              }
+            } catch (fcmError) {
+              console.warn("Ошибка получения токена:", fcmError)
+            }
+          }
+
+          return () => {
+            if (subscriptions) {
+              NotificationService.removeNotificationHandlers(subscriptions)
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Ошибка инициализации уведомлений:", error)
+        setNotificationPermission(false)
+      }
+    }
+
+    initializeNotifications()
+  }, [dispatch])
+
+  // Обновление бейджей при изменении алертов
+  useEffect(() => {
+    const updateBadges = async () => {
+      if (notificationPermission) {
+        try {
+          await NotificationService.setBadgeCount(unreadAlertsCount)
+        } catch (error) {
+          console.warn("Не удалось обновить бейджи:", error)
+        }
+      }
+    }
+
+    updateBadges()
+  }, [unreadAlertsCount, notificationPermission])
+
+  // Обработчик ручного обновления
+  const handleManualUpdate = useCallback(async () => {
+    if (isUpdating) {
+      // Обновление уже выполняется
+      return
+    }
+
+    // Ручное обновление избранного
+    setIsUpdating(true)
+    setForceShimmer(true)
+    setLastUpdateTime(new Date().toLocaleTimeString())
+
+    try {
+      await updateFavoritePrices()
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    } catch (error) {
+      console.error("Ошибка обновления:", error)
+    } finally {
+      setIsUpdating(false)
+      setTimeout(() => {
+        setForceShimmer(false)
+      }, 2500)
+    }
+  }, [updateFavoritePrices, isUpdating])
+
+  // Подсчет стоимости портфеля
+  const totalPortfolioValue = coinData.reduce((total, coin) => {
+    const amount = (userAssets && userAssets[coin.id]) || 0
+    return total + amount * (coin.current_price || 0)
+  }, 0)
+
+  // Статистика
+  const stats = {
+    total: coinData.length,
+    bullish: coinData.filter((c) => c.price_change_percentage_24h >= 0).length,
+    bearish: coinData.filter((c) => c.price_change_percentage_24h < 0).length,
+    top10: coinData.filter((c) => c.market_cap_rank <= 10).length,
+    activeAlerts: priceAlerts.filter((a) => a.isActive && !a.triggeredAt).length,
+    triggeredAlerts: priceAlerts.filter((a) => a.triggeredAt).length,
+    serverSynced: priceAlerts.filter((a) => a.serverId || a.syncStatus === "synced")
+      .length
+  }
+
+  // Функция открытия модалки алерта
+  const openAlertModal = useCallback(
+    async (coin) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+
+      const openModal = () => {
+        setSelectedCoinForAlert(coin)
+        setAlertModalVisible(true)
+      }
+
+      try {
+        const { granted, status, canAskAgain } = await Notifications.getPermissionsAsync()
+
+        if (granted) {
+          if (!notificationPermission) {
+            setNotificationPermission(true)
+          }
+
+          if (!fcmToken && Platform.OS !== "web") {
+            try {
+              const token = await NotificationService.getFCMToken()
+              if (token) {
+                setFcmToken(token)
+
+                // Инициализация серверной синхронизации
+                ServerSyncService.initialize(token)
+              }
+            } catch (tokenError) {
+              console.warn("Не удалось получить FCM токен:", tokenError)
+            }
+          }
+
+          openModal()
+          return
+        }
+
+        Alert.alert(
+          "🔔 Price Alerts",
+          "Enable notifications to receive alerts when prices reach your targets. This works even when the app is closed.",
+          [
+            {
+              text: "Not Now",
+              style: "cancel",
+              onPress: () => {
+                Alert.alert(
+                  "Notifications Disabled",
+                  "Alert will be saved locally, but you won't receive push notifications when it triggers.",
+                  [{ text: "OK", onPress: openModal }]
+                )
+              }
+            },
+            {
+              text: "Enable",
+              onPress: async () => {
+                try {
+                  const requestNotificationPermission = async () => {
+                    if (Platform.OS === "ios") {
+                      return await Notifications.requestPermissionsAsync({
+                        ios: {
+                          allowAlert: true,
+                          allowBadge: true,
+                          allowSound: true,
+                          allowAnnouncements: true
+                        }
+                      })
+                    } else {
+                      return await Notifications.requestPermissionsAsync()
+                    }
+                  }
+
+                  const result = await requestNotificationPermission()
+                  const { granted: newGranted } = result
+
+                  setNotificationPermission(newGranted)
+
+                  if (newGranted) {
+                    AlertManager.initialize(dispatch)
+
+                    if (Platform.OS !== "web") {
+                      try {
+                        const token = await NotificationService.getFCMToken()
+                        if (token) {
+                          setFcmToken(token)
+
+                          ServerSyncService.initialize(token)
+                        }
+                      } catch (tokenError) {
+                        console.warn("Не удалось получить FCM токен:", tokenError)
+                      }
+                    }
+
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+
+                    Alert.alert(
+                      "✓ Notifications Enabled",
+                      "You'll receive push notifications when your price alerts trigger, even when the app is closed.",
+                      [{ text: "Great!" }]
+                    )
+                  }
+
+                  openModal()
+                } catch (error) {
+                  console.error("Ошибка запроса разрешений:", error)
+                  openModal()
+                }
+              }
+            }
+          ]
+        )
+      } catch (error) {
+        console.error("Ошибка при открытии алерта:", error)
+        openModal()
+      }
+    },
+    [dispatch, notificationPermission, fcmToken]
+  )
+
+  // Обработчик сохранения алерта
+  const handleSaveAlert = useCallback(
+    async (alertData) => {
+      const currentCoinPrice = alertData.currentPrice || 0
+
+      const payload = {
+        ...alertData,
+        currentPrice: currentCoinPrice,
+        fcmToken: fcmToken,
+        syncStatus: fcmToken ? "pending_sync" : "local_only",
+        source: "local"
+      }
+
+      // Сохраняем алерт в Redux
+      dispatch(addPriceAlert(payload))
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+
+      // Если есть FCM токен и сервер доступен, синхронизируем
+      if (fcmToken && notificationPermission) {
+        const serverAvailable = serverStatus?.serverAvailable || false
+
+        if (serverAvailable) {
+          try {
+            // Синхронизируем все алерты с сервером
+            const syncedAlerts = [...priceAlerts, payload].filter(
+              (a) => a.isActive && !a.triggeredAt
+            )
+            await ServerSyncService.syncAlertsWithServer(syncedAlerts)
+
+            Alert.alert(
+              "✅ Done!",
+              `Your ${alertData.coinSymbol} price alert was set to $${alertData.targetPrice}`,
+              [{ text: "Great!" }]
+            )
+          } catch (syncError) {
+            console.warn("Не удалось синхронизировать с сервером:", syncError)
+            Alert.alert(
+              "⚠️ Alert Saved",
+              `Alert saved locally. Push notifications require app to be open.`,
+              [{ text: "OK" }]
+            )
+          }
+        } else {
+          Alert.alert(
+            "✅ Done",
+            `Alert saved locally. You'll receive notifications when ${alertData.coinSymbol} reaches $${alertData.targetPrice}, while the app is open.`,
+            [{ text: "OK" }]
+          )
+        }
+      } else if (notificationPermission) {
+        Alert.alert(
+          "✅ Done",
+          `Alert saved locally. You'll receive notifications when ${alertData.coinSymbol} reaches $${alertData.targetPrice} while the app is open.`,
+          [{ text: "OK" }]
+        )
+      } else {
+        Alert.alert(
+          "✅ Alert saved locally",
+          "Notifications are disabled. The alert will only work while the app is open.",
+          [{ text: "OK" }]
+        )
+      }
+    },
+    [dispatch, notificationPermission, fcmToken, priceAlerts, serverStatus]
+  )
+
+  // Удаление монеты из избранного
+  const removeFromFav = useCallback(
+    (coin) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+      setRemovingCoinId(coin.id)
+
+      // Удаляем все алерты для этой монеты
+      const coinAlerts = priceAlerts.filter((alert) => alert.coinId === coin.id)
+      coinAlerts.forEach((alert) => {
+        dispatch(deletePriceAlert(alert.id))
+
+        // Удаляем алерт с сервера если есть serverId
+        if (alert.serverId && fcmToken) {
+          ServerSyncService.deleteAlertFromServer(alert.serverId)
+        }
+      })
+
+      if (coinAlerts.length > 0) {
+        console.log(`Удалено ${coinAlerts.length} алертов для монеты`)
+      }
+
+      setTimeout(() => {
+        setRemovingCoinId(null)
+        dispatch(removeCoin(coin))
+
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      }, 1500)
+    },
+    [dispatch, priceAlerts, fcmToken]
+  )
+
+  // Открытие графика
+  const openChartModal = useCallback((coin) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    setSelectedCoin(coin)
+    setModalVisible(true)
+  }, [])
+
+  const closeChartModal = useCallback(() => {
+    setModalVisible(false)
+    setSelectedCoin(null)
+  }, [])
+
+  // Открытие формы ввода количества
+  const openAmountInput = (coin) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    setSelectedCoinForInput(coin)
+    setInputModalVisible(true)
+  }
+
+  // Сохранение количества
+  const saveAmount = () => {
+    if (selectedCoinForInput && amountInputRef.current) {
+      let text = amountInputRef.current.replace(/,/g, ".")
+      const amount = parseFloat(text) || 0
+
+      dispatch(
+        updateUserAsset({
+          coinId: selectedCoinForInput.id,
+          amount: amount
+        })
+      )
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    }
+    setInputModalVisible(false)
+    setSelectedCoinForInput(null)
+    amountInputRef.current = ""
+  }
+
+  // Функция для тестирования сервера
+  const testServerConnection = async () => {
+    try {
+      const result = await ServerSyncService.testConnection()
+
+      if (result.success) {
+        Alert.alert(
+          "✅ Сервер доступен",
+          `Ping: ${result.ping}ms\nStatus: ${result.status}\nTimestamp: ${result.timestamp}`,
+          [{ text: "OK" }]
+        )
+      } else {
+        Alert.alert("Сервер недоступен", `Error: ${result.error}`, [{ text: "OK" }])
+      }
+    } catch (error) {
+      Alert.alert("Ошибка тестирования", error.message, [{ text: "OK" }])
+    }
+  }
 
   return (
-    <View style={styles.favlist}>
-      <FlatList
-        style={styles.favCoins}
-        data={coinData.filter(
-          (coin) => coin.name.toLowerCase() || coin.symbol.toLowerCase()
-        )}
-        renderItem={({ item }) => (
-          <View style={styles.itemContainer}>
-            <CoinItem coin={item} onPress={() => openModal(item)} />
+    <LinearGradient
+      colors={["#0A0A0F", "#121218", "#0A0A0F"]}
+      style={styles.premiumContainer}
+    >
+      {/* Заголовок с Portfolio */}
+      {coinData.length > 0 && (
+        <FavoriteHeader
+          stats={stats}
+          lastUpdateTime={lastUpdateTime}
+          priceAlerts={priceAlerts}
+          notificationPermission={notificationPermission}
+          totalPortfolioValue={totalPortfolioValue}
+          isUpdating={isUpdating}
+          handleManualUpdate={handleManualUpdate}
+          fcmToken={fcmToken}
+          testFCMNotification={testServerConnection}
+          serverStatus={serverStatus}
+        />
+      )}
 
-            <TouchableOpacity onPress={() => removeFromFav(item)}>
-              {flag[item.id] ? (
-                <Ionicons name='close-circle-outline' size={24} color='red'></Ionicons>
-              ) : (
-                <Ionicons name='remove-circle-outline' size={24} color='gray' />
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
-        numColumns={2}
-        keyExtractor={(item) => item.id}
+      {/* Панель статистики */}
+      {coinData.length > 0 && (
+        <FavoriteStatsPanel
+          priceAlerts={priceAlerts}
+          stats={stats}
+          unreadAlertsCount={unreadAlertsCount}
+          notificationPermission={notificationPermission}
+          fcmToken={fcmToken}
+          serverStatus={serverStatus}
+        />
+      )}
+
+      {/* Информация о статусе обновления */}
+      {isUpdating && (
+        <View style={styles.updateStatus}>
+          <Text style={styles.updateStatusText}>Updating prices...</Text>
+        </View>
+      )}
+
+      {/* Пустое состояние или список */}
+      {coinData.length === 0 ? (
+        <EmptyState
+          notificationPermission={notificationPermission}
+          fcmToken={fcmToken}
+          serverAvailable={serverStatus?.serverAvailable}
+        />
+      ) : (
+        <FlatList
+          data={coinData}
+          renderItem={({ item }) => (
+            <PremiumCoinCard
+              item={item}
+              isUpdating={forceShimmer}
+              removingCoinId={removingCoinId}
+              userAssets={userAssets}
+              priceAlerts={priceAlerts}
+              notificationPermission={notificationPermission}
+              openChartModal={openChartModal}
+              openAlertModal={openAlertModal}
+              openAmountInput={openAmountInput}
+              removeFromFav={removeFromFav}
+            />
+          )}
+          numColumns={numColumns}
+          contentContainerStyle={[
+            styles.premiumList,
+            {
+              paddingBottom: bottomInsets.bottom > 0 ? bottomInsets.bottom + 70 : 60
+            }
+          ]}
+          columnWrapperStyle={
+            numColumns > 1
+              ? {
+                  justifyContent: "flex-start",
+                  // width: styles.listInnerContainer.width
+                  width: LIST_INNER_CONTAINER_WIDTH
+                }
+              : null
+          }
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+        />
+      )}
+
+      {/* Модалка ввода количества */}
+      <AmountInputModal
+        inputModalVisible={inputModalVisible}
+        setInputModalVisible={setInputModalVisible}
+        selectedCoinForInput={selectedCoinForInput}
+        userAssets={userAssets}
+        saveAmount={saveAmount}
+        amountInputRef={amountInputRef}
       />
 
-      <Modal visible={isModalVisible} animationType='slide'>
-        <View style={styles.chartContainer}>
-          {/* <Text style={styles.modalTitle}>{coinData.name}</Text> */}
-          {sant && (
-            <View
-              style={{
-                paddingBottom: 2,
-                alignItems: "center"
-              }}
-            >
-              <Text style={styles.text0}>
-                Market Santiment:
-                <Text style={{ color: "wheat" }}> {sant}</Text>
-              </Text>
-            </View>
-          )}
-          <View style={styles.minmaxBlock}>
-            <Text style={styles.textUp}>
-              Мин. 24 часа:
-              <Text style={{ color: "lightblue" }}> {minMax.minPrice}$</Text>
-            </Text>
+      {/* Модалка алерта */}
+      {selectedCoinForAlert && (
+        <AlertModal
+          visible={alertModalVisible}
+          onClose={() => {
+            setAlertModalVisible(false)
+            setSelectedCoinForAlert(null)
+          }}
+          onSave={handleSaveAlert}
+          coin={selectedCoinForAlert}
+          currentPrice={selectedCoinForAlert.current_price || 0}
+          notificationPermission={notificationPermission}
+          fcmToken={fcmToken}
+          serverAvailable={serverStatus?.serverAvailable}
+        />
+      )}
 
-            <Text style={styles.textUp}>
-              Макс. 24 часа:
-              <Text style={{ color: "wheat" }}> {minMax.maxPrice}$</Text>
-            </Text>
-          </View>
-
-          {prices.length === 0 ? (
-            <Text style={{ color: "white" }}>Загрузка данных...</Text>
-          ) : (
-            <>
-              <Text style={styles.textTit}>Min and Max trade range:</Text>
-
-              {Array.isArray(prices) && prices.length > 0 ? (
-                <>
-                  <TapGestureHandler>
-                    <PinchGestureHandler
-                      onGestureEvent={onPinchEvent}
-                      onHandlerStateChange={onPinchStateChange}
-                    >
-                      <View style={{ alignItems: "center" }}>
-                        <CandlestickChart.Provider data={prices}>
-                          <CandlestickChart
-                            width={Dimensions.get("window").width * 0.99}
-                            height={Dimensions.get("window").height * 0.45}
-                            style={{
-                              backgroundColor: "#1E1E1E",
-                              border: 1,
-                              borderWidth: 1,
-                              borderColor: "wheat",
-                              borderRadius: 20,
-                              alignItems: "center"
-                            }}
-                          >
-                            <Text style={styles.limits}>Limit: {limit}</Text>
-                            <View style={styles.priceBlock}>
-                              <View style={styles.priceContainer}>
-                                <Text style={styles.label}>Low:</Text>
-                                <CandlestickChart.PriceText
-                                  type='low'
-                                  style={styles.priceValue}
-                                />
-                              </View>
-                              <View style={styles.priceContainer}>
-                                <Text style={styles.label}>Open:</Text>
-                                <CandlestickChart.PriceText
-                                  type='open'
-                                  style={styles.priceValue}
-                                />
-                              </View>
-                              <View style={styles.priceContainer}>
-                                <Text style={styles.label}>Close:</Text>
-                                <CandlestickChart.PriceText
-                                  type='close'
-                                  style={styles.priceValue}
-                                />
-                              </View>
-                              <View style={styles.priceContainer}>
-                                <Text style={styles.label}>High:</Text>
-                                <CandlestickChart.PriceText
-                                  type='high'
-                                  style={styles.priceValue}
-                                />
-                              </View>
-                            </View>
-                            <CandlestickChart.Candles />
-                            <CandlestickChart.Crosshair />
-                          </CandlestickChart>
-                        </CandlestickChart.Provider>
-                      </View>
-                    </PinchGestureHandler>
-                  </TapGestureHandler>
-                </>
-              ) : (
-                <Text style={{ color: "white" }}>Нет данных для отображения</Text>
-              )}
-              <>
-                <Text style={styles.text1}>Volume range:</Text>
-                <VolumeChart volumeData={volumeData} />
-              </>
-            </>
-          )}
-
-          <Text style={styles.text}>
-            Selected range<Text style={styles.textZ}> {chartDays}</Text>
-          </Text>
-          <SwitchTimeframeButtons chartDays={chartDays} />
-
-          <View style={styles.chartButtonsClose}>
-            <TouchableOpacity
-              style={styles.buttonClose}
-              title='Закрыть'
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.closeb}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </View>
+      {/* Модалка с графиком */}
+      <ModalFavorite
+        visible={isModalVisible}
+        onClose={closeChartModal}
+        selectedCoin={selectedCoin}
+        chartDays={chartDays}
+      />
+    </LinearGradient>
   )
 }
 
