@@ -23,7 +23,8 @@
           "iosDisplayInForeground": true,
           "defaultChannel": "price-alerts"
         }
-      ]
+      ],
+      "expo-status-bar"
     ],
     "ios": {
       "supportsTablet": true,
