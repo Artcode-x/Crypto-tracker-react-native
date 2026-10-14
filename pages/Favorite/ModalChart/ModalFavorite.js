@@ -128,7 +128,7 @@ const ModalFavorite = ({ visible, onClose, selectedCoin, chartDays }) => {
 
   useEffect(() => {
     if (selectedCoin && visible) {
-      fetchChartData(selectedCoin, chartDays, limit)
+      fetchChartData(selectedCoin, chartDays, 200)
     }
   }, [chartDays, selectedCoin, visible, flagDoubleTap])
 
