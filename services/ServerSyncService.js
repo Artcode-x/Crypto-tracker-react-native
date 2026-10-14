@@ -3,8 +3,7 @@ import { Platform } from "react-native"
 
 // Конфигурация сервера
 const SERVER_CONFIG = {
-  // BASE_URL: "https://alerts-manager.ru/api/",
-  BASE_URL: "http://192.168.1.143:3000",
+  BASE_URL: "https://meridian-finance.ru/api/",
   TIMEOUT: 10000,
   RETRY_COUNT: 3,
   RETRY_DELAY: 1000

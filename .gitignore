@@ -11,6 +11,23 @@ node_modules/
 /dist/
 /web-build/
 
+# Generate expo
+/ios
+/android
+
+# Signing keys & sertificates
+.jks
+.p8
+.p12
+.key
+.mobileprovision
+.pem
+
+# Firebase / Google Services config (secrets)
+google-services.json
+GoogleService-Info.plist
+
+
 # Native
 *.orig.*
 *.jks
