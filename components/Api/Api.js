@@ -1,10 +1,12 @@
 import axios from "axios"
 
+const BASE_API = `http://192.168.1.143:3001/api/coingecko`
+
 // Оригинальная функция с параметром page
 export async function GetMarketData(page = 1, perPage = 250) {
   try {
     const response = await axios.get(
-      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${perPage}&page=${page}&sparkline=true&price_change_percentage=7d`
+      `${BASE_API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${perPage}&page=${page}&sparkline=true&price_change_percentage=7d`
     )
     return response.data
   } catch (error) {
@@ -22,9 +24,7 @@ export async function GetNextMarketPage(page) {
 export async function UpdatePricesForIds(coinIds) {
   try {
     const response = await axios.get(
-      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${coinIds.join(
-        ","
-      )}&sparkline=false`
+      `${BASE_API}/coins/markets?vs_currency=usd&ids=${coinIds.join(",")}&sparkline=false`
     )
     return response.data
   } catch (error) {
@@ -35,7 +35,7 @@ export async function UpdatePricesForIds(coinIds) {
 
 export async function FetchCoinHistoricalData(coinId, switchChartDays) {
   const response = await fetch(
-    `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${switchChartDays}`
+    `${BASE_API}/coins/${coinId}/market_chart?vs_currency=usd&days=${switchChartDays}`
   ) // Получаем данные для графика за разные таймфреймы/дни
   if (!response.ok) {
     throw new Error("Ошибка при получении данных")
@@ -108,7 +108,7 @@ export async function GetSantiment() {
 export async function FetchCoinPriceChange(coinId, days) {
   try {
     const response = await fetch(
-      `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${days}`
+      `${BASE_API}/coins/${coinId}/market_chart?vs_currency=usd&days=${days}`
     )
 
     if (!response.ok) {
@@ -145,7 +145,7 @@ export async function UpdateFavoriteCoins(coinIds) {
     const idsParam = coinIds.slice(0, 50).join(",") // Берем максимум 50 монет
 
     const response = await axios.get(
-      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${idsParam}&sparkline=false&price_change_percentage=24h,7d`
+      `${BASE_API}/coins/markets?vs_currency=usd&ids=${idsParam}&sparkline=false&price_change_percentage=24h,7d`
     )
 
     return response.data
@@ -167,9 +167,7 @@ export async function UpdateFavoriteCoins(coinIds) {
 export async function fetchCurrentPrices(coinIds) {
   try {
     const response = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${coinIds.join(
-        ","
-      )}&vs_currencies=usd`
+      `${BASE_API}/simple/price?ids=${coinIds.join(",")}&vs_currencies=usd`
     )
 
     if (!response.ok) {
@@ -197,9 +195,7 @@ export async function SearchCoins(query) {
   if (!query || query.length < 2) return []
 
   try {
-    const response = await axios.get(
-      `https://api.coingecko.com/api/v3/search?query=${query}`
-    )
+    const response = await axios.get(`${BASE_API}/search?query=${query}`)
 
     if (!response.data || !response.data.coins) {
       return []
@@ -213,7 +209,7 @@ export async function SearchCoins(query) {
     // Получаем рыночные данные для найденных монет
     const coinIds = coins.map((coin) => coin.id).join(",")
     const marketResponse = await axios.get(
-      `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${coinIds}&sparkline=true&price_change_percentage=7d`
+      `${BASE_API}/coins/markets?vs_currency=usd&ids=${coinIds}&sparkline=true&price_change_percentage=7d`
     )
 
     return marketResponse.data

@@ -122,7 +122,7 @@ const HeaderCard = ({
           {getTimeframeDisplayName(timeframe)} • {getTimeframeDetails(timeframe)}
         </Text>
         <Text style={styles.timeframeSource}>
-          Source: CoinGecko API
+          {/* Source: CoinGecko API */}
           {hasSimulatedData ? " (simulated data)" : ""}
           {!portfolioMetrics.allDataLoaded && timeframe !== "24h" ? " (loading...)" : ""}
         </Text>
