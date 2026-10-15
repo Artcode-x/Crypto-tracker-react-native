@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect, useCallback } from "react"
+import React, { useState, useRef, useEffect, useMemo } from "react"
 import { View, Text, Dimensions } from "react-native"
 import Svg, { Rect, Line, G } from "react-native-svg"
 import { RFValue } from "react-native-responsive-fontsize"
 import { styles } from "./CandlestickChart.styles"
 import {
   GestureHandlerRootView,
+  PanGestureHandler,
   PinchGestureHandler,
   TapGestureHandler,
   State
@@ -13,6 +14,12 @@ import * as Haptics from "expo-haptics"
 import { useDispatch } from "react-redux"
 import { setDoubleTap } from "../../../../../store/reducersSlice"
 
+const MIN_LIMIT = 10
+const MAX_LIMIT = 200
+const ZOOM_IN_THRESHOLD = 1.05
+const ZOOM_OUT_THRESHOLD = 0.95
+const DEFAULT_LIMIT = 100
+
 const CandlestickChart = ({
   data,
   width: chartWidth,
@@ -20,18 +27,17 @@ const CandlestickChart = ({
   limit,
   setLimit
 }) => {
-  if (!data || data.length === 0) return null
+  // offset - Сколько свечей окно сдвинуто влево (в прошлое) от правого края. 0 = показываем самые новые свечи.
+  const [offset, setOffset] = useState(0)
 
-  const [zoomScale, setZoomScale] = useState(1)
-  const [lastScale, setLastScale] = useState(1)
-  const [internalLimit, setInternalLimit] = useState(limit || data.length)
-
-  const pinchRef = useRef()
-  const doubleTapRef = useRef()
+  const pinchRef = useRef() // реф для пинч-жеста
+  const panRef = useRef() // реф для пана
+  const doubleTapRef = useRef() // реф для двойного тапа
 
   const dispatch = useDispatch()
 
-  // Функция для легкой вибрации
+  if (!data || data.length === 0) return null
+
   const triggerHaptic = () => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -40,65 +46,121 @@ const CandlestickChart = ({
     }
   }
 
-  // Синхронизация internalLimit с limit при изменении извне
-  useEffect(() => {
-    if (limit && limit !== internalLimit) {
-      setInternalLimit(limit)
-    }
-  }, [limit])
-
-  // Используем либо limit, либо internalLimit
-  const currentLimit = limit !== undefined ? limit : internalLimit
-
-  // Ограничение количества отображаемых свечей
-  const displayData = data.slice(0, Math.min(currentLimit, data.length))
+  const currentLimit = limit
 
   const margin = { top: 15, right: 15, bottom: 15, left: 45 }
   const innerWidth = chartWidth - margin.left - margin.right
   const innerHeight = chartHeight - margin.top - margin.bottom
 
-  const minPrice = Math.min(...displayData.map((d) => Math.min(d.low, d.open, d.close)))
-  const maxPrice = Math.max(...displayData.map((d) => Math.max(d.high, d.open, d.close)))
-  const priceRange = maxPrice - minPrice
+  // Максимальный сдвиг окна
+  // Максимально возможный offset.
+  // Показывает, на сколько свечей можно уехать в прошлое, чтобы окно ещё не вылезло за левый край данных.
+  // Math.max(0, ...) — защита от отрицательного значения, если данных меньше лимита.
+  const maxOffset = Math.max(0, data.length - currentLimit)
+
+  // Следит за maxOffset и, если тот уменьшился, «подрезает» offset, чтобы он не остался больше новой границы.
+  // (Сбрасываем offset, если он вылез за пределы после зума)
+  useEffect(() => {
+    setOffset((prev) => Math.min(prev, maxOffset))
+  }, [maxOffset])
+
+  // Окно отображаемых данных
+  // data отсортирован от старых к новым: offset = 0 → последние currentLimit свечей
+  const { displayData, startIndex } = useMemo(() => {
+    // Math.max(0, X) возвращает большее из двух: либо 0, либо X. Не даёт результату стать отрицательным.
+    // Если X ушёл в минус — он превращается в 0.
+    const start = Math.max(0, data.length - currentLimit - offset)
+
+    // Без защиты (если start ушёл в минус → часть окна «за кадром/пропадает»)
+    // const start = data.length - currentLimit - offset
+
+    const end = Math.min(data.length, start + currentLimit)
+    return {
+      displayData: data.slice(start, end),
+      startIndex: start
+    }
+  }, [data, currentLimit, offset])
+
+  // min/max без спреда по массиву
+  const { minPrice, maxPrice } = useMemo(() => {
+    let mn = Infinity
+    let mx = -Infinity
+    for (let i = 0; i < displayData.length; i++) {
+      const d = displayData[i]
+      if (d.low < mn) mn = d.low
+      if (d.open < mn) mn = d.open
+      if (d.close < mn) mn = d.close
+      if (d.high > mx) mx = d.high
+      if (d.open > mx) mx = d.open
+      if (d.close > mx) mx = d.close
+    }
+    return { minPrice: mn, maxPrice: mx }
+  }, [displayData])
+
+  const priceRange = maxPrice - minPrice || 1
 
   const xScale = (index) =>
-    margin.left + (index / (displayData.length - 1)) * innerWidth + 1
+    margin.left + (index / Math.max(1, displayData.length - 1)) * innerWidth + 1
+
   const yScale = (price) =>
     margin.top + innerHeight - ((price - minPrice) / priceRange) * innerHeight
 
-  // Обработка жеста pinch для зума
-  const onPinchGestureEvent = (event) => {
-    setZoomScale(event.nativeEvent.scale)
-  }
+  // === Жесты ===
 
   const onPinchHandlerStateChange = (event) => {
-    if (event.nativeEvent.oldState === State.ACTIVE) {
-      const newScale = lastScale * event.nativeEvent.scale
-      setLastScale(newScale)
+    if (event.nativeEvent.oldState !== State.ACTIVE) return
+    const scale = event.nativeEvent.scale
 
-      // Изменение количества отображаемых свечей на основе зума
-      if (event.nativeEvent.scale > 1.05) {
-        // Увеличиваем (уменьшаем количество свеч)
-        const newCount = Math.max(10, Math.floor(currentLimit * 0.8))
-        setLimit(newCount)
-      } else if (event.nativeEvent.scale < 1.05) {
-        // Уменьшаем (увеличиваем количество свеч)
-        const newCount = Math.min(200, Math.ceil(currentLimit * 1.2))
-        setLimit(newCount)
-      }
+    if (scale > ZOOM_IN_THRESHOLD) {
+      setLimit(Math.max(MIN_LIMIT, Math.floor(currentLimit * 0.8)))
+    } else if (scale < ZOOM_OUT_THRESHOLD) {
+      setLimit(Math.min(MAX_LIMIT, data.length, Math.ceil(currentLimit * 1.2)))
+    }
+  }
 
-      setZoomScale(1)
+  // Это коэффициент замедления скролла.
+  const PAN_SENSITIVITY = 12.5
+
+  // Функция вызывается непрерывно, пока палец движется по экрану (десятки раз в секунду).
+  // Задача — превратить движение пальца в пикселях в сдвиг окна в свечах (offset).
+  const onPanGestureEvent = (event) => {
+    if (displayData.length < 2) return
+    // Сколько пикселей пальца = одна свеча
+    // Пример: innerWidth = 350, limit = 100 → 3.5px на свечу.  3.5 * 2.5 = 8.75px или 3.5 * 12.5 = 43.5
+    // Чем больше limit (свечей на экране), тем меньше candleWidthPx → тем «чувствительнее» скролл. Логично: свечи мелкие, окно двигается быстрее.
+    const candleWidthPx = (innerWidth / currentLimit) * PAN_SENSITIVITY
+    // Перевод пикселей в свечи
+    // event.nativeEvent.translationX — накопленное смещение пальца от точки касания, в пикселях.
+    // Это не дельта между кадрами, а всё расстояние с начала жеста.
+    // Делим на «цену свечи» → получаем смещение в свечах. Округляем до целого (Math.round) — свечи целые, дробных сдвигов нет.
+
+    // Пример: Палец ушёл вправо на 20px.
+    // candleWidthPx = 8.75. shifted = Math.round(20 / 8.75) = Math.round(2.28) = 2. Значит окно надо сдвинуть на 2 свечи.
+    const shifted = Math.round(event.nativeEvent.translationX / candleWidthPx)
+
+    if (shifted !== 0) {
+      // prev — текущий offset.
+      setOffset((prev) => {
+        // next = prev + shifted — новый offset.
+        const next = prev + shifted
+        // ath.max(0, Math.min(maxOffset, next)) — кламп в диапазон [0, maxOffset].
+        // Не даёт уехать в прошлое дальше maxOffset.
+        // Не даёт уехать «в будущее» дальше 0 (к новым свечам, которых ещё нет).
+        return Math.max(0, Math.min(maxOffset, next))
+      })
     }
   }
 
   const onDoubleTap = (event) => {
     if (event.nativeEvent.state === State.ACTIVE) {
-      // Double tap detected, resetting to full data
-      setLimit(100)
+      setLimit(DEFAULT_LIMIT)
+      setOffset(0)
       triggerHaptic()
       dispatch(setDoubleTap())
     }
   }
+
+  // === Ось Y ===
 
   const generateYAxisLabels = () => {
     const numberOfLabels = 5
@@ -131,11 +193,7 @@ const CandlestickChart = ({
         formattedPrice = `$${price.toExponential(3)}`
       }
 
-      labels.push({
-        price: formattedPrice,
-        y: yPosition,
-        rawPrice: price
-      })
+      labels.push({ price: formattedPrice, y: yPosition, rawPrice: price })
     }
 
     return labels
@@ -154,7 +212,7 @@ const CandlestickChart = ({
         <View style={styles.limitContainer}>
           <Text style={styles.limitHint}>
             {currentLimit < data.length
-              ? `Showing ${currentLimit} of ${data.length} candles • Pinch to zoom • Double tap to reset`
+              ? `${currentLimit} of ${data.length} candles • Pinch to zoom • Double tap to reset`
               : `Pinch to zoom • Double tap to reset`}
           </Text>
         </View>
@@ -167,109 +225,117 @@ const CandlestickChart = ({
           <View style={styles.chartBox}>
             <PinchGestureHandler
               ref={pinchRef}
-              onGestureEvent={onPinchGestureEvent}
+              simultaneousHandlers={panRef}
               onHandlerStateChange={onPinchHandlerStateChange}
             >
-              <View style={{ width: chartWidth, height: chartHeight }}>
-                {/* Метки оси Y */}
-                {yAxisLabels.map((label, index) => (
-                  <Text
-                    key={index}
-                    style={[
-                      styles.yAxisLabel,
-                      {
-                        position: "absolute",
-                        top: label.y - 8,
-                        left: yAxisLeftOffset,
-                        zIndex: 1,
-                        backgroundColor: "transparent",
-                        fontSize: RFValue(7)
-                      }
-                    ]}
-                  >
-                    {label.price}
-                  </Text>
-                ))}
+              <PanGestureHandler
+                ref={panRef}
+                simultaneousHandlers={pinchRef}
+                onGestureEvent={onPanGestureEvent}
+                minPointers={1}
+                maxPointers={1}
+              >
+                <View style={{ width: chartWidth, height: chartHeight }}>
+                  {/* Метки оси Y */}
+                  {yAxisLabels.map((label, index) => (
+                    <Text
+                      key={index}
+                      style={[
+                        styles.yAxisLabel,
+                        {
+                          position: "absolute",
+                          top: label.y - 8,
+                          left: yAxisLeftOffset,
+                          zIndex: 1,
+                          backgroundColor: "transparent",
+                          fontSize: RFValue(7)
+                        }
+                      ]}
+                    >
+                      {label.price}
+                    </Text>
+                  ))}
 
-                {/* SVG график */}
-                <View style={{ paddingLeft: axisLeftLine }}>
-                  <Svg width={chartWidth} height={chartHeight}>
-                    {/* Горизонтальные линии сетки */}
-                    {yAxisLabels.map((label, index) => (
+                  {/* SVG график */}
+                  <View style={{ paddingLeft: axisLeftLine }}>
+                    <Svg width={chartWidth} height={chartHeight}>
+                      {/* Горизонтальные линии сетки */}
+                      {yAxisLabels.map((label, index) => (
+                        <Line
+                          key={`grid-${index}`}
+                          x1={margin.left}
+                          y1={label.y}
+                          x2={chartWidth - margin.right}
+                          y2={label.y}
+                          stroke='rgba(255,255,255,0.15)'
+                          strokeWidth='0.5'
+                          strokeDasharray='2,2'
+                        />
+                      ))}
+
+                      {/* Ось X */}
                       <Line
-                        key={`grid-${index}`}
                         x1={margin.left}
-                        y1={label.y}
+                        y1={chartHeight - margin.bottom}
                         x2={chartWidth - margin.right}
-                        y2={label.y}
-                        stroke='rgba(255,255,255,0.15)'
-                        strokeWidth='0.5'
-                        strokeDasharray='2,2'
+                        y2={chartHeight - margin.bottom}
+                        stroke='rgba(255,255,255,0.4)'
+                        strokeWidth='1'
                       />
-                    ))}
 
-                    {/* Ось X */}
-                    <Line
-                      x1={margin.left}
-                      y1={chartHeight - margin.bottom}
-                      x2={chartWidth - margin.right}
-                      y2={chartHeight - margin.bottom}
-                      stroke='rgba(255,255,255,0.4)'
-                      strokeWidth='1'
-                    />
+                      {/* Ось Y */}
+                      <Line
+                        x1={margin.left}
+                        y1={margin.top}
+                        x2={margin.left}
+                        y2={chartHeight - margin.bottom}
+                        stroke='rgba(255,255,255,0.4)'
+                        strokeWidth='1'
+                      />
 
-                    {/* Ось Y */}
-                    <Line
-                      x1={margin.left}
-                      y1={margin.top}
-                      x2={margin.left}
-                      y2={chartHeight - margin.bottom}
-                      stroke='rgba(255,255,255,0.4)'
-                      strokeWidth='1'
-                    />
+                      {/* Свечи */}
+                      {displayData.map((candle, index) => {
+                        const x = xScale(index) - candleWidth / 2
+                        const openY = yScale(candle.open)
+                        const closeY = yScale(candle.close)
+                        const highY = yScale(candle.high)
+                        const lowY = yScale(candle.low)
 
-                    {/* Свечи */}
-                    {displayData.map((candle, index) => {
-                      const x = xScale(index) - candleWidth / 2
-                      const openY = yScale(candle.open)
-                      const closeY = yScale(candle.close)
-                      const highY = yScale(candle.high)
-                      const lowY = yScale(candle.low)
+                        const isBullish = candle.close >= candle.open
+                        const color = isBullish ? "#4CAF50" : "#F44336"
+                        const candleTopY = isBullish ? closeY : openY
+                        const candleBottomY = isBullish ? openY : closeY
+                        const candleHeight = Math.max(
+                          1,
+                          Math.abs(candleBottomY - candleTopY)
+                        )
 
-                      const isBullish = candle.close >= candle.open
-                      const color = isBullish ? "#4CAF50" : "#F44336"
-                      const candleTopY = isBullish ? closeY : openY
-                      const candleBottomY = isBullish ? openY : closeY
-                      const candleHeight = Math.max(
-                        1,
-                        Math.abs(candleBottomY - candleTopY)
-                      )
-
-                      return (
-                        <G key={index}>
-                          <Line
-                            x1={x + candleWidth / 2}
-                            y1={highY}
-                            x2={x + candleWidth / 2}
-                            y2={lowY}
-                            stroke={color}
-                            strokeWidth='0.8'
-                          />
-                          <Rect
-                            x={x}
-                            y={candleTopY}
-                            width={candleWidth}
-                            height={candleHeight}
-                            fill={color}
-                            stroke={color}
-                            strokeWidth='0.5'
-                          />
-                        </G>
-                      )
-                    })}
-                  </Svg>
+                        return (
+                          <G key={`${startIndex}-${index}`}>
+                            <Line
+                              x1={x + candleWidth / 2}
+                              y1={highY}
+                              x2={x + candleWidth / 2}
+                              y2={lowY}
+                              stroke={color}
+                              strokeWidth='0.8'
+                            />
+                            <Rect
+                              x={x}
+                              y={candleTopY}
+                              width={candleWidth}
+                              height={candleHeight}
+                              fill={color}
+                              stroke={color}
+                              strokeWidth='0.5'
+                            />
+                          </G>
+                        )
+                      })}
+                    </Svg>
+                  </View>
                 </View>
-              </View>
+              </PanGestureHandler>
             </PinchGestureHandler>
           </View>
         </TapGestureHandler>
