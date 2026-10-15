@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from "react"
+import React, { useState, useRef } from "react"
 import { View, Text, Dimensions } from "react-native"
 import Svg, { Rect, Line, G } from "react-native-svg"
 import { RFValue } from "react-native-responsive-fontsize"
@@ -16,9 +16,25 @@ import { setDoubleTap } from "../../../../../store/reducersSlice"
 
 const MIN_LIMIT = 10
 const MAX_LIMIT = 200
+const DEFAULT_LIMIT = 100
 const ZOOM_IN_THRESHOLD = 1.05
 const ZOOM_OUT_THRESHOLD = 0.95
-const DEFAULT_LIMIT = 100
+
+const formatPrice = (price) => {
+  if (price >= 1000000) return `$${(price / 1000000).toFixed(2)}M`
+  if (price >= 1000) return `$${(price / 1000).toFixed(2)}k`
+
+  let text
+  if (price >= 1) text = `$${price.toFixed(2)}`
+  else if (price >= 0.1) text = `$${price.toFixed(3)}`
+  else if (price >= 0.01) text = `$${price.toFixed(4)}`
+  else if (price >= 0.001) text = `$${price.toFixed(5)}`
+  else if (price >= 0.0001) text = `$${price.toFixed(6)}`
+  else text = `$${price.toFixed(8)}`
+
+  if (text.length > 12) text = `$${price.toExponential(3)}`
+  return text
+}
 
 const CandlestickChart = ({
   data,
@@ -27,7 +43,9 @@ const CandlestickChart = ({
   limit,
   setLimit
 }) => {
-  const [offset, setOffset] = useState(0)
+  const [rawOffset, setRawOffset] = useState(0)
+
+  const startOffset = useRef(0)
 
   const pinchRef = useRef()
   const panRef = useRef()
@@ -37,63 +55,54 @@ const CandlestickChart = ({
 
   if (!data || data.length === 0) return null
 
-  const triggerHaptic = () => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    } catch (error) {
-      console.log("Haptic not available:", error)
-    }
-  }
+  const currentLimit = Math.max(1, Math.min(limit, data.length))
 
-  const currentLimit = limit
+  const maxOffset = data.length - currentLimit
+
+  const offset = Math.min(rawOffset, maxOffset)
+
+  const exactStart = data.length - currentLimit - offset
+
+  const start = Math.floor(exactStart)
+
+  const fraction = exactStart - start
+
+  const displayData = data.slice(start, Math.min(data.length, start + currentLimit + 2))
+
+  let minPrice = Infinity
+  let maxPrice = -Infinity
+  for (const c of displayData) {
+    minPrice = Math.min(minPrice, c.low)
+    maxPrice = Math.max(maxPrice, c.high)
+  }
+  const priceRange = maxPrice - minPrice || 1
 
   const margin = { top: 15, right: 15, bottom: 15, left: 45 }
   const innerWidth = chartWidth - margin.left - margin.right
   const innerHeight = chartHeight - margin.top - margin.bottom
 
-  const maxOffset = Math.max(0, data.length - currentLimit)
+  const candleStep = innerWidth / currentLimit
+  const candleWidth = Math.max(2, candleStep * 0.6)
+  const pixelOffset = fraction * candleStep
 
-  useEffect(() => {
-    setOffset((prev) => Math.min(prev, maxOffset))
-  }, [maxOffset])
-
-  const { displayData, startIndex } = useMemo(() => {
-    const start = Math.max(0, data.length - currentLimit - offset)
-
-    const end = Math.min(data.length, start + currentLimit)
-    return {
-      displayData: data.slice(start, end),
-      startIndex: start
-    }
-  }, [data, currentLimit, offset])
-
-  const { minPrice, maxPrice } = useMemo(() => {
-    let mn = Infinity
-    let mx = -Infinity
-    for (let i = 0; i < displayData.length; i++) {
-      const d = displayData[i]
-      if (d.low < mn) mn = d.low
-      if (d.open < mn) mn = d.open
-      if (d.close < mn) mn = d.close
-      if (d.high > mx) mx = d.high
-      if (d.open > mx) mx = d.open
-      if (d.close > mx) mx = d.close
-    }
-    return { minPrice: mn, maxPrice: mx }
-  }, [displayData])
-
-  const priceRange = maxPrice - minPrice || 1
-
-  const xScale = (index) =>
-    margin.left + (index / Math.max(1, displayData.length - 1)) * innerWidth + 1
+  const xScale = (index) => margin.left + index * candleStep - pixelOffset
 
   const yScale = (price) =>
     margin.top + innerHeight - ((price - minPrice) / priceRange) * innerHeight
 
-  // === Жесты ===
+  const yAxisLabels = []
+  for (let i = 0; i <= 5; i++) {
+    const price = minPrice + (priceRange * i) / 5
+    yAxisLabels.push({ text: formatPrice(price), y: yScale(price) })
+  }
 
-  const onPinchHandlerStateChange = (event) => {
+  const screenWidth = Dimensions.get("window").width
+  const yAxisLeftOffset = screenWidth > 600 ? 4 : 9
+  const axisLeftLine = screenWidth > 400 && screenWidth < 600 ? 3 : 0
+
+  const onPinchStateChange = (event) => {
     if (event.nativeEvent.oldState !== State.ACTIVE) return
+
     const scale = event.nativeEvent.scale
 
     if (scale > ZOOM_IN_THRESHOLD) {
@@ -103,76 +112,27 @@ const CandlestickChart = ({
     }
   }
 
-  const PAN_SENSITIVITY = 12.5
+  const onPanStateChange = (event) => {
+    if (event.nativeEvent.state === State.BEGAN) {
+      startOffset.current = offset
+    }
+  }
 
   const onPanGestureEvent = (event) => {
-    if (displayData.length < 2) return
-    const candleWidthPx = (innerWidth / currentLimit) * PAN_SENSITIVITY
-    const shifted = Math.round(event.nativeEvent.translationX / candleWidthPx)
+    const movedCandles = event.nativeEvent.translationX / candleStep
+    const next = startOffset.current + movedCandles
 
-    if (shifted !== 0) {
-      setOffset((prev) => {
-        const next = prev + shifted
-
-        return Math.max(0, Math.min(maxOffset, next))
-      })
-    }
+    setRawOffset(Math.max(0, Math.min(maxOffset, next)))
   }
 
   const onDoubleTap = (event) => {
     if (event.nativeEvent.state === State.ACTIVE) {
       setLimit(DEFAULT_LIMIT)
-      setOffset(0)
-      triggerHaptic()
+      setRawOffset(0)
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})
       dispatch(setDoubleTap())
     }
   }
-
-  // === Ось Y ===
-
-  const generateYAxisLabels = () => {
-    const numberOfLabels = 5
-    const labels = []
-
-    for (let i = 0; i <= numberOfLabels; i++) {
-      const price = minPrice + (priceRange * i) / numberOfLabels
-      const yPosition = yScale(price)
-
-      let formattedPrice
-      if (price >= 1000000) {
-        formattedPrice = `$${(price / 1000000).toFixed(2)}M`
-      } else if (price >= 1000) {
-        formattedPrice = `$${(price / 1000).toFixed(2)}k`
-      } else if (price >= 1) {
-        formattedPrice = `$${price.toFixed(2)}`
-      } else if (price >= 0.1) {
-        formattedPrice = `$${price.toFixed(3)}`
-      } else if (price >= 0.01) {
-        formattedPrice = `$${price.toFixed(4)}`
-      } else if (price >= 0.001) {
-        formattedPrice = `$${price.toFixed(5)}`
-      } else if (price >= 0.0001) {
-        formattedPrice = `$${price.toFixed(6)}`
-      } else {
-        formattedPrice = `$${price.toFixed(8)}`
-      }
-
-      if (formattedPrice.length > 12) {
-        formattedPrice = `$${price.toExponential(3)}`
-      }
-
-      labels.push({ price: formattedPrice, y: yPosition, rawPrice: price })
-    }
-
-    return labels
-  }
-
-  const yAxisLabels = generateYAxisLabels()
-  const candleWidth = Math.max(2, (innerWidth / displayData.length) * 0.6)
-
-  const screenWidth = Dimensions.get("window").width
-  const yAxisLeftOffset = screenWidth > 600 ? 4 : 9
-  const axisLeftLine = screenWidth > 400 && screenWidth < 600 ? 3 : 0
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -194,17 +154,18 @@ const CandlestickChart = ({
             <PinchGestureHandler
               ref={pinchRef}
               simultaneousHandlers={panRef}
-              onHandlerStateChange={onPinchHandlerStateChange}
+              onHandlerStateChange={onPinchStateChange}
             >
               <PanGestureHandler
                 ref={panRef}
                 simultaneousHandlers={pinchRef}
+                onHandlerStateChange={onPanStateChange}
                 onGestureEvent={onPanGestureEvent}
                 minPointers={1}
                 maxPointers={1}
               >
                 <View style={{ width: chartWidth, height: chartHeight }}>
-                  {/* Метки оси Y */}
+                  {/* Подписи цен слева */}
                   {yAxisLabels.map((label, index) => (
                     <Text
                       key={index}
@@ -220,11 +181,10 @@ const CandlestickChart = ({
                         }
                       ]}
                     >
-                      {label.price}
+                      {label.text}
                     </Text>
                   ))}
 
-                  {/* SVG график */}
                   <View style={{ paddingLeft: axisLeftLine }}>
                     <Svg width={chartWidth} height={chartHeight}>
                       {/* Горизонтальные линии сетки */}
@@ -263,36 +223,32 @@ const CandlestickChart = ({
 
                       {/* Свечи */}
                       {displayData.map((candle, index) => {
-                        const x = xScale(index) - candleWidth / 2
-                        const openY = yScale(candle.open)
-                        const closeY = yScale(candle.close)
-                        const highY = yScale(candle.high)
-                        const lowY = yScale(candle.low)
+                        const centerX = xScale(index)
+                        const isGreen = candle.close >= candle.open
+                        const color = isGreen ? "#4CAF50" : "#F44336"
 
-                        const isBullish = candle.close >= candle.open
-                        const color = isBullish ? "#4CAF50" : "#F44336"
-                        const candleTopY = isBullish ? closeY : openY
-                        const candleBottomY = isBullish ? openY : closeY
-                        const candleHeight = Math.max(
-                          1,
-                          Math.abs(candleBottomY - candleTopY)
-                        )
+                        // Тело свечи: от open до close
+                        const bodyTop = yScale(Math.max(candle.open, candle.close))
+                        const bodyBottom = yScale(Math.min(candle.open, candle.close))
+                        const bodyHeight = Math.max(1, bodyBottom - bodyTop)
 
                         return (
-                          <G key={`${startIndex}-${index}`}>
+                          <G key={start + index}>
+                            {/* Фитиль: от high до low */}
                             <Line
-                              x1={x + candleWidth / 2}
-                              y1={highY}
-                              x2={x + candleWidth / 2}
-                              y2={lowY}
+                              x1={centerX}
+                              y1={yScale(candle.high)}
+                              x2={centerX}
+                              y2={yScale(candle.low)}
                               stroke={color}
                               strokeWidth='0.8'
                             />
+                            {/* Тело */}
                             <Rect
-                              x={x}
-                              y={candleTopY}
+                              x={centerX - candleWidth / 2}
+                              y={bodyTop}
                               width={candleWidth}
-                              height={candleHeight}
+                              height={bodyHeight}
                               fill={color}
                               stroke={color}
                               strokeWidth='0.5'
