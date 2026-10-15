@@ -20,7 +20,7 @@ export const styles = StyleSheet.create({
   },
 
   limitHint: {
-    fontSize: RFValue(9),
+    fontSize: RFValue(8),
     color: "rgba(255, 255, 255, 0.5)",
     fontStyle: "italic"
   },
