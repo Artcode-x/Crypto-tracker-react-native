@@ -27,12 +27,11 @@ const CandlestickChart = ({
   limit,
   setLimit
 }) => {
-  // offset - Сколько свечей окно сдвинуто влево (в прошлое) от правого края. 0 = показываем самые новые свечи.
   const [offset, setOffset] = useState(0)
 
-  const pinchRef = useRef() // реф для пинч-жеста
-  const panRef = useRef() // реф для пана
-  const doubleTapRef = useRef() // реф для двойного тапа
+  const pinchRef = useRef()
+  const panRef = useRef()
+  const doubleTapRef = useRef()
 
   const dispatch = useDispatch()
 
@@ -52,27 +51,14 @@ const CandlestickChart = ({
   const innerWidth = chartWidth - margin.left - margin.right
   const innerHeight = chartHeight - margin.top - margin.bottom
 
-  // Максимальный сдвиг окна
-  // Максимально возможный offset.
-  // Показывает, на сколько свечей можно уехать в прошлое, чтобы окно ещё не вылезло за левый край данных.
-  // Math.max(0, ...) — защита от отрицательного значения, если данных меньше лимита.
   const maxOffset = Math.max(0, data.length - currentLimit)
 
-  // Следит за maxOffset и, если тот уменьшился, «подрезает» offset, чтобы он не остался больше новой границы.
-  // (Сбрасываем offset, если он вылез за пределы после зума)
   useEffect(() => {
     setOffset((prev) => Math.min(prev, maxOffset))
   }, [maxOffset])
 
-  // Окно отображаемых данных
-  // data отсортирован от старых к новым: offset = 0 → последние currentLimit свечей
   const { displayData, startIndex } = useMemo(() => {
-    // Math.max(0, X) возвращает большее из двух: либо 0, либо X. Не даёт результату стать отрицательным.
-    // Если X ушёл в минус — он превращается в 0.
     const start = Math.max(0, data.length - currentLimit - offset)
-
-    // Без защиты (если start ушёл в минус → часть окна «за кадром/пропадает»)
-    // const start = data.length - currentLimit - offset
 
     const end = Math.min(data.length, start + currentLimit)
     return {
@@ -81,7 +67,6 @@ const CandlestickChart = ({
     }
   }, [data, currentLimit, offset])
 
-  // min/max без спреда по массиву
   const { minPrice, maxPrice } = useMemo(() => {
     let mn = Infinity
     let mx = -Infinity
@@ -118,34 +103,17 @@ const CandlestickChart = ({
     }
   }
 
-  // Это коэффициент замедления скролла.
   const PAN_SENSITIVITY = 12.5
 
-  // Функция вызывается непрерывно, пока палец движется по экрану (десятки раз в секунду).
-  // Задача — превратить движение пальца в пикселях в сдвиг окна в свечах (offset).
   const onPanGestureEvent = (event) => {
     if (displayData.length < 2) return
-    // Сколько пикселей пальца = одна свеча
-    // Пример: innerWidth = 350, limit = 100 → 3.5px на свечу.  3.5 * 2.5 = 8.75px или 3.5 * 12.5 = 43.5
-    // Чем больше limit (свечей на экране), тем меньше candleWidthPx → тем «чувствительнее» скролл. Логично: свечи мелкие, окно двигается быстрее.
     const candleWidthPx = (innerWidth / currentLimit) * PAN_SENSITIVITY
-    // Перевод пикселей в свечи
-    // event.nativeEvent.translationX — накопленное смещение пальца от точки касания, в пикселях.
-    // Это не дельта между кадрами, а всё расстояние с начала жеста.
-    // Делим на «цену свечи» → получаем смещение в свечах. Округляем до целого (Math.round) — свечи целые, дробных сдвигов нет.
-
-    // Пример: Палец ушёл вправо на 20px.
-    // candleWidthPx = 8.75. shifted = Math.round(20 / 8.75) = Math.round(2.28) = 2. Значит окно надо сдвинуть на 2 свечи.
     const shifted = Math.round(event.nativeEvent.translationX / candleWidthPx)
 
     if (shifted !== 0) {
-      // prev — текущий offset.
       setOffset((prev) => {
-        // next = prev + shifted — новый offset.
         const next = prev + shifted
-        // ath.max(0, Math.min(maxOffset, next)) — кламп в диапазон [0, maxOffset].
-        // Не даёт уехать в прошлое дальше maxOffset.
-        // Не даёт уехать «в будущее» дальше 0 (к новым свечам, которых ещё нет).
+
         return Math.max(0, Math.min(maxOffset, next))
       })
     }
