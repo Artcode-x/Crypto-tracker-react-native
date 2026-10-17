@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react"
 import { View, Text, Dimensions } from "react-native"
-import Svg, { Rect, Line, G } from "react-native-svg"
+import Svg, { Rect, Line, G, ClipPath, Defs } from "react-native-svg"
 import { RFValue } from "react-native-responsive-fontsize"
 import { styles } from "./CandlestickChart.styles"
 import {
@@ -187,6 +187,16 @@ const CandlestickChart = ({
 
                   <View style={{ paddingLeft: axisLeftLine }}>
                     <Svg width={chartWidth} height={chartHeight}>
+                      <Defs>
+                        <ClipPath id='plotClip'>
+                          <Rect
+                            x={margin.left}
+                            y={0}
+                            width={innerWidth}
+                            height={chartHeight}
+                          />
+                        </ClipPath>
+                      </Defs>
                       {/* Горизонтальные линии сетки */}
                       {yAxisLabels.map((label, index) => (
                         <Line
@@ -221,41 +231,43 @@ const CandlestickChart = ({
                         strokeWidth='1'
                       />
 
-                      {/* Свечи */}
-                      {displayData.map((candle, index) => {
-                        const centerX = xScale(index)
-                        const isGreen = candle.close >= candle.open
-                        const color = isGreen ? "#4CAF50" : "#F44336"
+                      <G clipPath='url(#plotClip)'>
+                        {/* Свечи */}
+                        {displayData.map((candle, index) => {
+                          const centerX = xScale(index)
+                          const isGreen = candle.close >= candle.open
+                          const color = isGreen ? "#4CAF50" : "#F44336"
 
-                        // Тело свечи: от open до close
-                        const bodyTop = yScale(Math.max(candle.open, candle.close))
-                        const bodyBottom = yScale(Math.min(candle.open, candle.close))
-                        const bodyHeight = Math.max(1, bodyBottom - bodyTop)
+                          // Тело свечи: от open до close
+                          const bodyTop = yScale(Math.max(candle.open, candle.close))
+                          const bodyBottom = yScale(Math.min(candle.open, candle.close))
+                          const bodyHeight = Math.max(1, bodyBottom - bodyTop)
 
-                        return (
-                          <G key={start + index}>
-                            {/* Фитиль: от high до low */}
-                            <Line
-                              x1={centerX}
-                              y1={yScale(candle.high)}
-                              x2={centerX}
-                              y2={yScale(candle.low)}
-                              stroke={color}
-                              strokeWidth='0.8'
-                            />
-                            {/* Тело */}
-                            <Rect
-                              x={centerX - candleWidth / 2}
-                              y={bodyTop}
-                              width={candleWidth}
-                              height={bodyHeight}
-                              fill={color}
-                              stroke={color}
-                              strokeWidth='0.5'
-                            />
-                          </G>
-                        )
-                      })}
+                          return (
+                            <G key={start + index}>
+                              {/* Фитиль: от high до low */}
+                              <Line
+                                x1={centerX}
+                                y1={yScale(candle.high)}
+                                x2={centerX}
+                                y2={yScale(candle.low)}
+                                stroke={color}
+                                strokeWidth='0.8'
+                              />
+                              {/* Тело */}
+                              <Rect
+                                x={centerX - candleWidth / 2}
+                                y={bodyTop}
+                                width={candleWidth}
+                                height={bodyHeight}
+                                fill={color}
+                                stroke={color}
+                                strokeWidth='0.5'
+                              />
+                            </G>
+                          )
+                        })}
+                      </G>
                     </Svg>
                   </View>
                 </View>
