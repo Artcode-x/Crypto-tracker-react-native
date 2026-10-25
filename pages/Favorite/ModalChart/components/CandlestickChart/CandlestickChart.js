@@ -311,7 +311,8 @@ const CandlestickChart = ({ data, width, height, limit, setLimit }) => {
                               x={label.x}
                               y={axisY + 16}
                               fill='rgba(255,255,255,0.6)'
-                              fontSize='9'
+                              // fontSize='9'
+                              fontSize={RFValue(7.6)}
                               textAnchor={label.anchor}
                             >
                               {label.text}
