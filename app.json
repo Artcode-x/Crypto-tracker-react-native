@@ -23,7 +23,17 @@
           "iosDisplayInForeground": true,
           "defaultChannel": "price-alerts"
         }
-      ]
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ],
+      "expo-status-bar"
     ],
     "ios": {
       "supportsTablet": true,

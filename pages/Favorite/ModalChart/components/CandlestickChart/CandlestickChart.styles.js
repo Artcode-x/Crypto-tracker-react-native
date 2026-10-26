@@ -2,7 +2,6 @@ import { StyleSheet } from "react-native"
 import { RFValue } from "react-native-responsive-fontsize"
 
 export const styles = StyleSheet.create({
-  // Для CandlestickChart
   chartContainerStyle: {
     width: "100%",
     height: "100%",
@@ -20,7 +19,7 @@ export const styles = StyleSheet.create({
   },
 
   limitHint: {
-    fontSize: RFValue(8),
+    fontSize: RFValue(7.5),
     color: "rgba(255, 255, 255, 0.5)",
     fontStyle: "italic"
   },
