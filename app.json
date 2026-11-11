@@ -23,7 +23,8 @@
           "iosDisplayInForeground": true,
           "defaultChannel": "price-alerts"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "ios": {
       "supportsTablet": true,
@@ -58,7 +59,7 @@
         "android.permission.WAKE_LOCK",
         "com.google.android.c2dm.permission.RECEIVE"
       ],
-      "useNextNotificationsApi": true,
+      // "useNextNotificationsApi": true,
       "allowBackup": true
     },
     "web": {
