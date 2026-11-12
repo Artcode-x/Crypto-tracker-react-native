@@ -24,7 +24,16 @@
           "defaultChannel": "price-alerts"
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ]
     ],
     "ios": {
       "supportsTablet": true,
@@ -59,7 +68,6 @@
         "android.permission.WAKE_LOCK",
         "com.google.android.c2dm.permission.RECEIVE"
       ],
-      // "useNextNotificationsApi": true,
       "allowBackup": true
     },
     "web": {
