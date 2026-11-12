@@ -22,13 +22,22 @@
       },
       "channel": "preview"
     },
-    "production": {
+    // "production": {
+    //   "autoIncrement": true,
+    //   "distribution": "store",
+    //   "android": {
+    //     "buildType": "app-bundle",
+    //     "image": "latest",
+    //     "withoutCredentials": false
+    //   },
+     "production": {
       "autoIncrement": true,
       "distribution": "store",
       "android": {
         "buildType": "app-bundle",
         "image": "latest",
-        "withoutCredentials": false
+        "withoutCredentials": false,
+        "credentialsSource": "local"
       },
       "channel": "production",
       "releaseChannel": "default"
