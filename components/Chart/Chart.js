@@ -6,18 +6,25 @@ import {
   TouchableOpacity,
   View,
   ScrollView,
-  Animated
-} from "react-native"
-import { useState, useEffect, useRef } from "react"
-import { useDispatch, useSelector } from "react-redux"
-import { setChartDaysMain } from "../../store/reducersSlice"
-import { mainDaySelector } from "../../store/toolkitSelectors"
-import { ChartBlack } from "./ChartBlack/ChartBlack"
-import { ChartWhite } from "./ChartWhite/ChartWhite"
-import { LinearGradient } from "expo-linear-gradient"
-import { Ionicons, MaterialIcons } from "@expo/vector-icons"
-import * as Haptics from "expo-haptics"
-import { styles } from "./Chart.styles"
+  Animated,
+} from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { setChartDaysMain } from '../../store/reducersSlice';
+import { mainDaySelector } from '../../store/toolkitSelectors';
+import { ChartBlack } from './ChartBlack/ChartBlack';
+import { ChartWhite } from './ChartWhite/ChartWhite';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { styles } from './Chart.styles';
+
+const TIME_PERIODS = [
+  { label: '24H', value: 1 },
+  { label: '7D', value: 7 },
+  { label: '14D', value: 14 },
+  { label: '30D', value: 30 },
+];
 
 export const Chart = ({
   selectedCoinData,
@@ -25,16 +32,17 @@ export const Chart = ({
   modalVisible,
   closeModal,
   isloading,
-  coinHistoryData
+  coinHistoryData,
 }) => {
-  const [is30DSelected, setIs30DSelected] = useState(false)
-  const [isDarkTheme, setIsDarkTheme] = useState(true)
-  const fadeAnim = useRef(new Animated.Value(0)).current
-  const scaleAnim = useRef(new Animated.Value(0.9)).current
-  const scrollViewRef = useRef(null)
+  const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const scrollViewRef = useRef(null);
 
-  const chartDays = useSelector(mainDaySelector)
-  const dispatch = useDispatch()
+  const chartDays = useSelector(mainDaySelector);
+  const dispatch = useDispatch();
+
+  const is30DSelected = chartDays === 30;
 
   useEffect(() => {
     if (modalVisible) {
@@ -42,111 +50,85 @@ export const Chart = ({
         Animated.timing(fadeAnim, {
           toValue: 1,
           duration: 300,
-          useNativeDriver: true
+          useNativeDriver: true,
         }),
         Animated.timing(scaleAnim, {
           toValue: 1,
           duration: 300,
-          useNativeDriver: true
-        })
-      ]).start()
-      // Прокрутка в начало при открытии
+          useNativeDriver: true,
+        }),
+      ]).start();
       setTimeout(() => {
-        scrollViewRef.current?.scrollTo({ y: 0, animated: false })
-      }, 100)
+        scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+      }, 100);
     } else {
-      fadeAnim.setValue(0)
-      scaleAnim.setValue(0.9)
+      fadeAnim.setValue(0);
+      scaleAnim.setValue(0.9);
     }
-  }, [modalVisible])
+  }, [modalVisible]);
 
   const openChart = (days) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    if (days === 30) {
-      setIs30DSelected(true)
-    } else {
-      setIs30DSelected(false)
-    }
-    dispatch(setChartDaysMain(days))
-  }
+    if (days === chartDays) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    dispatch(setChartDaysMain(days));
+  };
 
   const toggleTheme = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    setIsDarkTheme(!isDarkTheme)
-  }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setIsDarkTheme((prev) => !prev);
+  };
 
-  const getPriceChangeColor = (value) => {
-    return value >= 0 ? "#00C853" : "#FF3B30"
-  }
+  const getPriceChangeColor = (value) => (value >= 0 ? '#00C853' : '#FF3B30');
 
   const formatPrice = (price) => {
-    if (!price) return "$0.00"
+    if (!price && price !== 0) return '$0.00';
     return price >= 1
-      ? `$${price.toLocaleString("en-US", {
+      ? `$${price.toLocaleString('en-US', {
           minimumFractionDigits: 2,
-          maximumFractionDigits: 2
+          maximumFractionDigits: 2,
         })}`
-      : `$${price.toFixed(3)}`
-  }
+      : `$${price.toFixed(3)}`;
+  };
 
   const formatLargeNumber = (num) => {
-    if (!num) return "0"
-    if (num >= 1000000000) {
-      return (num / 1000000000).toFixed(2) + "B"
-    }
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(2) + "M"
-    }
-    if (num >= 1000) {
-      return (num / 1000).toFixed(2) + "K"
-    }
-    return num.toFixed(2)
-  }
+    if (!num) return '0';
+    if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+    if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+    if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+    return num.toFixed(2);
+  };
 
-  const timePeriods = [
-    { label: "24H", value: 1 },
-    { label: "7D", value: 7 },
-    { label: "14D", value: 14 },
-    { label: "30D", value: 30 }
-  ]
-
-  // Определение тренда для отображения индикатора
   const getTrendIndicator = () => {
-    if (!chartData?.prices || chartData.prices.length < 2) return null
-
-    const firstPrice = chartData.prices[0]
-    const lastPrice = chartData.prices[chartData.prices.length - 1]
-    const isPositive = lastPrice > firstPrice
-
+    if (!chartData?.prices || chartData.prices.length < 2) return null;
+    const firstPrice = chartData.prices[0];
+    const lastPrice = chartData.prices[chartData.prices.length - 1];
+    const isPositive = lastPrice > firstPrice;
     return {
       isPositive,
       percentage: Math.abs(((lastPrice - firstPrice) / firstPrice) * 100).toFixed(2),
-      currentPrice: lastPrice
-    }
-  }
+      currentPrice: lastPrice,
+    };
+  };
 
-  const trendData = getTrendIndicator()
+  const trendData = getTrendIndicator();
 
   return (
     <Modal
       animationType='fade'
-      transparent={true}
+      transparent
       visible={modalVisible}
       onRequestClose={closeModal}
-      statusBarTranslucent={true}
+      statusBarTranslucent
     >
       <View style={styles.modalBlurContainer}>
         <Animated.View
           style={[
             styles.modalContainer,
-            {
-              opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }]
-            }
+            { opacity: fadeAnim, transform: [{ scale: scaleAnim }] },
           ]}
         >
           <LinearGradient
-            colors={["#0A0A0F", "#121218", "#0A0A0F"]}
+            colors={['#0A0A0F', '#121218', '#0A0A0F']}
             style={styles.modalContent}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -180,7 +162,6 @@ export const Chart = ({
               </TouchableOpacity>
             </View>
 
-            {/* Основной скролл для контента */}
             <ScrollView
               ref={scrollViewRef}
               showsVerticalScrollIndicator={false}
@@ -198,20 +179,20 @@ export const Chart = ({
                     {
                       backgroundColor:
                         selectedCoinData?.price_change_percentage_24h >= 0
-                          ? "rgba(0, 200, 83, 0.15)"
-                          : "rgba(255, 59, 48, 0.15)"
-                    }
+                          ? 'rgba(0, 200, 83, 0.15)'
+                          : 'rgba(255, 59, 48, 0.15)',
+                    },
                   ]}
                 >
                   <Ionicons
                     name={
                       selectedCoinData?.price_change_percentage_24h >= 0
-                        ? "trending-up"
-                        : "trending-down"
+                        ? 'trending-up'
+                        : 'trending-down'
                     }
                     size={14}
                     color={getPriceChangeColor(
-                      selectedCoinData?.price_change_percentage_24h
+                      selectedCoinData?.price_change_percentage_24h,
                     )}
                   />
                   <Text
@@ -219,9 +200,9 @@ export const Chart = ({
                       styles.priceChangeText,
                       {
                         color: getPriceChangeColor(
-                          selectedCoinData?.price_change_percentage_24h
-                        )
-                      }
+                          selectedCoinData?.price_change_percentage_24h,
+                        ),
+                      },
                     ]}
                   >
                     {Math.abs(selectedCoinData?.price_change_percentage_24h?.toFixed(2))}%
@@ -278,16 +259,18 @@ export const Chart = ({
                   <View
                     style={[
                       styles.trendDot,
-                      { backgroundColor: trendData.isPositive ? "#00C853" : "#FF3B30" }
+                      {
+                        backgroundColor: trendData.isPositive ? '#00C853' : '#FF3B30',
+                      },
                     ]}
                   />
                   <Text style={styles.trendText}>
-                    {trendData.isPositive ? "↗ BULLISH" : "↘ BEARISH"} TREND
+                    {trendData.isPositive ? '↗ BULLISH' : '↘ BEARISH'} TREND
                   </Text>
                   <Text
                     style={[
                       styles.trendPercentage,
-                      { color: trendData.isPositive ? "#00C853" : "#FF3B30" }
+                      { color: trendData.isPositive ? '#00C853' : '#FF3B30' },
                     ]}
                   >
                     {trendData.percentage}%
@@ -295,28 +278,31 @@ export const Chart = ({
                 </View>
               )}
 
-              {/* Кнопки переключения таймфреймов графика */}
+              {/* Таймфреймы */}
               <View style={styles.timePeriodsContainer}>
-                {timePeriods.map((period) => (
-                  <TouchableOpacity
-                    key={period.value}
-                    onPress={() => openChart(period.value)}
-                    style={[
-                      styles.timePeriodButton,
-                      chartDays === period.value && styles.timePeriodButtonActive
-                    ]}
-                    activeOpacity={0.7}
-                  >
-                    <Text
+                {TIME_PERIODS.map((period) => {
+                  const active = chartDays === period.value;
+                  return (
+                    <TouchableOpacity
+                      key={period.value}
+                      onPress={() => openChart(period.value)}
                       style={[
-                        styles.timePeriodText,
-                        chartDays === period.value && styles.timePeriodTextActive
+                        styles.timePeriodButton,
+                        active && styles.timePeriodButtonActive,
                       ]}
+                      activeOpacity={0.7}
                     >
-                      {period.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text
+                        style={[
+                          styles.timePeriodText,
+                          active && styles.timePeriodTextActive,
+                        ]}
+                      >
+                        {period.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
 
               {/* График с переключателем темы */}
@@ -330,14 +316,14 @@ export const Chart = ({
                   >
                     <LinearGradient
                       colors={
-                        isDarkTheme ? ["#D4AF37", "#F7EF8A"] : ["#2D3748", "#4A5568"]
+                        isDarkTheme ? ['#D4AF37', '#F7EF8A'] : ['#2D3748', '#4A5568']
                       }
                       style={styles.themeToggleGradient}
                     >
                       <Ionicons
-                        name={isDarkTheme ? "moon" : "sunny"}
+                        name={isDarkTheme ? 'moon' : 'sunny'}
                         size={16}
-                        color={isDarkTheme ? "#0A0A0F" : "#CBD5E0"}
+                        color={isDarkTheme ? '#0A0A0F' : '#CBD5E0'}
                       />
                     </LinearGradient>
                   </TouchableOpacity>
@@ -355,6 +341,7 @@ export const Chart = ({
                         coinHistoryData={coinHistoryData}
                         chartData={chartData}
                         is30DSelected={is30DSelected}
+                        chartDays={chartDays}
                         trendData={trendData}
                       />
                     ) : (
@@ -362,6 +349,7 @@ export const Chart = ({
                         coinHistoryData={coinHistoryData}
                         chartData={chartData}
                         is30DSelected={is30DSelected}
+                        chartDays={chartDays}
                         trendData={trendData}
                       />
                     )}
@@ -376,7 +364,7 @@ export const Chart = ({
                 <View style={styles.additionalGrid}>
                   <View style={styles.additionalCard}>
                     <LinearGradient
-                      colors={["rgba(0, 200, 83, 0.1)", "rgba(0, 200, 83, 0.05)"]}
+                      colors={['rgba(0, 200, 83, 0.1)', 'rgba(0, 200, 83, 0.05)']}
                       style={styles.additionalCardGradient}
                     >
                       <View style={styles.additionalIconContainer}>
@@ -389,13 +377,13 @@ export const Chart = ({
                             styles.additionalValue,
                             {
                               color: getPriceChangeColor(
-                                selectedCoinData?.price_change_percentage_7d_in_currency
-                              )
-                            }
+                                selectedCoinData?.price_change_percentage_7d_in_currency,
+                              ),
+                            },
                           ]}
                         >
                           {selectedCoinData?.price_change_percentage_7d_in_currency?.toFixed(
-                            2
+                            2,
                           )}
                           %
                         </Text>
@@ -405,7 +393,7 @@ export const Chart = ({
 
                   <View style={styles.additionalCard}>
                     <LinearGradient
-                      colors={["rgba(212, 175, 55, 0.1)", "rgba(212, 175, 55, 0.05)"]}
+                      colors={['rgba(212, 175, 55, 0.1)', 'rgba(212, 175, 55, 0.05)']}
                       style={styles.additionalCardGradient}
                     >
                       <View style={styles.additionalIconContainer}>
@@ -422,7 +410,7 @@ export const Chart = ({
 
                   <View style={styles.additionalCard}>
                     <LinearGradient
-                      colors={["rgba(102, 126, 234, 0.1)", "rgba(102, 126, 234, 0.05)"]}
+                      colors={['rgba(102, 126, 234, 0.1)', 'rgba(102, 126, 234, 0.05)']}
                       style={styles.additionalCardGradient}
                     >
                       <View style={styles.additionalIconContainer}>
@@ -435,9 +423,9 @@ export const Chart = ({
                             styles.additionalValue,
                             {
                               color: getPriceChangeColor(
-                                selectedCoinData?.price_change_24h
-                              )
-                            }
+                                selectedCoinData?.price_change_24h,
+                              ),
+                            },
                           ]}
                         >
                           {formatPrice(selectedCoinData?.price_change_24h)}
@@ -448,7 +436,7 @@ export const Chart = ({
 
                   <View style={styles.additionalCard}>
                     <LinearGradient
-                      colors={["rgba(156, 39, 176, 0.1)", "rgba(156, 39, 176, 0.05)"]}
+                      colors={['rgba(156, 39, 176, 0.1)', 'rgba(156, 39, 176, 0.05)']}
                       style={styles.additionalCardGradient}
                     >
                       <View style={styles.additionalIconContainer}>
@@ -474,7 +462,7 @@ export const Chart = ({
                       <Text style={styles.marketDataLabel}>Circulating Supply</Text>
                       <Text style={styles.marketDataValue}>
                         {formatLargeNumber(
-                          selectedCoinData?.market_data?.circulating_supply
+                          selectedCoinData?.market_data?.circulating_supply,
                         )}
                       </Text>
                     </View>
@@ -482,7 +470,7 @@ export const Chart = ({
                       <Text style={styles.marketDataLabel}>Total Supply</Text>
                       <Text style={styles.marketDataValue}>
                         {formatLargeNumber(selectedCoinData?.market_data?.total_supply) ||
-                          "∞"}
+                          '∞'}
                       </Text>
                     </View>
                   </View>
@@ -493,5 +481,5 @@ export const Chart = ({
         </Animated.View>
       </View>
     </Modal>
-  )
-}
+  );
+};
