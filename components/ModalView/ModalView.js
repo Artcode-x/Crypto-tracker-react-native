@@ -1,27 +1,27 @@
-import { Modal, Text, TouchableOpacity, View } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
-import { styles } from "./ModalView.styles"
-import { useDispatch } from "react-redux"
-import { setFlagForView } from "../../store/reducersSlice"
-import { useState } from "react"
+import { Modal, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { styles } from './ModalView.styles';
+import { useDispatch } from 'react-redux';
+import { setFlagForView } from '../../store/reducersSlice';
+import { useState } from 'react';
 
 export const ModalView = ({ modal, setModal }) => {
-  const dispatch = useDispatch()
-  const [activeItem, setActiveItem] = useState(null)
+  const dispatch = useDispatch();
+  const [activeItem, setActiveItem] = useState(null);
 
   const handlePress = (e) => {
     if (e === 1) {
-      dispatch(setFlagForView(false))
+      dispatch(setFlagForView(false));
     } else {
-      dispatch(setFlagForView(true))
+      dispatch(setFlagForView(true));
     }
-    setModal(false)
-  }
+    setModal(false);
+  };
 
   const handleItemPress = (itemId) => {
-    setActiveItem(itemId)
-    handlePress(itemId)
-  }
+    setActiveItem(itemId);
+    handlePress(itemId);
+  };
 
   return (
     <Modal
@@ -55,7 +55,7 @@ export const ModalView = ({ modal, setModal }) => {
               onPress={() => handleItemPress(2)}
             >
               <View style={styles.indicator} />
-              <Text style={styles.dropdownText}>Large</Text>
+              <Text style={styles.dropdownText}>Detailed</Text>
               <View style={styles.iconContainer}>
                 <Ionicons name='grid-outline' size={18} color='#D4AF37' />
               </View>
@@ -64,5 +64,5 @@ export const ModalView = ({ modal, setModal }) => {
         </View>
       </TouchableOpacity>
     </Modal>
-  )
-}
+  );
+};

@@ -22,7 +22,7 @@
     "expo-device": "~58.0.5",
     "expo-haptics": "~58.0.7",
     "expo-linear-gradient": "~58.0.3",
-    "expo-notifications": "~58.1.6",
+    "expo-notifications": "^0.28.17",
     "expo-splash-screen": "~58.0.14",
     "expo-status-bar": "~58.0.4",
     "react": "19.3.0",
