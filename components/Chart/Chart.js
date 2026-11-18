@@ -26,6 +26,37 @@ const TIME_PERIODS = [
   { label: '30D', value: 30 },
 ];
 
+const UP = '#00C853';
+const DOWN = '#FF3B30';
+
+const isNum = (v) => typeof v === 'number' && isFinite(v);
+
+const formatPrice = (price) => {
+  if (!isNum(price)) return '$0.00';
+  const a = Math.abs(price);
+  const d = a >= 1 ? 2 : a >= 0.01 ? 4 : a >= 0.0001 ? 6 : 8;
+  return `$${price.toLocaleString('en-US', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d,
+  })}`;
+};
+
+const formatLargeNumber = (num) => {
+  if (!isNum(num) || num === 0) return '0';
+  if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+  if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+  if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+  if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+  return num.toFixed(2);
+};
+
+const formatPercent = (v) => {
+  if (!isNum(v)) return '—';
+  return `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(2)}%`;
+};
+
+const changeColor = (v) => (isNum(v) && v < 0 ? DOWN : UP);
+
 export const Chart = ({
   selectedCoinData,
   chartData,
@@ -43,6 +74,7 @@ export const Chart = ({
   const dispatch = useDispatch();
 
   const is30DSelected = chartDays === 30;
+  const periodLabel = TIME_PERIODS.find((p) => p.value === chartDays)?.label ?? '';
 
   useEffect(() => {
     if (modalVisible) {
@@ -78,39 +110,22 @@ export const Chart = ({
     setIsDarkTheme((prev) => !prev);
   };
 
-  const getPriceChangeColor = (value) => (value >= 0 ? '#00C853' : '#FF3B30');
-
-  const formatPrice = (price) => {
-    if (!price && price !== 0) return '$0.00';
-    return price >= 1
-      ? `$${price.toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}`
-      : `$${price.toFixed(3)}`;
-  };
-
-  const formatLargeNumber = (num) => {
-    if (!num) return '0';
-    if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
-    if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
-    if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
-    return num.toFixed(2);
-  };
-
   const getTrendIndicator = () => {
     if (!chartData?.prices || chartData.prices.length < 2) return null;
     const firstPrice = chartData.prices[0];
     const lastPrice = chartData.prices[chartData.prices.length - 1];
-    const isPositive = lastPrice > firstPrice;
+    if (!firstPrice) return null;
     return {
-      isPositive,
+      isPositive: lastPrice >= firstPrice,
       percentage: Math.abs(((lastPrice - firstPrice) / firstPrice) * 100).toFixed(2),
-      currentPrice: lastPrice,
     };
   };
 
   const trendData = getTrendIndicator();
+
+  const change24h = selectedCoinData?.price_change_percentage_24h;
+  const change7d = selectedCoinData?.price_change_percentage_7d_in_currency;
+  const totalSupply = selectedCoinData?.market_data?.total_supply;
 
   return (
     <Modal
@@ -178,34 +193,23 @@ export const Chart = ({
                     styles.priceChangeBadge,
                     {
                       backgroundColor:
-                        selectedCoinData?.price_change_percentage_24h >= 0
-                          ? 'rgba(0, 200, 83, 0.15)'
-                          : 'rgba(255, 59, 48, 0.15)',
+                        isNum(change24h) && change24h < 0
+                          ? 'rgba(255, 59, 48, 0.15)'
+                          : 'rgba(0, 200, 83, 0.15)',
                     },
                   ]}
                 >
                   <Ionicons
                     name={
-                      selectedCoinData?.price_change_percentage_24h >= 0
-                        ? 'trending-up'
-                        : 'trending-down'
+                      isNum(change24h) && change24h < 0 ? 'trending-down' : 'trending-up'
                     }
                     size={14}
-                    color={getPriceChangeColor(
-                      selectedCoinData?.price_change_percentage_24h,
-                    )}
+                    color={changeColor(change24h)}
                   />
                   <Text
-                    style={[
-                      styles.priceChangeText,
-                      {
-                        color: getPriceChangeColor(
-                          selectedCoinData?.price_change_percentage_24h,
-                        ),
-                      },
-                    ]}
+                    style={[styles.priceChangeText, { color: changeColor(change24h) }]}
                   >
-                    {Math.abs(selectedCoinData?.price_change_percentage_24h?.toFixed(2))}%
+                    {isNum(change24h) ? `${Math.abs(change24h).toFixed(2)}%` : '—'}
                   </Text>
                 </View>
               </View>
@@ -214,7 +218,7 @@ export const Chart = ({
               <View style={styles.statsGrid}>
                 <View style={styles.statCard}>
                   <View style={styles.statHeader}>
-                    <MaterialIcons name='arrow-upward' size={14} color='#00C853' />
+                    <MaterialIcons name='arrow-upward' size={14} color={UP} />
                     <Text style={styles.statLabel}>High</Text>
                   </View>
                   <Text style={styles.statValue}>
@@ -224,7 +228,7 @@ export const Chart = ({
 
                 <View style={styles.statCard}>
                   <View style={styles.statHeader}>
-                    <MaterialIcons name='arrow-downward' size={14} color='#FF3B30' />
+                    <MaterialIcons name='arrow-downward' size={14} color={DOWN} />
                     <Text style={styles.statLabel}>Low</Text>
                   </View>
                   <Text style={styles.statValue}>
@@ -238,7 +242,7 @@ export const Chart = ({
                     <Text style={styles.statLabel}>Rank</Text>
                   </View>
                   <Text style={styles.statValue}>
-                    #{selectedCoinData?.market_cap_rank}
+                    #{selectedCoinData?.market_cap_rank ?? '—'}
                   </Text>
                 </View>
 
@@ -253,26 +257,23 @@ export const Chart = ({
                 </View>
               </View>
 
-              {/* Индикатор тренда */}
+              {/* Изменение за выбранный период */}
               {trendData && !isloading && (
                 <View style={styles.trendIndicator}>
                   <View
                     style={[
                       styles.trendDot,
-                      {
-                        backgroundColor: trendData.isPositive ? '#00C853' : '#FF3B30',
-                      },
+                      { backgroundColor: trendData.isPositive ? UP : DOWN },
                     ]}
                   />
-                  <Text style={styles.trendText}>
-                    {trendData.isPositive ? '↗ BULLISH' : '↘ BEARISH'} TREND
-                  </Text>
+                  <Text style={styles.trendText}>{periodLabel} PERFORMANCE</Text>
                   <Text
                     style={[
                       styles.trendPercentage,
-                      { color: trendData.isPositive ? '#00C853' : '#FF3B30' },
+                      { color: trendData.isPositive ? UP : DOWN },
                     ]}
                   >
+                    {trendData.isPositive ? '+' : '−'}
                     {trendData.percentage}%
                   </Text>
                 </View>
@@ -342,7 +343,6 @@ export const Chart = ({
                         chartData={chartData}
                         is30DSelected={is30DSelected}
                         chartDays={chartDays}
-                        trendData={trendData}
                       />
                     ) : (
                       <ChartWhite
@@ -350,7 +350,6 @@ export const Chart = ({
                         chartData={chartData}
                         is30DSelected={is30DSelected}
                         chartDays={chartDays}
-                        trendData={trendData}
                       />
                     )}
                   </View>
@@ -368,24 +367,17 @@ export const Chart = ({
                       style={styles.additionalCardGradient}
                     >
                       <View style={styles.additionalIconContainer}>
-                        <MaterialIcons name='show-chart' size={18} color='#00C853' />
+                        <MaterialIcons name='show-chart' size={18} color={UP} />
                       </View>
                       <View>
                         <Text style={styles.additionalLabel}>7D Change</Text>
                         <Text
                           style={[
                             styles.additionalValue,
-                            {
-                              color: getPriceChangeColor(
-                                selectedCoinData?.price_change_percentage_7d_in_currency,
-                              ),
-                            },
+                            { color: changeColor(change7d) },
                           ]}
                         >
-                          {selectedCoinData?.price_change_percentage_7d_in_currency?.toFixed(
-                            2,
-                          )}
-                          %
+                          {formatPercent(change7d)}
                         </Text>
                       </View>
                     </LinearGradient>
@@ -421,11 +413,7 @@ export const Chart = ({
                         <Text
                           style={[
                             styles.additionalValue,
-                            {
-                              color: getPriceChangeColor(
-                                selectedCoinData?.price_change_24h,
-                              ),
-                            },
+                            { color: changeColor(selectedCoinData?.price_change_24h) },
                           ]}
                         >
                           {formatPrice(selectedCoinData?.price_change_24h)}
@@ -469,8 +457,9 @@ export const Chart = ({
                     <View style={styles.marketDataCard}>
                       <Text style={styles.marketDataLabel}>Total Supply</Text>
                       <Text style={styles.marketDataValue}>
-                        {formatLargeNumber(selectedCoinData?.market_data?.total_supply) ||
-                          '∞'}
+                        {isNum(totalSupply) && totalSupply > 0
+                          ? formatLargeNumber(totalSupply)
+                          : '∞'}
                       </Text>
                     </View>
                   </View>

@@ -1,10 +1,107 @@
-import { View, Dimensions, Text } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Dimensions, Text, StyleSheet, PanResponder } from 'react-native';
+import { G, Circle, Line } from 'react-native-svg';
 import { LineChart } from 'react-native-chart-kit';
+import * as Haptics from 'expo-haptics';
 import { styles } from './ChartBlack.styles';
 
 const CHART_WIDTH_PERCENTAGE = 0.78;
 const CHART_HEIGHT = 200;
 const CHART_INNER_HEIGHT = 190;
+const PADDING_TOP = 15;
+const PLOT_BOTTOM = PADDING_TOP + (CHART_INNER_HEIGHT * 3) / 4;
+const SEGMENTS = 4;
+const MAX_POINTS = 72;
+
+const THEME = {
+  bg: '#0F121B',
+  grid: 'rgba(255, 255, 255, 0.07)',
+  label: 'rgba(255, 255, 255, 0.5)',
+  text: '#FFFFFF',
+  muted: 'rgba(255, 255, 255, 0.45)',
+  cross: 'rgba(255, 255, 255, 0.35)',
+  border: 'rgba(212, 175, 55, 0.25)',
+  up: '#00C853',
+  down: '#FF3B30',
+};
+
+/* ------------------------- helpers ------------------------- */
+
+const getTimestamps = (chartData, count, chartDays) => {
+  if (Array.isArray(chartData.timestamps) && chartData.timestamps.length === count) {
+    return chartData.timestamps.map((t) => (t < 1e12 ? t * 1000 : t));
+  }
+  if (Array.isArray(chartData.labelDate) && chartData.labelDate.length === count) {
+    const parsed = chartData.labelDate.map((raw) => {
+      if (typeof raw === 'number') return raw < 1e12 ? raw * 1000 : raw;
+      const t = Date.parse(raw);
+      return isNaN(t) ? null : t;
+    });
+    if (parsed.every((t) => t !== null)) return parsed;
+  }
+  const now = Date.now();
+  const spanMs = Math.max(1, chartDays) * 24 * 60 * 60 * 1000;
+  const step = spanMs / Math.max(1, count - 1);
+  return Array.from({ length: count }, (_, i) => now - spanMs + i * step);
+};
+
+const downsample = (values, times, max) => {
+  const n = values.length;
+  if (n <= max) return { values, times };
+  const size = n / max;
+  const v = [];
+  const t = [];
+  for (let i = 0; i < max; i++) {
+    const start = Math.floor(i * size);
+    const end = Math.max(start + 1, Math.floor((i + 1) * size));
+    let sum = 0;
+    for (let j = start; j < end; j++) sum += values[j];
+    v.push(sum / (end - start));
+    t.push(times[Math.min(end - 1, n - 1)]);
+  }
+  v[max - 1] = values[n - 1];
+  t[max - 1] = times[n - 1];
+  return { values: v, times: t };
+};
+
+const formatAxisLabel = (ts, chartDays) => {
+  const d = new Date(ts);
+  if (!isFinite(d.getTime())) return '';
+  if (chartDays === 1) {
+    return d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  }
+  return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+};
+
+const formatFullTime = (ts, chartDays) => {
+  const d = new Date(ts);
+  if (!isFinite(d.getTime())) return '';
+  const time = d.toLocaleTimeString('ru-RU', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  if (chartDays === 1) return time;
+  const date = d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+  return `${date} · ${time}`;
+};
+
+const formatPrice = (v) => {
+  if (!isFinite(v)) return '$0.00';
+  const a = Math.abs(v);
+  const d = a >= 1 ? 2 : a >= 0.01 ? 4 : a >= 0.0001 ? 6 : 8;
+  return `$${v.toLocaleString('en-US', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d,
+  })}`;
+};
+
+const getFontSize = (width) => {
+  if (width < 350) return 7;
+  if (width < 400) return 8;
+  return 9;
+};
+
+/* ------------------------- component ------------------------- */
 
 export const ChartBlack = ({
   coinHistoryData,
@@ -14,13 +111,66 @@ export const ChartBlack = ({
 }) => {
   const { width } = Dimensions.get('window');
   const chartWidth = width * CHART_WIDTH_PERCENTAGE;
+  const svgWidth = chartWidth + 40;
+  const fontSize = getFontSize(width);
 
-  if (
-    !coinHistoryData ||
-    coinHistoryData.length === 0 ||
-    !chartData?.prices ||
-    chartData.prices.length === 0
-  ) {
+  const [selected, setSelected] = useState(null);
+  const geoRef = useRef({ n: 0, left: 0, span: 1 });
+  const lastIdxRef = useRef(-1);
+
+  const rawPrices = chartData?.prices;
+  const hasData =
+    !!coinHistoryData?.length && Array.isArray(rawPrices) && rawPrices.length > 1;
+
+  const series = useMemo(() => {
+    if (!hasData) return null;
+    const times = getTimestamps(chartData, rawPrices.length, chartDays);
+    const ds = downsample(rawPrices, times, MAX_POINTS);
+    return {
+      values: ds.values,
+      times: ds.times,
+      first: rawPrices[0],
+      last: rawPrices[rawPrices.length - 1],
+      high: Math.max(...rawPrices),
+      low: Math.min(...rawPrices),
+    };
+  }, [hasData, chartData, rawPrices, chartDays]);
+
+  useEffect(() => {
+    setSelected(null);
+    lastIdxRef.current = -1;
+  }, [rawPrices, chartDays]);
+
+  const pan = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderGrant: (e) => pick(e.nativeEvent.locationX),
+      onPanResponderMove: (e) => pick(e.nativeEvent.locationX),
+      onPanResponderRelease: () => clear(),
+      onPanResponderTerminate: () => clear(),
+    }),
+  ).current;
+
+  function pick(x) {
+    const { n, left, span } = geoRef.current;
+    if (!n) return;
+    // +8 — компенсация marginLeft: -8 у LineChart
+    const idx = Math.min(n - 1, Math.max(0, Math.round((x + 8 - left) / span)));
+    if (idx !== lastIdxRef.current) {
+      lastIdxRef.current = idx;
+      setSelected(idx);
+      Haptics.selectionAsync();
+    }
+  }
+
+  function clear() {
+    lastIdxRef.current = -1;
+    setSelected(null);
+  }
+
+  if (!series) {
     return (
       <View style={styles.noDataContainer}>
         <Text style={styles.noDataText}>Loading chart...</Text>
@@ -28,200 +178,257 @@ export const ChartBlack = ({
     );
   }
 
-  const prices = chartData.prices;
-  const isPositive = prices[prices.length - 1] > prices[0];
-  const lineColor = isPositive ? '#00C853' : '#FF3B30';
+  const { values, times, first, last, high, low } = series;
+  const n = values.length;
 
-  /* ------------------------- Y-ось ------------------------- */
+  const isPositive = last >= first;
+  const lineColor = isPositive ? THEME.up : THEME.down;
+
+  const shownIndex = selected !== null && selected < n ? selected : null;
+  const shownValue = shownIndex !== null ? values[shownIndex] : last;
+  const delta = first ? ((shownValue - first) / first) * 100 : 0;
+  const deltaUp = delta >= 0;
+  const deltaColor = deltaUp ? THEME.up : THEME.down;
+
+  /* ----- Y-ось ----- */
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const step = (max - min) / SEGMENTS;
+  const yDecimals =
+    step > 0 ? Math.min(10, Math.max(0, Math.ceil(-Math.log10(step)) + 1)) : 4;
 
   const formatYLabel = (value) => {
     const num = parseFloat(value);
     if (isNaN(num)) return '0';
-
-    if (Math.abs(num) < 0.000001 && num !== 0) return num.toExponential(3);
-    if (Math.abs(num) < 0.001 && num !== 0) return num.toFixed(6);
-    if (Math.abs(num) < 1) return num.toFixed(4);
-
     return num.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: yDecimals,
+      maximumFractionDigits: yDecimals,
     });
   };
 
-  const hasSmallNumbers = () => Math.min(...prices) < 0.001;
+  const gutter = Math.max(
+    40,
+    Math.ceil(`$${formatYLabel(String(max))}`.length * fontSize * 0.6) + 10,
+  );
 
-  const getDecimalPlaces = () => (hasSmallNumbers() ? 6 : 2);
+  geoRef.current = { n, left: gutter, span: (svgWidth - gutter) / n };
 
-  const getSegments = () => {
-    const min = Math.min(...prices);
-    const max = Math.max(...prices);
-    const range = max - min;
-    if (range < 0.001) return 6;
-    if (range < 0.1) return 5;
-    return 4;
-  };
-
-  /* ------------------------- X-ось ------------------------- */
-
-  const getTimestamps = () => {
-    if (
-      Array.isArray(chartData.timestamps) &&
-      chartData.timestamps.length === prices.length
-    ) {
-      return chartData.timestamps.map((t) => (t < 1e12 ? t * 1000 : t));
+  /* ----- X-ось: подпись только под нужными точками ----- */
+  let desired = 6;
+  if (width >= 400) desired = 8;
+  if (width >= 500) desired = 10;
+  if (is30DSelected) desired = Math.max(4, Math.floor(desired * 0.8));
+  const labelStep = Math.max(1, Math.floor(n / desired));
+  const labels = new Array(n).fill('');
+  let prevLabel = '';
+  for (let i = 0; i < n; i += labelStep) {
+    const l = formatAxisLabel(times[i], chartDays);
+    if (l && l !== prevLabel) {
+      labels[i] = l;
+      prevLabel = l;
     }
-    if (
-      Array.isArray(chartData.labelDate) &&
-      chartData.labelDate.length === prices.length
-    ) {
-      const parsed = chartData.labelDate.map((raw) => {
-        if (typeof raw === 'number') return raw < 1e12 ? raw * 1000 : raw;
-        const t = Date.parse(raw);
-        return isNaN(t) ? null : t;
-      });
-      if (parsed.every((t) => t !== null)) return parsed;
+  }
+
+  const renderDotContent = ({ x, y, index }) => {
+    if (index === shownIndex) {
+      return (
+        <G key={`sel-${index}`}>
+          <Line
+            x1={x}
+            x2={x}
+            y1={PADDING_TOP}
+            y2={PLOT_BOTTOM}
+            stroke={THEME.cross}
+            strokeWidth={1}
+            strokeDasharray='3,3'
+          />
+          <Circle cx={x} cy={y} r={9} fill={lineColor} fillOpacity={0.18} />
+          <Circle
+            cx={x}
+            cy={y}
+            r={4}
+            fill={THEME.bg}
+            stroke={lineColor}
+            strokeWidth={2}
+          />
+        </G>
+      );
     }
-
-    const now = Date.now();
-    const spanMs = Math.max(1, chartDays) * 24 * 60 * 60 * 1000;
-    const step = spanMs / Math.max(1, prices.length - 1);
-    return prices.map((_, i) => now - spanMs + i * step);
-  };
-
-  const formatLabel = (ts) => {
-    const d = new Date(ts);
-    if (!isFinite(d.getTime())) return '';
-
-    if (chartDays === 1) {
-      return d.toLocaleTimeString('ru-RU', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
+    if (shownIndex === null && index === n - 1) {
+      return (
+        <G key={`live-${index}`}>
+          <Circle cx={x} cy={y} r={8} fill={lineColor} fillOpacity={0.2} />
+          <Circle cx={x} cy={y} r={3.5} fill={lineColor} />
+        </G>
+      );
     }
-    return d.toLocaleDateString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-    });
+    return null;
   };
-
-  const getFilteredLabels = () => {
-    const timestamps = getTimestamps();
-    if (!timestamps.length) return [];
-
-    const screenWidth = Dimensions.get('window').width;
-    let desiredLabelsCount = 6;
-    if (screenWidth >= 400) desiredLabelsCount = 8;
-    if (screenWidth >= 500) desiredLabelsCount = 10;
-    if (is30DSelected)
-      desiredLabelsCount = Math.max(4, Math.floor(desiredLabelsCount * 0.8));
-
-    const step = Math.max(1, Math.floor(timestamps.length / desiredLabelsCount));
-
-    const seen = new Set();
-    const result = [];
-    for (let i = 0; i < timestamps.length; i += step) {
-      const label = formatLabel(timestamps[i]);
-      if (!label || seen.has(label)) continue;
-      seen.add(label);
-      result.push(label);
-    }
-
-    if (result.length === 0) {
-      return [formatLabel(timestamps[timestamps.length - 1])];
-    }
-
-    return result.slice(0, 10);
-  };
-
-  const getFontSize = () => {
-    if (width < 350) return 7;
-    if (width < 400) return 8;
-    return 9;
-  };
-
-  const filteredLabels = getFilteredLabels();
 
   return (
     <View style={styles.container}>
+      {/* Цена + изменение */}
+      <View style={ui.header}>
+        <View>
+          <Text style={ui.caption}>
+            {shownIndex !== null
+              ? formatFullTime(times[shownIndex], chartDays)
+              : 'LAST PRICE'}
+          </Text>
+          <Text style={ui.price}>{formatPrice(shownValue)}</Text>
+        </View>
+        <View
+          style={[
+            ui.pill,
+            {
+              backgroundColor: deltaUp
+                ? 'rgba(0, 200, 83, 0.14)'
+                : 'rgba(255, 59, 48, 0.14)',
+            },
+          ]}
+        >
+          <Text style={[ui.pillText, { color: deltaColor }]}>
+            {deltaUp ? '+' : '−'}
+            {Math.abs(delta).toFixed(2)}%
+          </Text>
+        </View>
+      </View>
+
       <View style={[styles.chartOuterContainer, { height: CHART_HEIGHT }]}>
         <LineChart
           data={{
-            labels: filteredLabels,
+            labels,
             datasets: [
               {
-                data: prices,
-                strokeWidth: 1.5,
+                data: values,
+                strokeWidth: 1.75,
                 color: () => lineColor,
               },
             ],
           }}
-          width={chartWidth + 40}
+          width={svgWidth}
           height={CHART_INNER_HEIGHT}
           withVerticalLines={false}
-          withHorizontalLines={true}
-          withDots={false}
-          withInnerLines={false}
+          withHorizontalLines
+          withInnerLines
           withOuterLines={false}
+          withShadow
+          withDots
           fromZero={false}
           formatYLabel={formatYLabel}
-          segments={getSegments()}
+          segments={SEGMENTS}
           yAxisOffset={0}
+          yAxisLabel='$'
+          yAxisSuffix=''
+          getDotColor={() => 'transparent'}
+          getDotProps={() => ({ r: '0', strokeWidth: '0' })}
+          renderDotContent={renderDotContent}
           chartConfig={{
-            backgroundColor: '#1A1F2E',
-            backgroundGradientFrom: '#1A1F2E',
-            backgroundGradientTo: '#1A1F2E',
-            decimalPlaces: getDecimalPlaces(),
+            backgroundColor: THEME.bg,
+            backgroundGradientFrom: THEME.bg,
+            backgroundGradientTo: THEME.bg,
+            decimalPlaces: yDecimals,
             color: (opacity = 1) => `rgba(255, 255, 255, ${opacity * 0.1})`,
-            labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity * 0.6})`,
+            labelColor: () => THEME.label,
+            fillShadowGradient: lineColor,
+            fillShadowGradientOpacity: 0.28,
+            fillShadowGradientFrom: lineColor,
+            fillShadowGradientFromOpacity: 0.28,
+            fillShadowGradientTo: THEME.bg,
+            fillShadowGradientToOpacity: 0,
             style: { borderRadius: 12 },
             paddingLeft: 30,
-            paddingRight: 40,
-            paddingTop: 15,
+            paddingRight: gutter,
+            paddingTop: PADDING_TOP,
             paddingBottom: 20,
             propsForBackgroundLines: {
               strokeWidth: 1,
-              stroke: 'rgba(255, 255, 255, 0.1)',
-              strokeDasharray: '3,3',
+              stroke: THEME.grid,
+              strokeDasharray: '2,6',
             },
-            propsForLabels: {
-              fontSize: getFontSize(),
-              fontWeight: '500',
-            },
-            propsForVerticalLabels: {
-              fontSize: getFontSize(),
-              dx: 0,
-            },
+            propsForLabels: { fontSize, fontWeight: '500' },
+            propsForVerticalLabels: { fontSize, dx: 0 },
             propsForHorizontalLabels: {
-              fontSize: getFontSize() - 1,
+              fontSize: fontSize - 1,
               rotation: 0,
               dy: 8,
             },
           }}
           bezier
-          style={{
-            marginLeft: -8,
-            marginRight: -20,
-            borderRadius: 12,
-          }}
-          yAxisLabel={hasSmallNumbers() ? '$' : ''}
-          yAxisSuffix=''
-          getDotProps={(value, index) => {
-            const total = prices.length;
-            if (index >= total - 1) {
-              return { r: '0', strokeWidth: '0' };
-            }
-            return {};
-          }}
+          style={{ marginLeft: -8, marginRight: -20, borderRadius: 12 }}
         />
+        <View style={ui.overlay} {...pan.panHandlers} />
       </View>
 
-      {hasSmallNumbers() && (
-        <View style={styles.smallNumberIndicator}>
-          <Text style={styles.smallNumberText}>
-            ⚡ Displaying values with high precision
+      {/* High / Low / Range */}
+      <View style={ui.stats}>
+        <View style={ui.stat}>
+          <Text style={ui.statLabel}>HIGH</Text>
+          <Text style={ui.statValue}>{formatPrice(high)}</Text>
+        </View>
+        <View style={ui.stat}>
+          <Text style={ui.statLabel}>LOW</Text>
+          <Text style={ui.statValue}>{formatPrice(low)}</Text>
+        </View>
+        <View style={ui.stat}>
+          <Text style={ui.statLabel}>RANGE</Text>
+          <Text style={ui.statValue}>
+            {low ? (((high - low) / low) * 100).toFixed(2) : '0.00'}%
           </Text>
         </View>
-      )}
+      </View>
     </View>
   );
 };
+
+const ui = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingTop: 6,
+    paddingBottom: 4,
+  },
+  caption: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 1.2,
+    color: THEME.muted,
+  },
+  price: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: THEME.text,
+    marginTop: 2,
+  },
+  pill: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  pillText: { fontSize: 12, fontWeight: '700' },
+  overlay: { ...StyleSheet.absoluteFillObject },
+  stats: {
+    flexDirection: 'row',
+    marginTop: 6,
+    marginHorizontal: 8,
+    paddingTop: 10,
+    paddingBottom: 6,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: THEME.border,
+  },
+  stat: { flex: 1, alignItems: 'center' },
+  statLabel: {
+    fontSize: 9,
+    fontWeight: '600',
+    letterSpacing: 1,
+    color: THEME.muted,
+  },
+  statValue: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: THEME.text,
+    marginTop: 3,
+  },
+});
