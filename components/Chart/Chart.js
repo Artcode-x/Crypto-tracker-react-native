@@ -12,8 +12,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setChartDaysMain } from '../../store/reducersSlice';
 import { mainDaySelector } from '../../store/toolkitSelectors';
-import { ChartBlack } from './ChartBlack/ChartBlack';
-import { ChartWhite } from './ChartWhite/ChartWhite';
+import { InteractiveChart } from './InteractiveChart/InteractiveChart';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -66,6 +65,10 @@ export const Chart = ({
   coinHistoryData,
 }) => {
   const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const [scrollEnabled, setScrollEnabled] = useState(true);
+
+  const handleScrub = (active) => setScrollEnabled(!active);
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const scrollViewRef = useRef(null);
@@ -148,7 +151,6 @@ export const Chart = ({
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            {/* Заголовок с кнопкой закрытия */}
             <View style={styles.header}>
               <View style={styles.coinHeader}>
                 <View style={styles.coinImageContainer}>
@@ -179,11 +181,11 @@ export const Chart = ({
 
             <ScrollView
               ref={scrollViewRef}
+              scrollEnabled={scrollEnabled}
               showsVerticalScrollIndicator={false}
               style={styles.mainScroll}
               contentContainerStyle={styles.mainScrollContent}
             >
-              {/* Цена и изменение */}
               <View style={styles.priceSection}>
                 <Text style={styles.currentPrice}>
                   {formatPrice(selectedCoinData?.current_price)}
@@ -214,7 +216,6 @@ export const Chart = ({
                 </View>
               </View>
 
-              {/* Стата */}
               <View style={styles.statsGrid}>
                 <View style={styles.statCard}>
                   <View style={styles.statHeader}>
@@ -257,7 +258,6 @@ export const Chart = ({
                 </View>
               </View>
 
-              {/* Изменение за выбранный период */}
               {trendData && !isloading && (
                 <View style={styles.trendIndicator}>
                   <View
@@ -279,7 +279,6 @@ export const Chart = ({
                 </View>
               )}
 
-              {/* Таймфреймы */}
               <View style={styles.timePeriodsContainer}>
                 {TIME_PERIODS.map((period) => {
                   const active = chartDays === period.value;
@@ -306,7 +305,6 @@ export const Chart = ({
                 })}
               </View>
 
-              {/* График с переключателем темы */}
               <View style={styles.chartSection}>
                 <View style={styles.chartHeader}>
                   <Text style={styles.chartTitle}>Price Chart</Text>
@@ -337,26 +335,18 @@ export const Chart = ({
                   </View>
                 ) : (
                   <View style={styles.chartWrapper}>
-                    {isDarkTheme ? (
-                      <ChartBlack
-                        coinHistoryData={coinHistoryData}
-                        chartData={chartData}
-                        is30DSelected={is30DSelected}
-                        chartDays={chartDays}
-                      />
-                    ) : (
-                      <ChartWhite
-                        coinHistoryData={coinHistoryData}
-                        chartData={chartData}
-                        is30DSelected={is30DSelected}
-                        chartDays={chartDays}
-                      />
-                    )}
+                    <InteractiveChart
+                      coinHistoryData={coinHistoryData}
+                      chartData={chartData}
+                      is30DSelected={is30DSelected}
+                      chartDays={chartDays}
+                      isDark={isDarkTheme}
+                      onScrubChange={handleScrub}
+                    />
                   </View>
                 )}
               </View>
 
-              {/* Дополнительная инфо */}
               <View style={styles.additionalSection}>
                 <Text style={styles.sectionTitle}>Additional Info</Text>
 
@@ -441,7 +431,6 @@ export const Chart = ({
                 </View>
               </View>
 
-              {/* Рыночные данные */}
               {selectedCoinData?.market_data && (
                 <View style={styles.marketDataSection}>
                   <Text style={styles.sectionTitle}>Market Data</Text>
